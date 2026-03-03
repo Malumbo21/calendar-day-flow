@@ -403,9 +403,9 @@ const CalendarEvent = ({
             ? '#fff'
             : getEventTextColor(calendarId, calendarRegistry),
         }}
-        onClick={isTouchEnabled ? undefined : handleClick}
-        onContextMenu={isTouchEnabled ? undefined : handleContextMenu}
-        onDblClick={isTouchEnabled ? undefined : handleDoubleClick}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        onDblClick={handleDoubleClick}
         onMouseDown={e => {
           if (!isTouchEnabled) setIsPressed(true);
           if (onMoveStart) {
