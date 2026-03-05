@@ -236,7 +236,7 @@ export const allDayCell =
  * Base event style
  */
 export const baseEvent =
-  'df-event calendar-event select-none pointer-events-auto px-0.5';
+  'df-event calendar-event select-none pointer-events-auto';
 
 /**
  * Event shadow

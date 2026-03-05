@@ -29,7 +29,7 @@ const MonthRegularContent = ({
 
   return (
     <div className={monthRegularContent}>
-      <div className='flex min-w-0 flex-1 items-center'>
+      <div className='flex min-w-0 flex-1 items-center px-0.5'>
         <div
           style={{
             backgroundColor: getLineColor(
