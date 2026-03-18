@@ -44,6 +44,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { getWebsiteCalendars } from '@/utils/palette';
 import { generateSampleEvents } from '@/utils/sampleData';
 
@@ -341,19 +342,25 @@ export function InteractiveCalendar() {
               </h3>
               <div className='flex gap-2'>
                 <div className='flex flex-wrap gap-1.5'>
-                  {VIEW_OPTIONS.map(opt => (
-                    <Button
-                      key={opt.value}
-                      size='sm'
-                      variant={
-                        selectedViews.includes(opt.value) ? 'default' : 'link'
-                      }
-                      className='h-7 rounded-full px-2.5 text-[11px]'
-                      onClick={() => toggleView(opt.value)}
-                    >
-                      {opt.label}
-                    </Button>
-                  ))}
+                  {VIEW_OPTIONS.map(opt => {
+                    const isSelected = selectedViews.includes(opt.value);
+                    return (
+                      <Button
+                        key={opt.value}
+                        size='sm'
+                        variant={isSelected ? 'default' : 'ghost'}
+                        className={cn(
+                          'h-7 rounded-full px-2.5 text-[11px] transition-all',
+                          isSelected
+                            ? 'bg-black text-white hover:bg-black/90 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200'
+                            : 'bg-transparent text-black hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                        )}
+                        onClick={() => toggleView(opt.value)}
+                      >
+                        {opt.label}
+                      </Button>
+                    );
+                  })}
                 </div>
 
                 {/* Year Mode Selection */}

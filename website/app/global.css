@@ -4,6 +4,12 @@
 
 @source '../node_modules/fumadocs-ui/dist/**/*.js';
 
+/* DayFlow: scan compiled bundles so Tailwind generates utility classes used
+   in DayFlow's components. Only packages with className strings are listed. */
+@source '../node_modules/@dayflow/core/dist/index.esm.js';
+@source '../node_modules/@dayflow/plugin-sidebar/dist/index.esm.js';
+@source '../node_modules/@dayflow/plugin-drag/dist/index.esm.js';
+
 /* Clerk TOC: classes not in fumadocs generated CSS, needed for Tailwind v4 scanning */
 @source inline("top-(--fd-top)");
 @source inline("h-(--fd-height)");
