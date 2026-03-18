@@ -8,6 +8,8 @@ import Link from 'next/link';
 
 import { LanguageSwitcher } from './LanguageSwitcher';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 function DiscordIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -60,7 +62,7 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
               className='me-6 inline-flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white'
             >
               <Image
-                src='/logo.png'
+                src={`${BASE}/logo.png`}
                 alt='DayFlow logo'
                 width={28}
                 height={28}

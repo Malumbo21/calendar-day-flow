@@ -37,10 +37,12 @@ export const gitConfig = {
   branch: 'main',
 };
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 const NavTitle = (
   <span className='flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white'>
     <Image
-      src='/logo.png'
+      src={`${BASE}/logo.png`}
       alt='DayFlow logo'
       width={28}
       height={28}
