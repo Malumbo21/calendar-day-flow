@@ -125,33 +125,64 @@ function MyCalendar() {
 
 ### Year View
 
-The year view provides a comprehensive annual overview using a continuous grid layout. Unlike traditional year views that just show 12 small calendars, DayFlow's Year View renders a unified grid where you can visualize multi-day events spanning across days, weeks, and even months.
+The year view provides a comprehensive annual overview. DayFlow's Year View supports three modes: `year-canvas` (continuous grid), `fixed-week` (fixed 52-week columns), and `grid` (a 4x3 month grid perfect for heatmaps).
 
 #### Configuration
 
-| Property                    | Type                            | Default         | Description                                                                                   |
-| :-------------------------- | :------------------------------ | :-------------- | :-------------------------------------------------------------------------------------------- |
-| `mode`                      | `'year-canvas' \| 'fixed-week'` | `'year-canvas'` | The display mode for the year view.                                                           |
-| `startOfWeek`               | `number`                        | `1`             | The start day of the week (0 for Sunday, 1 for Monday, etc.). Only used in `fixed-week` mode. |
-| `showTimedEventsInYearView` | `boolean`                       | `false`         | Whether to show timed events (dots/indicators) in the year view.                              |
+| Property                    | Type                                          | Default         | Description                                                                                          |
+| :-------------------------- | :-------------------------------------------- | :-------------- | :--------------------------------------------------------------------------------------------------- |
+| `mode`                      | `'year-canvas' \| 'fixed-week' \| 'grid'`     | `'year-canvas'` | The display mode for the year view.                                                                  |
+| `startOfWeek`               | `number`                                      | `1`             | The start day of the week (0 for Sunday, 1 for Monday, etc.). Used in `fixed-week` and `grid` modes. |
+| `showTimedEventsInYearView` | `boolean`                                     | `false`         | Whether to show timed events (dots/indicators/intensity) in the year view.                           |
+| `gridDateClick`             | `'popup' \| 'day-view' \| 'none' \| function` | `'popup'`       | (Grid mode) Action when a date cell is clicked.                                                      |
+| `gridDateDoubleClick`       | `'day-view' \| 'none' \| function`            | `'day-view'`    | (Grid mode) Action when a date cell is double-clicked.                                               |
+| `gridPopupContent`          | `function`                                    | `undefined`     | (Grid mode) Custom renderer for the day popup content.                                               |
+| `gridHeatmapLevels`         | `number`                                      | `5`             | (Grid mode) Number of heatmap intensity levels to use.                                               |
 
-```tsx {10-14}
+#### Heatmap Customization (Grid Mode)
+
+When using `mode: 'grid'`, the calendar acts as a heatmap where the intensity (color) of each day is determined by the number of events. You can customize the colors by overriding the following CSS variables in your global CSS:
+
+```css
+/* Light Mode Heatmap */
+.df-year-grid-month {
+  --heat-1: #ebf5ff;
+  --heat-2: #cfe8ff;
+  --heat-3: #91d5ff;
+  --heat-4: #60a5fa;
+  --heat-5: #3b82f6;
+}
+
+/* Dark Mode Heatmap */
+.dark .df-year-grid-month {
+  --heat-1: #1e3a5f;
+  --heat-2: #2563eb;
+  --heat-3: #1e40af;
+  --heat-4: #3b82f6;
+  --heat-5: #93c5fd;
+}
+```
+
+If you change `gridHeatmapLevels` to a different number (e.g., `3`), you should provide variables up to that number (e.g., `--heat-1` to `--heat-3`).
+
+```tsx {10-15}
 import {
   useCalendarApp,
   DayFlowCalendar,
   createYearView,
   ViewType,
-} from '@dayflow/react'; // or '@dayflow/vue', '@dayflow/svelte', '@dayflow/angular'
+} from '@dayflow/react';
 
 function MyCalendar() {
   const calendar = useCalendarApp({
     views: [
       createYearView({
+        mode: 'grid',
         showTimedEventsInYearView: true,
+        gridHeatmapLevels: 5,
       }),
     ],
     defaultView: ViewType.YEAR,
-    initialDate: new Date(),
   });
 
   return <DayFlowCalendar calendar={calendar} />;

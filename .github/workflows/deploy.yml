@@ -26,13 +26,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: website/package-lock.json
 
-      - name: Clean and reinstall deps (fix optional native binding)
+      - name: Install deps
         run: |
           cd website
-          rm -rf node_modules package-lock.json
           npm install
 
       - name: Build website
@@ -42,6 +39,7 @@ jobs:
         env:
           BASE_PATH: /calendar
           NEXT_PUBLIC_BASE_PATH: /calendar
+          NEXT_PUBLIC_SITE_URL: https://dayflow-js.github.io/calendar
 
       - name: Disable Jekyll and verify output
         run: |

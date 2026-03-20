@@ -1,4 +1,4 @@
-import { AnyComponent, RefObject } from 'preact';
+import { AnyComponent, ComponentChildren, RefObject } from 'preact';
 
 import { ViewSwitcherMode } from '@/components/common/ViewHeader';
 
@@ -132,11 +132,43 @@ export interface MonthViewConfig extends ViewFactoryConfig {
  * Year view factory configuration
  */
 export interface YearViewConfig extends ViewFactoryConfig {
-  mode?: 'year-canvas' | 'fixed-week';
+  mode?: 'year-canvas' | 'fixed-week' | 'grid';
   showTimedEventsInYearView?: boolean;
   startOfWeek?: number;
   /** Scroll / navigation behavior for the month view */
   scroll?: MonthScrollConfig;
+  /**
+   * Grid mode: action when a date cell is clicked.
+   * - 'popup' (default): show a popup with events for that day
+   * - 'day-view': navigate to the Day View
+   * - 'none': no action
+   * - function: custom handler
+   */
+  gridDateClick?:
+    | 'popup'
+    | 'day-view'
+    | 'none'
+    | ((date: Date, events: Event[]) => void);
+  /**
+   * Grid mode: action when a date cell is double-clicked.
+   * - 'day-view' (default): navigate to the Day View
+   * - 'none': no action
+   * - function: custom handler
+   */
+  gridDateDoubleClick?:
+    | 'day-view'
+    | 'none'
+    | ((date: Date, events: Event[]) => void);
+  /**
+   * Grid mode: render custom popup content.
+   * Receives the clicked date and its events; return null/undefined to use the default popup.
+   */
+  gridPopupContent?: (date: Date, events: Event[]) => ComponentChildren;
+  /**
+   * Grid mode: number of heatmap intensity levels.
+   * @default 5
+   */
+  gridHeatmapLevels?: number;
 }
 
 /**

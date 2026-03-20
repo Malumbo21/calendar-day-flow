@@ -121,33 +121,64 @@ function MyCalendar() {
 
 ### 年ビュー
 
-年ビューは、連続グリッドレイアウトを使用して包括的な年間概要を提供します。12 個の小さなカレンダーを表示するだけの従来の年ビューとは異なり、DayFlow の年ビューは、数日、数週間、さらには数ヶ月にわたる複数日のイベントを視覚化できる統一されたグリッドを描画します。
+年ビューは、包括的な年間概要を提供します。DayFlow の年ビューは、`year-canvas`（連続グリッド）、`fixed-week`（固定 52 週間の列）、および `grid`（ヒートマップに最適な 4x3 の月間グリッド）の 3 つのモードをサポートしています。
 
 #### 設定
 
-| プロパティ                  | 型                              | デフォルト      | 説明                                                                                |
-| :-------------------------- | :------------------------------ | :-------------- | :---------------------------------------------------------------------------------- |
-| `mode`                      | `'year-canvas' \| 'fixed-week'` | `'year-canvas'` | 年ビューの表示モード。                                                              |
-| `startOfWeek`               | `number`                        | `1`             | 週の開始曜日（0 は日曜日、1 は月曜日など）。`fixed-week` モードでのみ使用されます。 |
-| `showTimedEventsInYearView` | `boolean`                       | `false`         | 年ビューに時間指定イベント（ドット/インジケーター）を表示するかどうか。             |
+| プロパティ                  | 型                                            | デフォルト      | 説明                                                                                          |
+| :-------------------------- | :-------------------------------------------- | :-------------- | :-------------------------------------------------------------------------------------------- |
+| `mode`                      | `'year-canvas' \| 'fixed-week' \| 'grid'`     | `'year-canvas'` | 年ビューの表示モード。                                                                        |
+| `startOfWeek`               | `number`                                      | `1`             | 週の開始曜日（0 は日曜日、1 は月曜日など）。`fixed-week` および `grid` モードで使用されます。 |
+| `showTimedEventsInYearView` | `boolean`                                     | `false`         | 年ビューに時間指定イベント（ドット/インジケーター/ヒートマップ強度）を表示するかどうか。      |
+| `gridDateClick`             | `'popup' \| 'day-view' \| 'none' \| function` | `'popup'`       | (Grid モード) 日付セルをクリックした際のアクション。                                          |
+| `gridDateDoubleClick`       | `'day-view' \| 'none' \| function`            | `'day-view'`    | (Grid モード) 日付セルをダブルクリックした際のアクション。                                    |
+| `gridPopupContent`          | `function`                                    | `undefined`     | (Grid モード) 日付ポップアップコンテンツのカスタムレンダラー。                                |
+| `gridHeatmapLevels`         | `number`                                      | `5`             | (Grid モード) 使用するヒートマップの強度の段階数。                                            |
 
-```tsx {10-14}
+#### ヒートマップのカスタマイズ (Grid モード)
+
+`mode: 'grid'` を使用する場合、カレンダーはイベントの数によって各日の強度（色）が決定されるヒートマップとして機能します。グローバル CSS で以下の CSS 変数を上書きすることで、色をカスタマイズできます。
+
+```css
+/* ライトモードのヒートマップ */
+.df-year-grid-month {
+  --heat-1: #ebf5ff;
+  --heat-2: #cfe8ff;
+  --heat-3: #91d5ff;
+  --heat-4: #60a5fa;
+  --heat-5: #3b82f6;
+}
+
+/* ダークモードのヒートマップ */
+.dark .df-year-grid-month {
+  --heat-1: #1e3a5f;
+  --heat-2: #2563eb;
+  --heat-3: #1e40af;
+  --heat-4: #3b82f6;
+  --heat-5: #93c5fd;
+}
+```
+
+`gridHeatmapLevels` を別の数値（例: `3`）に変更した場合は、その数値までの変数（例: `--heat-1` から `--heat-3`）を提供する必要があります。
+
+```tsx {10-15}
 import {
   useCalendarApp,
   DayFlowCalendar,
   createYearView,
   ViewType,
-} from '@dayflow/react'; // or '@dayflow/vue', '@dayflow/svelte', '@dayflow/angular'
+} from '@dayflow/react';
 
 function MyCalendar() {
   const calendar = useCalendarApp({
     views: [
       createYearView({
+        mode: 'grid',
         showTimedEventsInYearView: true,
+        gridHeatmapLevels: 5,
       }),
     ],
     defaultView: ViewType.YEAR,
-    initialDate: new Date(),
   });
 
   return <DayFlowCalendar calendar={calendar} />;

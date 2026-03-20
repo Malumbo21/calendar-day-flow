@@ -4,11 +4,13 @@
 
 @source '../node_modules/fumadocs-ui/dist/**/*.js';
 
-/* DayFlow: scan compiled bundles so Tailwind generates utility classes used
-   in DayFlow's components. Only packages with className strings are listed. */
-@source '../node_modules/@dayflow/core/dist/index.esm.js';
-@source '../node_modules/@dayflow/plugin-sidebar/dist/index.esm.js';
-@source '../node_modules/@dayflow/plugin-drag/dist/index.esm.js';
+/* DayFlow: scan compiled JS so Tailwind generates utility classes used inside DayFlow components */
+@source '../node_modules/@dayflow/core/dist/**/*.js';
+@source '../node_modules/@dayflow/plugin-drag/dist/**/*.js';
+@source '../node_modules/@dayflow/plugin-sidebar/dist/**/*.js';
+
+/* DayFlow: class-based dark mode so theme.mode works correctly */
+@variant dark (.dark &);
 
 /* Clerk TOC: classes not in fumadocs generated CSS, needed for Tailwind v4 scanning */
 @source inline("top-(--fd-top)");
@@ -93,15 +95,6 @@
    offsets content below the fixed header, so a smaller value is sufficient. */
 #nd-docs-layout [class*='grid-area:main'] {
   padding-top: 1.5rem !important;
-}
-
-/* Dark mode overrides */
-.dark #nd-docs-layout [data-active='true'] {
-  color: #199bf1 !important;
-}
-
-.dark #nd-toc [data-active='true'] {
-  color: #199bf1 !important;
 }
 
 /* Prevent prose (typography) styles from leaking into the calendar components */

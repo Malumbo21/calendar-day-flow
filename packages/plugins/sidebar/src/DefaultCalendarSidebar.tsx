@@ -42,6 +42,7 @@ const DefaultCalendarSidebar = ({
   isCollapsed,
   setCollapsed,
   renderCalendarContextMenu,
+  renderSidebarHeader,
   editingCalendarId: propEditingCalendarId,
   setEditingCalendarId: propSetEditingCalendarId,
   onCreateCalendar,
@@ -367,9 +368,25 @@ const DefaultCalendarSidebar = ({
       className={sidebarContainer}
       onContextMenu={isEditable ? handleSidebarContextMenu : undefined}
     >
-      <SidebarHeader
-        isCollapsed={isCollapsed}
-        onCollapseToggle={() => setCollapsed(!isCollapsed)}
+      <ContentSlot
+        generatorName='sidebarHeader'
+        generatorArgs={{
+          isCollapsed,
+          onCollapseToggle: () => setCollapsed(!isCollapsed),
+        }}
+        defaultContent={
+          renderSidebarHeader ? (
+            renderSidebarHeader({
+              isCollapsed,
+              onCollapseToggle: () => setCollapsed(!isCollapsed),
+            })
+          ) : (
+            <SidebarHeader
+              isCollapsed={isCollapsed}
+              onCollapseToggle={() => setCollapsed(!isCollapsed)}
+            />
+          )
+        }
       />
 
       {isCollapsed ? (
@@ -628,7 +645,7 @@ const DefaultCalendarSidebar = ({
                     },
                   }}
                   defaultContent={
-                    <div className='rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-slate-900'>
+                    <div className='rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900'>
                       <DefaultColorPicker
                         color={customColorPicker.currentColor}
                         onChange={(color, isPending) => {

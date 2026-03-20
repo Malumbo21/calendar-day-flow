@@ -42,7 +42,7 @@ const CalendarHeader = ({
 
   return (
     <div
-      className={`df-header flex shrink-0 items-center justify-between border-b bg-white pt-1 pr-2 transition-colors duration-200 dark:bg-gray-900 ${
+      className={`df-header flex shrink-0 items-center justify-between border-b pt-1 pr-2 transition-colors duration-200 ${
         isDayView || isSearchOpen
           ? 'border-gray-200 dark:border-gray-700'
           : 'border-transparent'

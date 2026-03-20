@@ -213,7 +213,7 @@ export function InteractiveCalendar() {
       <div className='flex w-full flex-col gap-6'>
         {/* Controls Panel */}
         <Card
-          className={`hidden border-slate-200 bg-slate-50/50 shadow-none lg:block dark:border-slate-800 dark:bg-slate-900/50 ${showControls ? 'block' : ''}`}
+          className={`hidden border-slate-200 bg-slate-50/50 shadow-none lg:block dark:border-slate-800 dark:bg-gray-900/50 ${showControls ? 'block' : ''}`}
         >
           <CardContent className='flex items-center justify-between p-4'>
             {/* Features Column */}

@@ -8,6 +8,8 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
   title: {
     template: '%s | DayFlow',
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
       'A lightweight and elegant full calendar component for React, Vue, Angular, and Svelte.',
     images: [
       {
-        url: '/logo.png',
+        url: `${BASE}/logo.png`,
         width: 512,
         height: 512,
         alt: 'DayFlow Logo',
@@ -49,7 +51,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     <html lang='en' className={inter.className} suppressHydrationWarning>
       <body className='flex min-h-screen flex-col'>
         <RootProvider
-          search={{ options: { type: 'static', api: '/api/search' } }}
+          search={{ options: { type: 'static', api: `${BASE}/api/search` } }}
         >
           {children}
         </RootProvider>

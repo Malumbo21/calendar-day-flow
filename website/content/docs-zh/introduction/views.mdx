@@ -121,33 +121,64 @@ function MyCalendar() {
 
 ### 年视图
 
-年视图使用连续网格布局提供全面的年度概览。与仅显示 12 个小日历的传统年视图不同，DayFlow 的年视图渲染一个统一的网格，您可以直观地看到跨越数天、数周甚至数月的长周期事件。
+年视图提供全面的年度概览。DayFlow 的年视图支持三种模式：`year-canvas`（连续网格）、`fixed-week`（固定 52 周列）和 `grid`（非常适合热力图的 4x3 月份网格）。
 
 #### 配置
 
-| 属性                        | 类型                            | 默认值          | 描述                                                                 |
-| :-------------------------- | :------------------------------ | :-------------- | :------------------------------------------------------------------- |
-| `mode`                      | `'year-canvas' \| 'fixed-week'` | `'year-canvas'` | 年视图的显示模式。                                                   |
-| `startOfWeek`               | `number`                        | `1`             | 设置周起始日（0 为周日，1 为周一等）。仅在 `fixed-week` 模式下使用。 |
-| `showTimedEventsInYearView` | `boolean`                       | `false`         | 是否在年视图中显示定时事件（圆点/指示器）。                          |
+| 属性                        | 类型                                          | 默认值          | 描述                                                                     |
+| :-------------------------- | :-------------------------------------------- | :-------------- | :----------------------------------------------------------------------- |
+| `mode`                      | `'year-canvas' \| 'fixed-week' \| 'grid'`     | `'year-canvas'` | 年视图的显示模式。                                                       |
+| `startOfWeek`               | `number`                                      | `1`             | 设置周起始日（0 为周日，1 为周一等）。用于 `fixed-week` 和 `grid` 模式。 |
+| `showTimedEventsInYearView` | `boolean`                                     | `false`         | 是否在年视图中显示定时事件（圆点/指示器/热力强度）。                     |
+| `gridDateClick`             | `'popup' \| 'day-view' \| 'none' \| function` | `'popup'`       | (Grid 模式) 点击日期单元格时的操作。                                     |
+| `gridDateDoubleClick`       | `'day-view' \| 'none' \| function`            | `'day-view'`    | (Grid 模式) 双击日期单元格时的操作。                                     |
+| `gridPopupContent`          | `function`                                    | `undefined`     | (Grid 模式) 日期弹出层的自定义渲染函数。                                 |
+| `gridHeatmapLevels`         | `number`                                      | `5`             | (Grid 模式) 热力图的强度层级数量。                                       |
 
-```tsx {10-14}
+#### 热力图自定义 (Grid 模式)
+
+当使用 `mode: 'grid'` 时，日历会根据事件数量显示热力图强度。您可以通过在全局 CSS 中覆盖以下 CSS 变量来自定义颜色：
+
+```css
+/* 浅色模式热力图 */
+.df-year-grid-month {
+  --heat-1: #ebf5ff;
+  --heat-2: #cfe8ff;
+  --heat-3: #91d5ff;
+  --heat-4: #60a5fa;
+  --heat-5: #3b82f6;
+}
+
+/* 深色模式热力图 */
+.dark .df-year-grid-month {
+  --heat-1: #1e3a5f;
+  --heat-2: #2563eb;
+  --heat-3: #1e40af;
+  --heat-4: #3b82f6;
+  --heat-5: #93c5fd;
+}
+```
+
+如果您将 `gridHeatmapLevels` 更改为不同的数字（例如 `3`），则应提供对应数量的变量（例如 `--heat-1` 到 `--heat-3`）。
+
+```tsx {10-15}
 import {
   useCalendarApp,
   DayFlowCalendar,
   createYearView,
   ViewType,
-} from '@dayflow/react'; // or '@dayflow/vue', '@dayflow/svelte', '@dayflow/angular'
+} from '@dayflow/react';
 
 function MyCalendar() {
   const calendar = useCalendarApp({
     views: [
       createYearView({
+        mode: 'grid',
         showTimedEventsInYearView: true,
+        gridHeatmapLevels: 5,
       }),
     ],
     defaultView: ViewType.YEAR,
-    initialDate: new Date(),
   });
 
   return <DayFlowCalendar calendar={calendar} />;

@@ -5,6 +5,8 @@ import { Languages } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 const locales = [
   { code: 'en', name: 'English', prefix: '/docs' },
   { code: 'zh', name: '中文', prefix: '/docs-zh' },
@@ -34,7 +36,7 @@ function switchTo(newLocale: string, currentPath: string) {
   if (contentPath === '/') newPath = next.prefix;
 
   localStorage.setItem('dayflow-locale', newLocale);
-  window.location.href = newPath;
+  window.location.href = BASE + newPath;
 }
 
 export function LanguageSwitcher() {
