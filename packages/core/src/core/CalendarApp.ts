@@ -594,7 +594,7 @@ export class CalendarApp implements ICalendarApp {
       }
 
       if (!this.calendarRegistry.has(event.calendarId)) {
-        return true;
+        return false;
       }
 
       return visibleCalendars.has(event.calendarId);

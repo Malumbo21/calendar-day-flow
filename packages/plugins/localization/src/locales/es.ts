@@ -72,6 +72,16 @@ const es: Locale = {
     copy: 'Copiar',
     pasteHere: 'Pegar aquí',
     eventSummary: 'Resumen',
+    viewEvent: 'Ver evento',
+    subscribeCalendar: 'Suscribirse a un calendario',
+    subscribeCalendarTitle:
+      'Introduce la URL del calendario al que quieres suscribirte.',
+    calendarUrl: 'URL del calendario',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: 'Suscribirse',
+    fetchingCalendar: 'Obteniendo calendario...',
+    subscribeError:
+      'No se pudo obtener el calendario. Comprueba la URL e inténtalo de nuevo.',
   },
 };
 

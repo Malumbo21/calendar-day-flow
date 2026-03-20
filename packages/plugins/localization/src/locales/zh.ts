@@ -69,6 +69,14 @@ const zh: Locale = {
     copy: '复制',
     pasteHere: '粘贴在此处',
     eventSummary: '简介',
+    viewEvent: '查看日程',
+    subscribeCalendar: '订阅日历',
+    subscribeCalendarTitle: '输入您要订阅的日历地址。',
+    calendarUrl: '日历 URL',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: '订阅',
+    fetchingCalendar: '正在获取日历...',
+    subscribeError: '获取日历失败。请检查地址并重试。',
   },
 };
 

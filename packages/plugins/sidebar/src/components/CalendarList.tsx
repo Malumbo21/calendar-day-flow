@@ -1,4 +1,4 @@
-import { CalendarType } from '@dayflow/core';
+import { CalendarType, AudioLines } from '@dayflow/core';
 import { JSX } from 'preact';
 import { useState, useCallback, useRef, useEffect } from 'preact/hooks';
 
@@ -272,12 +272,21 @@ export const CalendarList = ({
                       onClick={e => e.stopPropagation()}
                     />
                   ) : (
-                    <span
-                      className='ml-2 flex-1 truncate pl-1 text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white'
-                      onDblClick={() => handleRenameStart(calendar)}
-                    >
-                      {calendar.name || calendar.id}
-                    </span>
+                    <>
+                      <span
+                        className='ml-2 flex-1 truncate pl-1 text-sm text-gray-700 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white'
+                        onDblClick={() => handleRenameStart(calendar)}
+                      >
+                        {calendar.name || calendar.id}
+                      </span>
+                      {calendar.subscribed && (
+                        <AudioLines
+                          width={13}
+                          height={13}
+                          className='ml-1 shrink-0 text-gray-400 dark:text-gray-500'
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               </div>

@@ -42,6 +42,9 @@ export interface CalendarType {
 
   /** Whether events of this type should be visible */
   isVisible?: boolean;
+
+  /** Whether this calendar was created by subscribing to a remote ICS URL */
+  subscribed?: boolean;
 }
 
 /**

@@ -207,7 +207,21 @@ export function generateVEvent(event: Event): string[] {
   lines.push(`UID:${uid}`);
   lines.push(`DTSTAMP:${formatDateToICSTimestamp(new Date())}`);
   const startICS = formatICSDate(event.start, event.allDay);
-  const endICS = formatICSDate(event.end, event.allDay);
+  // For all-day events, ICS DTEND is exclusive (day after the last inclusive
+  // day). DayFlow stores inclusive end dates, so add 1 day on export.
+  let endICS: { value: string; params?: Record<string, string> };
+  if (event.allDay) {
+    const endDate = isPlainDate(event.end)
+      ? event.end
+      : (event.end as Temporal.ZonedDateTime).toPlainDate();
+    const exclusiveEnd = endDate.add({ days: 1 });
+    endICS = {
+      value: `${exclusiveEnd.year}${pad2(exclusiveEnd.month)}${pad2(exclusiveEnd.day)}`,
+      params: { VALUE: 'DATE' },
+    };
+  } else {
+    endICS = formatICSDate(event.end, false);
+  }
   lines.push(formatProperty('DTSTART', startICS.value, startICS.params));
   lines.push(formatProperty('DTEND', endICS.value, endICS.params));
   lines.push(formatProperty('SUMMARY', escapeICSValue(event.title)));
@@ -369,7 +383,10 @@ export function convertToDayFlowEvent(
     finalStart = startTemporal;
   }
   if (isPlainDate(endTemporal)) {
-    finalEnd = endTemporal.toZonedDateTime({
+    // RFC 5545: DTEND for all-day events is exclusive (the day after the last
+    // day). DayFlow uses inclusive end dates, so subtract 1 day.
+    const inclusiveEnd = endTemporal.subtract({ days: 1 });
+    finalEnd = inclusiveEnd.toZonedDateTime({
       timeZone: tz,
       plainTime: '00:00:00',
     });

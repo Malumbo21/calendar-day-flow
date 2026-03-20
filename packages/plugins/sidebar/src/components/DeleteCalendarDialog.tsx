@@ -32,7 +32,7 @@ export const DeleteCalendarDialog = ({
 
   return createPortal(
     <div className='df-portal fixed inset-0 z-[9999] flex items-center justify-center bg-black/50'>
-      <div className='w-full max-w-md rounded-lg bg-background p-6 shadow-xl'>
+      <div className='w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800'>
         {step === 'initial' ? (
           <>
             <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
@@ -51,7 +51,7 @@ export const DeleteCalendarDialog = ({
                   {t('merge')}
                 </button>
                 {showMergeDropdown && (
-                  <div className='absolute top-full left-0 z-10 mt-1 max-h-60 w-max min-w-full overflow-y-auto rounded-md border border-gray-200 bg-background shadow-lg dark:border-slate-700'>
+                  <div className='absolute top-full left-0 z-10 mt-1 max-h-60 w-max min-w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-gray-800'>
                     {calendars
                       .filter(c => c.id !== calendarId)
                       .map(calendar => (

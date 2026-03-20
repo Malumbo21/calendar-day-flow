@@ -18,6 +18,7 @@ import {
   useLocale,
   sidebarContainer,
   importICSFile,
+  parseICS,
   downloadICS,
   generateUniKey,
 } from '@dayflow/core';
@@ -33,6 +34,7 @@ import {
 import { MergeCalendarDialog } from './components/MergeCalendarDialog';
 import { MergeMenuItem } from './components/MergeMenuItem';
 import { SidebarHeader } from './components/SidebarHeader';
+import { SubscribeCalendarDialog } from './components/SubscribeCalendarDialog';
 import type { CalendarSidebarRenderProps } from './plugin';
 
 const DefaultCalendarSidebar = ({
@@ -123,6 +125,9 @@ const DefaultCalendarSidebar = ({
     events: CalendarEvent[];
     filename: string;
   } | null>(null);
+
+  // Subscribe Calendar State
+  const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
 
   const handleContextMenu = useCallback(
     (e: JSX.TargetedMouseEvent<HTMLElement>, calendarId: string) => {
@@ -265,6 +270,63 @@ const DefaultCalendarSidebar = ({
     fileInputRef.current?.click();
     handleCloseSidebarContextMenu();
   }, [handleCloseSidebarContextMenu]);
+
+  // Subscribe Calendar handler
+  const handleSubscribeClick = useCallback(() => {
+    setSubscribeDialogOpen(true);
+    handleCloseSidebarContextMenu();
+  }, [handleCloseSidebarContextMenu]);
+
+  const handleSubscribeConfirm = useCallback(
+    async (url: string) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const icsContent = await response.text();
+
+      const result = parseICS(icsContent);
+
+      // Extract calendar name from X-WR-CALNAME if present
+      const nameMatch = icsContent.match(/X-WR-CALNAME[^:]*:([^\r\n]+)/);
+      const calendarName = nameMatch
+        ? nameMatch[1].trim()
+        : new URL(url).hostname;
+
+      const presetColors = [
+        '#3b82f6',
+        '#10b981',
+        '#8b5cf6',
+        '#f59e0b',
+        '#ef4444',
+        '#f97316',
+        '#ec4899',
+        '#14b8a6',
+        '#6366f1',
+        '#6b7280',
+      ];
+      const randomColor =
+        presetColors[Math.floor(Math.random() * presetColors.length)];
+      const { colors: calendarColors, darkColors } =
+        getCalendarColorsForHex(randomColor);
+
+      const calendarId = generateUniKey();
+      app.createCalendar({
+        id: calendarId,
+        name: calendarName,
+        isDefault: false,
+        colors: calendarColors,
+        darkColors,
+        isVisible: true,
+        subscribed: true,
+      });
+
+      result.events.forEach(event => {
+        app.addEvent({ ...event, calendarId });
+      });
+
+      setSubscribeDialogOpen(false);
+    },
+    [app]
+  );
 
   const handleFileChange = useCallback(
     async (e: JSX.TargetedEvent<HTMLInputElement, globalThis.Event>) => {
@@ -534,6 +596,9 @@ const DefaultCalendarSidebar = ({
             <ContextMenuItem onClick={handleImportClick}>
               {t('importCalendar') || 'Import Calendar'}
             </ContextMenuItem>
+            <ContextMenuItem onClick={handleSubscribeClick}>
+              {t('subscribeCalendar') || 'Subscribe to Calendar'}
+            </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
                 app.triggerRender();
@@ -562,6 +627,15 @@ const DefaultCalendarSidebar = ({
             filename={importState.filename}
             onConfirm={handleImportConfirm}
             onCancel={() => setImportState(null)}
+          />,
+          document.body
+        )}
+
+      {subscribeDialogOpen &&
+        createPortal(
+          <SubscribeCalendarDialog
+            onSubscribe={handleSubscribeConfirm}
+            onCancel={() => setSubscribeDialogOpen(false)}
           />,
           document.body
         )}

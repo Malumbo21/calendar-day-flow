@@ -61,6 +61,7 @@ export {
   Check,
   ChevronsUpDown,
   Plus,
+  AudioLines,
 } from './components/common/Icons';
 
 // Sidebar classNames

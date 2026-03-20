@@ -72,6 +72,15 @@ const ja: Locale = {
     copy: 'コピー',
     pasteHere: 'ここに貼り付け',
     eventSummary: '概要',
+    viewEvent: '予定を表示',
+    subscribeCalendar: 'カレンダーを登録',
+    subscribeCalendarTitle: '登録するカレンダーのURLを入力してください。',
+    calendarUrl: 'カレンダーURL',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: '登録',
+    fetchingCalendar: 'カレンダーを取得中...',
+    subscribeError:
+      'カレンダーの取得に失敗しました。URLを確認して再試行してください。',
   },
 };
 
