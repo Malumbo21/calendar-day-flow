@@ -59,6 +59,7 @@ Built-in features include:
 - **Merge Calendars** - Move all events from one calendar into another
 - **Delete Calendar** - Remove a calendar with a confirmation step (or merge first)
 - **Import / Export** - Import `.ics` files or export calendars to `.ics`
+- **Subscribe to Calendar** - Subscribe to remote `.ics` feeds by URL; subscribed calendars display a badge in the sidebar list
 
 ### Live Showcase
 
@@ -71,6 +72,36 @@ Explore the built-in sidebar UI and a custom framework-native implementation bel
 - **Visibility Toggles**: Hide and show calendars to see the views update instantly.
 - **Drag & Sync**: Drag events between views; the sidebar keeps upcoming highlights in sync.
 - **Collapse**: Toggle the sidebar to reclaim space when focusing on dense week views.
+
+## Subscribe to Calendar
+
+The sidebar includes a built-in subscribe feature that lets users add remote ICS calendar feeds. To trigger it, click the options button (`⋯`) in the sidebar header and select **Subscribe to Calendar**, then enter any publicly accessible `.ics` URL.
+
+DayFlow fetches the file, parses the events, and creates a new calendar automatically. Subscribed calendars display a small badge icon in the sidebar list to distinguish them from locally created calendars.
+
+### Persisting Subscribed Calendars
+
+DayFlow stores a `subscribed: true` flag on the `CalendarType` object. When saving calendar state to a backend, preserve this field and restore it on the next load so the badge remains visible:
+
+```tsx
+const calendar = useCalendarApp({
+  calendars: [
+    {
+      id: 'team-ics',
+      name: 'Team Calendar',
+      subscribed: true,
+      lightColors: {
+        /* ... */
+      },
+      darkColors: {
+        /* ... */
+      },
+    },
+  ],
+});
+```
+
+> **Note:** DayFlow does not auto-refresh subscribed feeds. To keep events up to date, implement periodic fetching in your app and update events via `app.addEvent()` / `app.removeEvent()`.
 
 ## Fully Custom Sidebar
 

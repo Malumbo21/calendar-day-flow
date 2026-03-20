@@ -71,6 +71,15 @@ const ko: Locale = {
     copy: '복사',
     pasteHere: '여기에 붙여넣기',
     eventSummary: '요약',
+    viewEvent: '일정 보기',
+    subscribeCalendar: '캘린더 구독',
+    subscribeCalendarTitle: '구독할 캘린더의 URL을 입력하세요.',
+    calendarUrl: '캘린더 URL',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: '구독',
+    fetchingCalendar: '캘린더를 가져오는 중...',
+    subscribeError:
+      '캘린더를 가져오지 못했습니다. URL을 확인하고 다시 시도하세요.',
   },
 };
 

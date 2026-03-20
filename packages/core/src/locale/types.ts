@@ -65,7 +65,14 @@ export type TranslationKey =
   | 'cut'
   | 'copy'
   | 'pasteHere'
-  | 'eventSummary';
+  | 'eventSummary'
+  | 'subscribeCalendar'
+  | 'subscribeCalendarTitle'
+  | 'calendarUrl'
+  | 'calendarUrlPlaceholder'
+  | 'subscribe'
+  | 'fetchingCalendar'
+  | 'subscribeError';
 
 export type LocaleDict = Partial<Record<TranslationKey, string>>;
 export type LocaleMessages = Partial<Record<TranslationKey, string>>;

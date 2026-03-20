@@ -79,6 +79,7 @@ export const ImportCalendarDialog = ({
           top: rect.bottom,
           left: rect.left,
           width: rect.width,
+          overscrollBehavior: 'none',
         }}
       >
         <div className='py-1'>

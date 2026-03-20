@@ -73,6 +73,15 @@ const en: Locale = {
     copy: 'Copy',
     pasteHere: 'Paste Here',
     eventSummary: 'Summary',
+    subscribeCalendar: 'Subscribe to Calendar',
+    subscribeCalendarTitle:
+      'Enter the URL of the calendar you want to subscribe to.',
+    calendarUrl: 'Calendar URL',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: 'Subscribe',
+    fetchingCalendar: 'Fetching calendar...',
+    subscribeError:
+      'Failed to fetch calendar. Please check the URL and try again.',
   },
 };
 

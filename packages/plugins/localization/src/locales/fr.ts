@@ -73,6 +73,16 @@ const fr: Locale = {
     copy: 'Copier',
     pasteHere: 'Coller ici',
     eventSummary: 'Résumé',
+    viewEvent: "Voir l'événement",
+    subscribeCalendar: "S'abonner à un calendrier",
+    subscribeCalendarTitle:
+      "Entrez l'URL du calendrier auquel vous souhaitez vous abonner.",
+    calendarUrl: 'URL du calendrier',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: "S'abonner",
+    fetchingCalendar: 'Récupération du calendrier...',
+    subscribeError:
+      "Impossible de récupérer le calendrier. Vérifiez l'URL et réessayez.",
   },
 };
 

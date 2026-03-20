@@ -468,6 +468,42 @@
   border-color: var(--df-color-primary);
 }
 
+/* --- Sidebar portal dialogs (delete/merge/subscribe/import calendar) --- */
+.df-portal .bg-primary {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
+}
+.df-portal .hover\:bg-primary\/90:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--df-color-primary) 90%,
+    transparent
+  );
+}
+.df-portal .text-primary-foreground {
+  color: var(--df-color-primary-foreground);
+}
+.df-portal .focus\:border-primary:focus {
+  border-color: var(--df-color-primary);
+}
+.df-portal .focus\:ring-primary:focus {
+  --tw-ring-color: var(--df-color-primary);
+}
+.df-portal .bg-destructive {
+  background-color: var(--df-color-destructive);
+  color: var(--df-color-destructive-foreground);
+}
+.df-portal .hover\:bg-destructive\/90:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--df-color-destructive) 90%,
+    transparent
+  );
+}
+.df-portal .text-destructive-foreground {
+  color: var(--df-color-destructive-foreground);
+}
+
 /* --- Event-detail panel action buttons --- */
 .df-event-detail-panel .bg-primary,
 .df-dialog-container .bg-primary {

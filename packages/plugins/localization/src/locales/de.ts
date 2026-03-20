@@ -72,6 +72,16 @@ const de: Locale = {
     copy: 'Kopieren',
     pasteHere: 'Hier einfügen',
     eventSummary: 'Zusammenfassung',
+    viewEvent: 'Ereignis anzeigen',
+    subscribeCalendar: 'Kalender abonnieren',
+    subscribeCalendarTitle:
+      'Geben Sie die URL des Kalenders ein, den Sie abonnieren möchten.',
+    calendarUrl: 'Kalender-URL',
+    calendarUrlPlaceholder: 'https://example.com/calendar.ics',
+    subscribe: 'Abonnieren',
+    fetchingCalendar: 'Kalender wird abgerufen...',
+    subscribeError:
+      'Kalender konnte nicht abgerufen werden. Bitte überprüfen Sie die URL und versuchen Sie es erneut.',
   },
 };
 
