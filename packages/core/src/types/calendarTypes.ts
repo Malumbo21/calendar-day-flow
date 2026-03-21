@@ -45,6 +45,9 @@ export interface CalendarType {
 
   /** Whether this calendar was created by subscribing to a remote ICS URL */
   subscribed?: boolean;
+
+  /** The source of this calendar (e.g., 'Google Calendar', 'iCloud', 'Outlook') */
+  source?: string;
 }
 
 /**

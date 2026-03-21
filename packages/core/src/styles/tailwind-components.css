@@ -131,6 +131,7 @@
     .df-all-day-cell,
     .df-time-column,
     .df-time-grid-row,
+    .df-time-grid-boundary,
     .df-all-day-row,
     .df-mini-calendar {
       border-color: var(--df-color-border);

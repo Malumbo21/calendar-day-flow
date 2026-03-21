@@ -58,6 +58,7 @@ export {
   PanelRightClose,
   PanelRightOpen,
   ChevronRight,
+  ChevronDown,
   Check,
   ChevronsUpDown,
   Plus,

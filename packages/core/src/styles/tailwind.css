@@ -206,6 +206,7 @@
   }
 
   .df-time-grid-row,
+  .df-time-grid-boundary,
   .df-all-day-row,
   .df-mini-calendar {
     @apply border-gray-200 dark:border-gray-700;

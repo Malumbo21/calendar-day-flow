@@ -438,7 +438,7 @@ export const calendarPickerDropdown =
  * Time grid bottom boundary (midnight line)
  * Used in TimeGrid.tsx and DayContent.tsx
  */
-export const timeGridBoundary = 'h-3 border-t relative';
+export const timeGridBoundary = 'df-time-grid-boundary h-3 border-t relative';
 
 /**
  * Midnight time label
