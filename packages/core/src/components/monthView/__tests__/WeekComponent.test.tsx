@@ -80,7 +80,8 @@ describe('WeekComponent', () => {
           name: 'Work',
           colors: {
             lineColor: '#2563eb',
-            bgColor: '#dbeafe',
+            eventColor: '#dbeafe',
+            eventSelectedColor: '#bfdbfe',
             textColor: '#1e3a8a',
           },
         },
@@ -156,7 +157,8 @@ describe('WeekComponent', () => {
           name: 'A',
           colors: {
             lineColor: '#2563eb',
-            bgColor: '#dbeafe',
+            eventColor: '#dbeafe',
+            eventSelectedColor: '#bfdbfe',
             textColor: '#1e3a8a',
           },
         },
@@ -165,7 +167,8 @@ describe('WeekComponent', () => {
           name: 'B',
           colors: {
             lineColor: '#16a34a',
-            bgColor: '#dcfce7',
+            eventColor: '#dcfce7',
+            eventSelectedColor: '#bbf7d0',
             textColor: '#166534',
           },
         },
