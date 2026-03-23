@@ -4,6 +4,7 @@ import {
   eventColorBar,
   eventTitleSmall,
   eventTime,
+  resizeHandleLeft,
   resizeHandleTop,
   resizeHandleBottom,
   resizeHandleRight,
@@ -36,6 +37,7 @@ interface RegularEventContentProps {
     direction: string
   ) => void;
   timeFormat?: '12h' | '24h';
+  resizeHandleOrientation?: 'vertical' | 'horizontal';
   /** Optional slot renderer — receives the default visual content and wraps it in a ContentSlot */
   renderSlot?: (defaultContent: ComponentChildren) => ComponentChildren;
 }
@@ -49,6 +51,7 @@ const RegularEventContent = ({
   isEventSelected,
   onResizeStart,
   timeFormat = '24h',
+  resizeHandleOrientation = 'vertical',
   renderSlot,
 }: RegularEventContentProps) => {
   const startHour = multiDaySegmentInfo
@@ -106,24 +109,95 @@ const RegularEventContent = ({
     <>
       {renderSlot ? renderSlot(visualContent) : visualContent}
 
-      {onResizeStart && isEditable && (
-        <>
-          {/* Only show top resize handle on the first segment */}
-          {isFirstSegment && (
+      {onResizeStart &&
+        isEditable &&
+        resizeHandleOrientation === 'vertical' && (
+          <>
+            {/* Only show top resize handle on the first segment */}
+            {isFirstSegment && (
+              <div
+                className={resizeHandleTop}
+                onMouseDown={e => onResizeStart(e, event, 'top')}
+              />
+            )}
+            {/* Only show bottom resize handle on the last segment */}
+            {isLastSegment && (
+              <div
+                className={resizeHandleBottom}
+                onMouseDown={e => onResizeStart(e, event, 'bottom')}
+              />
+            )}
+            {/* Right resize handle for multi-day events (only on the last segment) */}
+            {!isFirstSegment && isLastSegment && multiDaySegmentInfo && (
+              <div
+                className={resizeHandleRight}
+                onMouseDown={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onResizeStart(e, event, 'right');
+                }}
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              />
+            )}
+          </>
+        )}
+
+      {isTouchEnabled &&
+        isEventSelected &&
+        onResizeStart &&
+        isEditable &&
+        resizeHandleOrientation === 'vertical' && (
+          <>
+            {/* Top-Right Indicator (Start Time) */}
             <div
-              className={resizeHandleTop}
-              onMouseDown={e => onResizeStart(e, event, 'top')}
+              className='absolute -top-1.5 right-5 z-50 h-2.5 w-2.5 rounded-full border-2 bg-white'
+              style={{
+                borderColor: getLineColor(
+                  calendarId,
+                  app?.getCalendarRegistry()
+                ),
+              }}
+              onTouchStart={e => {
+                e.stopPropagation();
+                onResizeStart(e, event, 'top');
+              }}
             />
-          )}
-          {/* Only show bottom resize handle on the last segment */}
-          {isLastSegment && (
+            {/* Bottom-Left Indicator (End Time) */}
             <div
-              className={resizeHandleBottom}
-              onMouseDown={e => onResizeStart(e, event, 'bottom')}
+              className='absolute -bottom-1.5 left-5 z-50 h-2.5 w-2.5 rounded-full border-2 bg-white'
+              style={{
+                borderColor: getLineColor(
+                  calendarId,
+                  app?.getCalendarRegistry()
+                ),
+              }}
+              onTouchStart={e => {
+                e.stopPropagation();
+                onResizeStart(e, event, 'bottom');
+              }}
             />
-          )}
-          {/* Right resize handle for multi-day events (only on the last segment) */}
-          {!isFirstSegment && isLastSegment && multiDaySegmentInfo && (
+          </>
+        )}
+
+      {onResizeStart &&
+        isEditable &&
+        resizeHandleOrientation === 'horizontal' && (
+          <>
+            <div
+              className={resizeHandleLeft}
+              onMouseDown={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                onResizeStart(e, event, 'left');
+              }}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            />
             <div
               className={resizeHandleRight}
               onMouseDown={e => {
@@ -136,36 +210,8 @@ const RegularEventContent = ({
                 e.stopPropagation();
               }}
             />
-          )}
-        </>
-      )}
-
-      {isTouchEnabled && isEventSelected && onResizeStart && isEditable && (
-        <>
-          {/* Top-Right Indicator (Start Time) */}
-          <div
-            className='absolute -top-1.5 right-5 z-50 h-2.5 w-2.5 rounded-full border-2 bg-white'
-            style={{
-              borderColor: getLineColor(calendarId, app?.getCalendarRegistry()),
-            }}
-            onTouchStart={e => {
-              e.stopPropagation();
-              onResizeStart(e, event, 'top');
-            }}
-          />
-          {/* Bottom-Left Indicator (End Time) */}
-          <div
-            className='absolute -bottom-1.5 left-5 z-50 h-2.5 w-2.5 rounded-full border-2 bg-white'
-            style={{
-              borderColor: getLineColor(calendarId, app?.getCalendarRegistry()),
-            }}
-            onTouchStart={e => {
-              e.stopPropagation();
-              onResizeStart(e, event, 'bottom');
-            }}
-          />
-        </>
-      )}
+          </>
+        )}
     </>
   );
 };

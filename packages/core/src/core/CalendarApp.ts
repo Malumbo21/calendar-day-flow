@@ -7,6 +7,7 @@ import {
   CalendarAppState,
   CalendarPlugin,
   CalendarView,
+  CalendarViewType,
   ViewType,
   CalendarCallbacks,
   CalendarType,
@@ -213,7 +214,7 @@ export class CalendarApp implements ICalendarApp {
   };
 
   // View management
-  changeView = (view: ViewType): void => {
+  changeView = (view: CalendarViewType): void => {
     if (!this.state.views.has(view)) {
       throw new Error(`View ${view} is not registered`);
     }
@@ -720,7 +721,7 @@ export class CalendarApp implements ICalendarApp {
   };
 
   // Get view configuration
-  getViewConfig = (viewType: ViewType): Record<string, unknown> => {
+  getViewConfig = (viewType: CalendarViewType): Record<string, unknown> => {
     const view = this.state.views.get(viewType);
     return view?.config || {};
   };

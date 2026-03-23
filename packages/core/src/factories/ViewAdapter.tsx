@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'preact/hooks';
 
 import {
+  CalendarViewType,
   ViewType,
   ViewAdapterProps,
   BaseViewProps,
@@ -79,7 +80,7 @@ export const ViewAdapter = ({
   );
 
   const handleViewChange = useCallback(
-    (view: ViewType) => {
+    (view: CalendarViewType) => {
       app.changeView(view);
     },
     [app]

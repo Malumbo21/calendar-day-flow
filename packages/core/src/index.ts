@@ -52,6 +52,8 @@ export { DefaultColorPicker } from './components/common/DefaultColorPicker';
 export { MiniCalendar } from './components/common/MiniCalendar';
 export { CreateCalendarDialog } from './components/common/CreateCalendarDialog';
 export { ContentSlot } from './renderer/ContentSlot';
+export { CalendarEvent } from './components/calendarEvent';
+export type { CalendarEventProps } from './components/calendarEvent/types';
 
 // Icons
 export {

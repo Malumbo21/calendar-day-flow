@@ -2,7 +2,7 @@ import { AnyComponent, ComponentChildren, RefObject } from 'preact';
 
 import { ViewSwitcherMode } from '@/components/common/ViewHeader';
 
-import { CalendarView, ViewType, ICalendarApp } from './core';
+import { CalendarView, CalendarViewType, ViewType, ICalendarApp } from './core';
 import { Event } from './event';
 import {
   EventDetailContentRenderer,
@@ -21,7 +21,7 @@ export interface BaseViewProps<TConfig = unknown> {
 
   // Base state
   currentDate?: Date; // Optional as they might be derived or passed via app
-  currentView?: ViewType;
+  currentView?: CalendarViewType;
   events?: Event[];
 
   // Event management - Optional as they can be derived from app
@@ -31,7 +31,7 @@ export interface BaseViewProps<TConfig = unknown> {
 
   // Navigation control
   onDateChange?: (date: Date) => void;
-  onViewChange?: (view: ViewType) => void;
+  onViewChange?: (view: CalendarViewType) => void;
 
   // View-specific configuration
   config: TConfig;
@@ -176,7 +176,7 @@ export interface YearViewConfig extends ViewFactoryConfig {
  * Adapter properties for wrapping original components
  */
 export interface ViewAdapterProps extends BaseViewProps {
-  viewType: ViewType;
+  viewType: CalendarViewType;
   // oxlint-disable-next-line typescript/no-explicit-any
   originalComponent: AnyComponent<any, any>;
   config: ViewFactoryConfig;

@@ -140,8 +140,8 @@ export const resolveAppliedTheme = (
   const root = document.documentElement;
 
   const overrideAttributes = [
-    root.dataset.dayflowThemeOverride,
-    root.dataset.themeOverride,
+    root.dataset.dfThemeOverride,
+    root.dataset.dfTheme,
     root.dataset.theme,
   ];
 

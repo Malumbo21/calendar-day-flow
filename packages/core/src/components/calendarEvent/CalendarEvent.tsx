@@ -70,6 +70,11 @@ const CalendarEvent = ({
   enableTouch,
   hideTime,
   timeFormat = '24h',
+  styleOverride,
+  className,
+  disableDefaultStyle = false,
+  renderVisualContent,
+  resizeHandleOrientation,
 }: CalendarEventProps) => {
   const customRenderingStore = useContext(CustomRenderingContext);
   const isTouchEnabled = enableTouch ?? isMobile;
@@ -393,15 +398,16 @@ const CalendarEvent = ({
           isMultiDay,
           segment,
           yearSegment
-        )} ${isAllDay && newlyCreatedEventId === event.id ? 'df-all-day-event-animate' : ''}`}
+        )} ${isAllDay && newlyCreatedEventId === event.id ? 'df-all-day-event-animate' : ''} ${className ?? ''}`}
         style={{
-          ...calculateEventStyle(),
+          ...(disableDefaultStyle ? {} : calculateEventStyle()),
           backgroundColor: isEventSelected
             ? getSelectedBgColor(calendarId, calendarRegistry)
             : getEventBgColor(calendarId, calendarRegistry),
           color: isEventSelected
             ? '#fff'
             : getEventTextColor(calendarId, calendarRegistry),
+          ...styleOverride,
         }}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
@@ -462,8 +468,9 @@ const CalendarEvent = ({
           multiDaySegmentInfo={multiDaySegmentInfo}
           customRenderingStore={customRenderingStore}
           eventContentSlotArgs={eventContentSlotArgs}
-          layout={layout}
           timeFormat={timeFormat}
+          renderVisualContent={renderVisualContent}
+          resizeHandleOrientation={resizeHandleOrientation}
         />
       </div>
 

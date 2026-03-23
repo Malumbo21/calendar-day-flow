@@ -28,7 +28,10 @@ export enum ViewType {
   WEEK = 'week',
   MONTH = 'month',
   YEAR = 'year',
+  RESOURCE = 'resource',
 }
+
+export type CalendarViewType = ViewType | string;
 
 /**
  * Plugin interface
@@ -46,7 +49,8 @@ export interface CalendarPlugin {
  * Defines the basic structure of calendar views
  */
 export interface CalendarView {
-  type: ViewType;
+  type: CalendarViewType;
+  label?: string;
   component: TComponent;
   config?: Record<string, unknown>;
 }
@@ -68,7 +72,7 @@ export type EventChange =
  */
 export interface CalendarCallbacks {
   onEventBatchChange?: (changes: EventChange[]) => void | Promise<void>;
-  onViewChange?: (view: ViewType) => void | Promise<void>;
+  onViewChange?: (view: CalendarViewType) => void | Promise<void>;
   onEventCreate?: (event: Event) => void | Promise<void>;
   onEventUpdate?: (event: Event) => void | Promise<void>;
   onEventDelete?: (eventId: string) => void | Promise<void>;
@@ -139,7 +143,7 @@ export interface CalendarAppConfig {
   plugins?: CalendarPlugin[];
   events?: Event[];
   callbacks?: CalendarCallbacks;
-  defaultView?: ViewType;
+  defaultView?: CalendarViewType;
   initialDate?: Date;
   switcherMode?: ViewSwitcherMode;
   calendars?: CalendarType[];
@@ -167,11 +171,11 @@ export interface ReadOnlyConfig {
  * Internal state of CalendarApp
  */
 export interface CalendarAppState {
-  currentView: ViewType;
+  currentView: CalendarViewType;
   currentDate: Date;
   events: Event[];
   plugins: Map<string, CalendarPlugin>;
-  views: Map<ViewType, CalendarView>;
+  views: Map<CalendarViewType, CalendarView>;
   switcherMode?: ViewSwitcherMode;
 
   locale: string | Locale;
@@ -195,9 +199,9 @@ export interface ICalendarApp {
   subscribe: (listener: (app: ICalendarApp) => void) => () => void;
 
   // View management
-  changeView: (view: ViewType) => void;
+  changeView: (view: CalendarViewType) => void;
   getCurrentView: () => CalendarView;
-  getViewConfig: (viewType: ViewType) => Record<string, unknown>;
+  getViewConfig: (viewType: CalendarViewType) => Record<string, unknown>;
 
   // Date management
   setCurrentDate: (date: Date) => void;
@@ -297,7 +301,7 @@ export interface ICalendarApp {
  */
 export interface UseCalendarAppReturn {
   app: ICalendarApp;
-  currentView: ViewType;
+  currentView: CalendarViewType;
   currentDate: Date;
   events: Event[];
   applyEventsChanges: (
@@ -309,7 +313,7 @@ export interface UseCalendarAppReturn {
     isPending?: boolean,
     source?: 'drag' | 'resize'
   ) => void;
-  changeView: (view: ViewType) => void;
+  changeView: (view: CalendarViewType) => void;
   setCurrentDate: (date: Date) => void;
   addEvent: (event: Event) => void;
   updateEvent: (
@@ -366,13 +370,13 @@ export interface CalendarConfig {
 
 export interface UseCalendarReturn {
   // State
-  view: ViewType;
+  view: CalendarViewType;
   currentDate: Date;
   events: Event[];
   currentWeekStart: Date;
 
   // Actions
-  changeView: (view: ViewType) => void;
+  changeView: (view: CalendarViewType) => void;
   goToToday: () => void;
   goToPrevious: () => void;
   goToNext: () => void;

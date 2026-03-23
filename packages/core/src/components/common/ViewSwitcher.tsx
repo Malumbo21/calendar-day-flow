@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'preact/hooks';
 import { useLocale } from '@/locale';
 import { TranslationKey } from '@/locale/types';
 import { dropdownPanel, textGray500 } from '@/styles/classNames';
-import { ICalendarApp } from '@/types';
+import { CalendarViewType, ICalendarApp } from '@/types';
 
 import { ChevronDown } from './Icons';
 
@@ -11,6 +11,29 @@ interface ViewSwitcherProps {
   calendar: ICalendarApp;
   mode?: 'buttons' | 'select';
 }
+
+const getViewLabel = (
+  viewType: CalendarViewType,
+  calendar: ICalendarApp,
+  t: (key: TranslationKey) => string
+): string => {
+  const label = calendar.state.views.get(viewType)?.label;
+  if (label) {
+    return label;
+  }
+
+  const translated = t(viewType as TranslationKey);
+  if (translated !== viewType) {
+    return translated;
+  }
+
+  return viewType
+    .split(/[-_]/g)
+    .map(segment =>
+      segment ? segment.charAt(0).toUpperCase() + segment.slice(1) : segment
+    )
+    .join(' ');
+};
 
 const ViewSwitcher = ({ calendar, mode = 'buttons' }: ViewSwitcherProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +78,7 @@ const ViewSwitcher = ({ calendar, mode = 'buttons' }: ViewSwitcherProps) => {
           aria-haspopup='listbox'
         >
           <span className='text-gray-900 dark:text-gray-100'>
-            {t(currentView as TranslationKey)}
+            {getViewLabel(currentView, calendar, t)}
           </span>
           <span
             className={`${textGray500} transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -87,7 +110,7 @@ const ViewSwitcher = ({ calendar, mode = 'buttons' }: ViewSwitcherProps) => {
                   role='option'
                   aria-selected={currentView === viewType}
                 >
-                  {t(viewType as TranslationKey)}
+                  {getViewLabel(viewType, calendar, t)}
                 </button>
               ))}
             </div>
@@ -129,7 +152,7 @@ const ViewSwitcher = ({ calendar, mode = 'buttons' }: ViewSwitcherProps) => {
             calendar.triggerRender();
           }}
         >
-          {t(viewType as TranslationKey)}
+          {getViewLabel(viewType, calendar, t)}
         </button>
       ))}
     </div>

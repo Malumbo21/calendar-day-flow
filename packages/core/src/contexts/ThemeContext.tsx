@@ -58,7 +58,14 @@ export const ThemeProvider = ({
   onThemeChange,
 }: ThemeProviderProps) => {
   const [theme, setThemeState] = useState<ThemeMode>(initialTheme as ThemeMode);
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return 'light';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  });
 
   // Compute effective theme (resolve 'auto' to actual theme)
   const effectiveTheme: 'light' | 'dark' =
@@ -92,10 +99,6 @@ export const ThemeProvider = ({
       const newSystemTheme = e.matches ? 'dark' : 'light';
       setSystemTheme(newSystemTheme);
     };
-
-    // Initial check on mount
-    const initialSystemTheme = mediaQuery.matches ? 'dark' : 'light';
-    setSystemTheme(initialSystemTheme);
 
     // Listen for changes
     // Use addEventListener if available (modern browsers), fallback to addListener
@@ -131,19 +134,26 @@ export const ThemeProvider = ({
     const appliedTheme = resolveAppliedTheme(effectiveTheme);
     const targetTheme = theme === 'auto' ? appliedTheme : effectiveTheme;
 
-    // Remove both classes first to avoid duplicates
-    root.classList.remove('light', 'dark');
-    root.classList.add(targetTheme);
-
-    // Track which theme DayFlow applied for other consumers if needed
-    if (theme === 'auto') {
-      delete root.dataset.dayflowThemeOverride;
-    } else {
-      root.dataset.dayflowThemeOverride = targetTheme;
+    // Only update if needed to prevent flash/unnecessary DOM mutations
+    if (!root.classList.contains(targetTheme)) {
+      root.classList.remove('light', 'dark');
+      root.classList.add(targetTheme);
     }
 
-    // Set data attribute for CSS selectors
-    root.dataset.theme = targetTheme;
+    // Track which theme DayFlow applied for other consumers if needed
+    // Use a unique dataset key to avoid clashing with next-themes or other libraries
+    if (theme === 'auto') {
+      if (root.dataset.dfThemeOverride) {
+        delete root.dataset.dfThemeOverride;
+      }
+    } else if (root.dataset.dfThemeOverride !== targetTheme) {
+      root.dataset.dfThemeOverride = targetTheme;
+    }
+
+    // Set data attribute for CSS selectors, using a scoped name
+    if (root.dataset.dfTheme !== targetTheme) {
+      root.dataset.dfTheme = targetTheme;
+    }
   }, [effectiveTheme, theme, systemTheme]);
 
   /**

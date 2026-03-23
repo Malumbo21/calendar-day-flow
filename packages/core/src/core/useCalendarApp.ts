@@ -9,8 +9,8 @@ import {
 import {
   AllDaySortComparator,
   CalendarAppConfig,
+  CalendarViewType,
   UseCalendarAppReturn,
-  ViewType,
   CalendarType,
   RangeChangeReason,
   Event,
@@ -46,7 +46,7 @@ export function useCalendarApp(
   const app = useMemo(() => new CalendarApp(normalizedConfig), []);
 
   // Reactive state - synchronize state from app instance
-  const [currentView, setCurrentView] = useState<ViewType>(
+  const [currentView, setCurrentView] = useState<CalendarViewType>(
     app.state.currentView
   );
   const [currentDate, setCurrentDateState] = useState<Date>(
@@ -77,7 +77,7 @@ export function useCalendarApp(
   // Synchronize state changes
   useEffect(() => {
     const originalChangeView = app.changeView;
-    app.changeView = (view: ViewType) => {
+    app.changeView = (view: CalendarViewType) => {
       originalChangeView(view);
       setCurrentView(view);
     };
@@ -192,7 +192,7 @@ export function useCalendarApp(
 
   // Wrapped methods to ensure state synchronization
   const changeView = useCallback(
-    (view: ViewType) => {
+    (view: CalendarViewType) => {
       app.changeView(view);
       triggerUpdate();
     },

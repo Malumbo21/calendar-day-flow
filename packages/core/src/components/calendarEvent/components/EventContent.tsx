@@ -68,6 +68,10 @@ interface EventContentProps {
   eventContentSlotArgs: any;
   layout?: EventLayout;
   timeFormat?: '12h' | '24h';
+  renderVisualContent?: (
+    defaultContent: ComponentChildren
+  ) => ComponentChildren;
+  resizeHandleOrientation?: 'vertical' | 'horizontal';
 }
 
 export const EventContent = ({
@@ -96,6 +100,8 @@ export const EventContent = ({
   customRenderingStore,
   eventContentSlotArgs,
   timeFormat = '24h',
+  renderVisualContent,
+  resizeHandleOrientation,
 }: EventContentProps) => {
   const isMonthView = viewType === ViewType.MONTH;
   const isYearView = viewType === ViewType.YEAR;
@@ -105,6 +111,9 @@ export const EventContent = ({
     viewType,
     isAllDay
   );
+
+  const applyVisualWrapper = (defaultContent: ComponentChildren) =>
+    renderVisualContent ? renderVisualContent(defaultContent) : defaultContent;
 
   // Month multi-day: MultiDayEvent owns absolute positioning and resize handles.
   // Year view: YearEventContent owns resize handles (CalendarEvent shell handles positioning).
@@ -130,7 +139,7 @@ export const EventContent = ({
             store={customRenderingStore}
             generatorName={generatorName}
             generatorArgs={eventContentSlotArgs}
-            defaultContent={defaultContent}
+            defaultContent={applyVisualWrapper(defaultContent)}
           />
         )}
       />
@@ -150,7 +159,7 @@ export const EventContent = ({
             store={customRenderingStore}
             generatorName={generatorName}
             generatorArgs={eventContentSlotArgs}
-            defaultContent={defaultContent}
+            defaultContent={applyVisualWrapper(defaultContent)}
           />
         )}
       />
@@ -174,7 +183,7 @@ export const EventContent = ({
         store={customRenderingStore}
         generatorName={generatorName}
         generatorArgs={eventContentSlotArgs}
-        defaultContent={defaultContent}
+        defaultContent={applyVisualWrapper(defaultContent)}
       />
     );
   }
@@ -187,7 +196,7 @@ export const EventContent = ({
       store={customRenderingStore}
       generatorName={generatorName}
       generatorArgs={eventContentSlotArgs}
-      defaultContent={defaultContent}
+      defaultContent={applyVisualWrapper(defaultContent)}
     />
   );
 
@@ -215,6 +224,7 @@ export const EventContent = ({
       isEventSelected={isEventSelected}
       onResizeStart={onResizeStart}
       timeFormat={timeFormat}
+      resizeHandleOrientation={resizeHandleOrientation}
       renderSlot={slotRenderer}
     />
   );

@@ -1,4 +1,4 @@
-import { RefObject } from 'preact';
+import { ComponentChildren, RefObject } from 'preact';
 
 import { MultiDayEventSegment } from '@/components/monthView/WeekComponent';
 import { YearMultiDaySegment } from '@/components/yearView/utils';
@@ -65,4 +65,20 @@ export interface CalendarEventProps {
   hideTime?: boolean;
   /** Time format for event display */
   timeFormat?: '12h' | '24h';
+  /** Optional style override for custom view layouts */
+  styleOverride?: Record<string, string | number>;
+  /** Optional additional class names */
+  className?: string;
+  /** Disable built-in layout calculation and rely on styleOverride */
+  disableDefaultStyle?: boolean;
+  /**
+   * Override the visual content rendered inside the event shell.
+   * The function receives the built-in default content as its argument,
+   * which can be wrapped, replaced, or ignored entirely.
+   */
+  renderVisualContent?: (
+    defaultContent: ComponentChildren
+  ) => ComponentChildren;
+  /** Override resize handle orientation for custom views */
+  resizeHandleOrientation?: 'vertical' | 'horizontal';
 }
