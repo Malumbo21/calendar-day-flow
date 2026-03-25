@@ -1,4 +1,9 @@
-import { CalendarType, AudioLines, ChevronDown } from '@dayflow/core';
+import {
+  CalendarType,
+  AudioLines,
+  ChevronDown,
+  AlertCircle,
+} from '@dayflow/core';
 import { JSX } from 'preact';
 import { useState, useCallback, useRef, useEffect } from 'preact/hooks';
 
@@ -149,13 +154,23 @@ const CalendarItem = ({
               >
                 {calendar.name || calendar.id}
               </span>
-              {calendar.subscribed && (
-                <AudioLines
+              {calendar.subscription?.status === 'error' && (
+                <AlertCircle
                   width={13}
                   height={13}
-                  className='ml-1 shrink-0 text-gray-400 dark:text-gray-500'
+                  className='ml-1 shrink-0 text-red-500'
+                  title='Failed to load subscription'
                 />
               )}
+              {calendar.subscribed &&
+                (!calendar.subscription ||
+                  calendar.subscription.status === 'ready') && (
+                  <AudioLines
+                    width={13}
+                    height={13}
+                    className='ml-1 shrink-0 text-gray-400 dark:text-gray-500'
+                  />
+                )}
             </>
           )}
         </div>

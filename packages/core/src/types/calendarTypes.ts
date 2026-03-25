@@ -48,6 +48,13 @@ export interface CalendarType {
 
   /** The source of this calendar (e.g., 'Google Calendar', 'iCloud', 'Outlook') */
   source?: string;
+
+  /** Subscription status and metadata */
+  subscription?: {
+    url: string;
+    status: 'loading' | 'ready' | 'error';
+    meta?: Record<string, unknown>;
+  };
 }
 
 /**

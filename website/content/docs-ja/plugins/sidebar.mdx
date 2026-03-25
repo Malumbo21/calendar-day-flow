@@ -38,9 +38,12 @@ function MyCalendar() {
 | プロパティ                   | 型                                             | デフォルト  | 説明                                                   |
 | :--------------------------- | :--------------------------------------------- | :---------- | :----------------------------------------------------- |
 | `width`                      | `number \| string`                             | `'240px'`   | サイドバーの幅（例: `280` または `'20rem'`）           |
+| `miniWidth`                  | `string`                                       | `'50px'`    | 折りたたみ時のサイドバーの幅                           |
 | `initialCollapsed`           | `boolean`                                      | `false`     | サイドバーを折りたたんだ状態で開始するかどうか         |
 | `createCalendarMode`         | `'inline' \| 'modal'`                          | `'inline'`  | カレンダー作成フォームの表示方法                       |
 | `colorPickerMode`            | `'blossom' \| 'default'`                       | `'default'` | 使用するカラーピッカーコンポーネント                   |
+| `onSubscribeCalendar`        | `(calendar, events) => Promise<void>`          | `undefined` | 新しい購読が追加された後のコールバック                 |
+| `onLoadSubscription`         | `(calendar) => Promise<void>`                  | `undefined` | 既存の購読用のカスタムローダー                         |
 | `render`                     | `(props: CalendarSidebarRenderProps) => TNode` | `undefined` | サイドバー UI を完全にオーバーライドします             |
 | `renderSidebarHeader`        | `(args: SidebarHeaderSlotArgs) => TNode`       | `undefined` | カスタムサイドバーヘッダーレンダラー                   |
 | `renderCalendarContextMenu`  | `(calendar, onClose) => TNode`                 | `undefined` | カレンダー項目のカスタムコンテキストメニューレンダラー |
@@ -78,6 +81,15 @@ DayFlow のサイドバー体験を 2 つのデモで紹介します。標準 UI
 サイドバーにはリモート ICS カレンダーフィードを登録する機能が組み込まれています。サイドバーヘッダーのオプションボタン（`⋯`）をクリックして**カレンダーを登録**を選択し、公開されている `.ics` URL を入力するだけで利用できます。
 
 DayFlow はファイルを取得してイベントを解析し、新しいカレンダーを自動的に作成します。登録済みカレンダーはサイドバーリストに小さなバッジアイコンが表示され、ローカルで作成したカレンダーと区別できます。
+
+### 自動読み込みと重複排除
+
+初期設定で `subscription.url` を持つカレンダーを提供すると、サイドバープラグインはマウント時に自動的に最新のイベントを取得します。
+
+ローカルにキャッシュされたイベントと、新しく取得した購読データを組み合わせる際の二重表示を防ぐため、DayFlow は**IDベースの重複排除**を実装しています：
+
+- 購読から取得したイベントが、コアストア内の既存イベントと同じ `id` を持っている場合、購読側のバージョンが優先されます。
+- これにより、ページをリロードした後にイベントが「二重に」表示されることなく、常に最新の情報を UI に表示できます。
 
 ### 登録済みカレンダーの永続化
 

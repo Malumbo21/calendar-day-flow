@@ -225,6 +225,8 @@ export interface ICalendarApp {
     source?: 'drag' | 'resize'
   ) => void;
   addEvent: (event: Event) => void;
+  /** Add events from external sources (like subscriptions) without persisting to main DB */
+  addExternalEvents: (calendarId: string, events: Event[]) => void;
   updateEvent: (
     id: string,
     event: Partial<Event>,

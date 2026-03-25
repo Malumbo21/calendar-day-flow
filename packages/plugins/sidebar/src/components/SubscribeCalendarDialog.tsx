@@ -22,8 +22,14 @@ export const SubscribeCalendarDialog = ({
     setLoading(true);
     try {
       await onSubscribe(trimmed);
-    } catch {
-      setError(t('subscribeError'));
+    } catch (err: unknown) {
+      if ((err as Error).message === 'DUPLICATE_URL') {
+        setError(
+          t('calendarAlreadySubscribed') || 'This URL is already subscribed'
+        );
+      } else {
+        setError(t('subscribeError') || 'Failed to subscribe to calendar');
+      }
     } finally {
       setLoading(false);
     }

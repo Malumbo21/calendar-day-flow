@@ -45,6 +45,7 @@ export class CalendarApp implements ICalendarApp {
   private pendingSnapshot: Event[] | null = null;
   private pendingChangeSource: 'drag' | 'resize' | null = null;
   private readonly MAX_UNDO_STACK = 50;
+  private externalEvents: Map<string, Event[]> = new Map();
 
   constructor(config: CalendarAppConfig) {
     // Initialize state
@@ -68,8 +69,11 @@ export class CalendarApp implements ICalendarApp {
     this.listeners = new Set();
 
     // Initialize CalendarStore
-    this.store = new CalendarStore(this.state.events);
+    this.store = new CalendarStore(config.events || []);
     this.setupStoreListeners();
+
+    // Ensure state.events matches store on init
+    this.syncExternalEventsToState();
 
     // Initialize CalendarRegistry
     this.calendarRegistry = new CalendarRegistry(
@@ -101,8 +105,8 @@ export class CalendarApp implements ICalendarApp {
 
   private setupStoreListeners(): void {
     this.store.onEventChange = (change: EventChange) => {
-      // Sync local state
-      this.state.events = this.store.getAllEvents();
+      // Sync local state including external events
+      this.syncExternalEventsToState();
 
       if (change.type === 'create') {
         this.callbacks.onEventCreate?.(change.event);
@@ -116,16 +120,16 @@ export class CalendarApp implements ICalendarApp {
       this.notify();
     };
 
-    this.store.onEventBatchChange = (changes: EventChange[]) => {
-      // Sync local state
-      this.state.events = this.store.getAllEvents();
+    this.store.onEventBatchChange = (_changes: EventChange[]) => {
+      // Sync local state including external events
+      this.syncExternalEventsToState();
 
       if (
         this.pendingChangeSource !== 'drag' &&
         this.pendingChangeSource !== 'resize'
       ) {
         // Trigger generic batch callback
-        this.callbacks.onEventBatchChange?.(changes);
+        this.callbacks.onEventBatchChange?.(_changes);
       }
       this.pendingChangeSource = null;
 
@@ -487,6 +491,53 @@ export class CalendarApp implements ICalendarApp {
     this.store.createEvent(event);
   };
 
+  /**
+   * Add external events to the state without persisting to the core store.
+   * This is used for temporary/subscription-based events.
+   */
+  addExternalEvents = (calendarId: string, events: Event[]): void => {
+    // Ensure all events are associated with this calendarId
+    const eventsWithCalendarId = events.map(event => ({
+      ...event,
+      calendarId,
+    }));
+
+    this.externalEvents.set(calendarId, eventsWithCalendarId);
+    this.syncExternalEventsToState();
+    this.notify();
+  };
+
+  /**
+   * Synchronize all events (core + external) into the main state.events array.
+   * This ensures all views and plugins that listen to state.events see the combined list.
+   */
+  private syncExternalEventsToState = (): void => {
+    // 1. Get core events from store
+    const coreEvents = this.store.getAllEvents();
+
+    // 2. Build a map of events by ID to ensure uniqueness
+    // We use a Map to ensure each event ID only appears once.
+    // Core events are added first, then external events override them if IDs match.
+    const eventsById = new Map<string, Event>();
+
+    // Initial pass with core events
+    coreEvents.forEach(event => {
+      eventsById.set(event.id, event);
+    });
+
+    // Second pass with external events (overwrites core events with same ID)
+    if (this.externalEvents.size > 0) {
+      for (const events of this.externalEvents.values()) {
+        events.forEach(event => {
+          eventsById.set(event.id, event);
+        });
+      }
+    }
+
+    // 3. Update state.events with a NEW array reference
+    this.state.events = Array.from(eventsById.values());
+  };
+
   updateEvent = (
     id: string,
     eventUpdate: Partial<Event>,
@@ -582,7 +633,10 @@ export class CalendarApp implements ICalendarApp {
   };
 
   getEvents = (): Event[] => {
-    const allEvents = this.getAllEvents();
+    // 1. Get all combined events from state (synced core + external)
+    const allEvents = this.state.events || [];
+
+    // 2. Filter by visible calendars from registry
     const visibleCalendars = new Set(
       this.calendarRegistry
         .getAll()
@@ -591,14 +645,13 @@ export class CalendarApp implements ICalendarApp {
     );
 
     return allEvents.filter(event => {
+      // Strict mode: Every event MUST have a calendarId to be displayed.
+      // If it doesn't, it's considered orphaned data and hidden.
       if (!event.calendarId) {
-        return true;
-      }
-
-      if (!this.calendarRegistry.has(event.calendarId)) {
         return false;
       }
 
+      // Check visibility from the registry
       return visibleCalendars.has(event.calendarId);
     });
   };

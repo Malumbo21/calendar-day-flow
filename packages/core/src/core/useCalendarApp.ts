@@ -94,6 +94,12 @@ export function useCalendarApp(
       setEvents([...app.getEvents()]);
     };
 
+    const originalAddExternalEvents = app.addExternalEvents;
+    app.addExternalEvents = (calendarId: string, newEvents: Event[]) => {
+      originalAddExternalEvents(calendarId, newEvents);
+      setEvents([...app.getEvents()]);
+    };
+
     const originalUpdateEvent = app.updateEvent;
     app.updateEvent = (
       id: string,
@@ -145,6 +151,7 @@ export function useCalendarApp(
     const originalCreateCalendar = app.createCalendar;
     app.createCalendar = (calendar: CalendarType) => {
       originalCreateCalendar(calendar);
+      setEvents([...app.getEvents()]);
     };
 
     const originalDeleteCalendar = app.deleteCalendar;

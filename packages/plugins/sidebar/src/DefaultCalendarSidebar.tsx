@@ -18,12 +18,13 @@ import {
   useLocale,
   sidebarContainer,
   importICSFile,
-  parseICS,
   downloadICS,
   generateUniKey,
+  subscribeCalendar,
+  CalendarType,
 } from '@dayflow/core';
 import { JSX } from 'preact';
-import { useCallback, useState, useRef } from 'preact/hooks';
+import { useCallback, useState, useRef, useEffect } from 'preact/hooks';
 
 import { CalendarList } from './components/CalendarList';
 import { DeleteCalendarDialog } from './components/DeleteCalendarDialog';
@@ -48,6 +49,8 @@ const DefaultCalendarSidebar = ({
   editingCalendarId: propEditingCalendarId,
   setEditingCalendarId: propSetEditingCalendarId,
   onCreateCalendar,
+  onSubscribeCalendar,
+  onLoadSubscription,
 }: CalendarSidebarRenderProps) => {
   const { t } = useLocale();
 
@@ -66,6 +69,40 @@ const DefaultCalendarSidebar = ({
   // File input ref for import
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+
+  // Track loaded subscription URLs to avoid redundant fetching
+  const loadedSubscriptionsRef = useRef<Set<string>>(new Set());
+
+  // Auto-load subscriptions on mount or when calendars change
+  useEffect(() => {
+    calendars.forEach(async calendar => {
+      if (
+        calendar.subscription?.url &&
+        !loadedSubscriptionsRef.current.has(calendar.subscription.url)
+      ) {
+        loadedSubscriptionsRef.current.add(calendar.subscription.url);
+
+        try {
+          if (onLoadSubscription) {
+            await onLoadSubscription(calendar);
+          } else {
+            const { events } = await subscribeCalendar(
+              calendar.subscription.url
+            );
+            app.addExternalEvents(calendar.id, events);
+          }
+        } catch (err) {
+          console.error(`Failed to auto-load calendar ${calendar.name}:`, err);
+          app.updateCalendar(calendar.id, {
+            subscription: {
+              ...calendar.subscription!,
+              status: 'error',
+            },
+          });
+        }
+      }
+    });
+  }, [app, calendars, onLoadSubscription]);
 
   const handleMonthChange = useCallback(
     (offset: number) => {
@@ -279,53 +316,35 @@ const DefaultCalendarSidebar = ({
 
   const handleSubscribeConfirm = useCallback(
     async (url: string) => {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const icsContent = await response.text();
+      // 1. Check for duplicates
+      const isDuplicate = calendars.some(c => c.subscription?.url === url);
+      if (isDuplicate) {
+        throw new Error('DUPLICATE_URL');
+      }
 
-      const result = parseICS(icsContent);
+      // 2. Load the subscription (fetch + parse) using the new utility
+      const { calendar, events } = await subscribeCalendar(url);
 
-      // Extract calendar name from X-WR-CALNAME if present
-      const nameMatch = icsContent.match(/X-WR-CALNAME[^:]*:([^\r\n]+)/);
-      const calendarName = nameMatch
-        ? nameMatch[1].trim()
-        : new URL(url).hostname;
+      // 3. Mark as loaded to avoid the useEffect triggering another fetch
+      if (calendar.subscription?.url) {
+        loadedSubscriptionsRef.current.add(calendar.subscription.url);
+      }
 
-      const presetColors = [
-        '#3b82f6',
-        '#10b981',
-        '#8b5cf6',
-        '#f59e0b',
-        '#ef4444',
-        '#f97316',
-        '#ec4899',
-        '#14b8a6',
-        '#6366f1',
-        '#6b7280',
-      ];
-      const randomColor =
-        presetColors[Math.floor(Math.random() * presetColors.length)];
-      const { colors: calendarColors, darkColors } =
-        getCalendarColorsForHex(randomColor);
+      // 4. Delegate to user if callback exists, otherwise use default behavior
+      if (onSubscribeCalendar) {
+        await onSubscribeCalendar(calendar as CalendarType, events);
+      } else {
+        // Default behavior: create calendar in the app
+        app.createCalendar(calendar as CalendarType);
+      }
 
-      const calendarId = generateUniKey();
-      app.createCalendar({
-        id: calendarId,
-        name: calendarName,
-        isDefault: false,
-        colors: calendarColors,
-        darkColors,
-        isVisible: true,
-        subscribed: true,
-      });
+      // 4. Always add events to the internal external store for IMMEDIATE display
+      app.addExternalEvents(calendar.id!, events);
 
-      result.events.forEach(event => {
-        app.addEvent({ ...event, calendarId });
-      });
-
+      // 5. Close dialog
       setSubscribeDialogOpen(false);
     },
-    [app]
+    [app, onSubscribeCalendar, calendars]
   );
 
   const handleFileChange = useCallback(

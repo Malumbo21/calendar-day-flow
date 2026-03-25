@@ -38,9 +38,12 @@ function MyCalendar() {
 | 属性                         | 类型                                           | 默认值      | 描述                                |
 | :--------------------------- | :--------------------------------------------- | :---------- | :---------------------------------- |
 | `width`                      | `number \| string`                             | `'240px'`   | 侧边栏宽度（如 `280` 或 `'20rem'`） |
+| `miniWidth`                  | `string`                                       | `'50px'`    | 折叠状态下的侧边栏宽度              |
 | `initialCollapsed`           | `boolean`                                      | `false`     | 是否以折叠状态启动侧边栏            |
 | `createCalendarMode`         | `'inline' \| 'modal'`                          | `'inline'`  | 创建日历表单的显示方式              |
 | `colorPickerMode`            | `'blossom' \| 'default'`                       | `'default'` | 使用的颜色选择器组件                |
+| `onSubscribeCalendar`        | `(calendar, events) => Promise<void>`          | `undefined` | 成功订阅新日历后的回调              |
+| `onLoadSubscription`         | `(calendar) => Promise<void>`                  | `undefined` | 针对现有订阅的自定义加载逻辑        |
 | `render`                     | `(props: CalendarSidebarRenderProps) => TNode` | `undefined` | 完全自定义侧边栏 UI                 |
 | `renderSidebarHeader`        | `(args: SidebarHeaderSlotArgs) => TNode`       | `undefined` | 自定义侧边栏头部渲染器              |
 | `renderCalendarContextMenu`  | `(calendar, onClose) => TNode`                 | `undefined` | 日历项的自定义右键菜单渲染器        |
@@ -78,6 +81,15 @@ function MyCalendar() {
 侧边栏内置了订阅远程 ICS 日历源的功能。点击侧边栏头部的选项按钮（`⋯`），选择**订阅日历**，然后输入任意公开的 `.ics` 地址即可。
 
 DayFlow 会自动获取该文件、解析事件并创建一个新日历。已订阅的日历在侧边栏列表中会显示一个小图标，以便与本地创建的日历区分。
+
+### 自动加载与去重
+
+如果你在初始配置中提供了带有 `subscription.url` 的日历，侧边栏插件会在挂载时自动获取最新事件。
+
+为了防止将本地缓存的事件与新鲜的订阅数据结合时出现视觉重复，DayFlow 实现了**基于 ID 的去重机制**：
+
+- 如果来自订阅的事件与核心存储中已有的事件具有相同的 `id`，订阅版本的事件将优先显示。
+- 这确保了你的 UI 始终显示最新信息，而不会在页面刷新后出现“双重”事件。
 
 ### 持久化已订阅日历
 

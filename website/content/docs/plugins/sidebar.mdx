@@ -38,9 +38,12 @@ function MyCalendar() {
 | Property                     | Type                                           | Default     | Description                                     |
 | :--------------------------- | :--------------------------------------------- | :---------- | :---------------------------------------------- |
 | `width`                      | `number \| string`                             | `'240px'`   | Width of the sidebar (e.g. `280` or `'20rem'`)  |
+| `miniWidth`                  | `string`                                       | `'50px'`    | Width of the sidebar when collapsed             |
 | `initialCollapsed`           | `boolean`                                      | `false`     | Whether the sidebar starts collapsed            |
 | `createCalendarMode`         | `'inline' \| 'modal'`                          | `'inline'`  | How the "create calendar" form is displayed     |
 | `colorPickerMode`            | `'blossom' \| 'default'`                       | `'default'` | Which color picker component to use             |
+| `onSubscribeCalendar`        | `(calendar, events) => Promise<void>`          | `undefined` | Callback triggered after a new subscription     |
+| `onLoadSubscription`         | `(calendar) => Promise<void>`                  | `undefined` | Custom loader for existing subscriptions        |
 | `render`                     | `(props: CalendarSidebarRenderProps) => TNode` | `undefined` | Full override for the sidebar UI                |
 | `renderSidebarHeader`        | `(args: SidebarHeaderSlotArgs) => TNode`       | `undefined` | Custom sidebar header renderer                  |
 | `renderCalendarContextMenu`  | `(calendar, onClose) => TNode`                 | `undefined` | Custom context menu renderer for calendar items |
@@ -78,6 +81,15 @@ Explore the built-in sidebar UI and a custom framework-native implementation bel
 The sidebar includes a built-in subscribe feature that lets users add remote ICS calendar feeds. To trigger it, click the options button (`⋯`) in the sidebar header and select **Subscribe to Calendar**, then enter any publicly accessible `.ics` URL.
 
 DayFlow fetches the file, parses the events, and creates a new calendar automatically. Subscribed calendars display a small badge icon in the sidebar list to distinguish them from locally created calendars.
+
+### Automatic Loading & Deduplication
+
+When you provide a calendar with a `subscription.url` in the initial configuration, the Sidebar plugin automatically fetches the latest events on mount.
+
+To prevent visual duplicates when combining locally cached events with fresh subscription data, DayFlow implements **ID-based deduplication**:
+
+- If an event from a subscription has the same `id` as an existing event in the core store, the subscription version takes precedence.
+- This ensures your UI always shows the most up-to-date information without "doubling up" on events after a page reload.
 
 ### Persisting Subscribed Calendars
 

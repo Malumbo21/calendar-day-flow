@@ -72,7 +72,8 @@ export type TranslationKey =
   | 'calendarUrlPlaceholder'
   | 'subscribe'
   | 'fetchingCalendar'
-  | 'subscribeError';
+  | 'subscribeError'
+  | 'calendarAlreadySubscribed';
 
 export type LocaleDict = Partial<Record<TranslationKey, string>>;
 export type LocaleMessages = Partial<Record<TranslationKey, string>>;
