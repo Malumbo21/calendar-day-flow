@@ -5,13 +5,14 @@ import {
   useLocale,
   Check,
   ChevronsUpDown,
+  LoadingButton,
 } from '@dayflow/core';
 import { useState, useRef, useEffect } from 'preact/hooks';
 
 interface ImportCalendarDialogProps {
   calendars: CalendarType[];
   filename: string;
-  onConfirm: (targetCalendarId: string) => void;
+  onConfirm: (targetCalendarId: string) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -29,6 +30,7 @@ export const ImportCalendarDialog = ({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -61,6 +63,16 @@ export const ImportCalendarDialog = ({
   const handleSelect = (id: string) => {
     setSelectedCalendarId(id);
     setIsOpen(false);
+  };
+
+  const handleConfirm = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await onConfirm(selectedCalendarId);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderDropdown = () => {
@@ -138,7 +150,8 @@ export const ImportCalendarDialog = ({
           <button
             ref={triggerRef}
             type='button'
-            className='flex w-full items-center rounded-md border border-gray-300 px-3 py-2 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800'
+            disabled={isLoading}
+            className='flex w-full items-center rounded-md border border-gray-300 px-3 py-2 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-800'
             onClick={() => setIsOpen(!isOpen)}
           >
             {!isNewSelected && selectedCalendar && (
@@ -160,16 +173,22 @@ export const ImportCalendarDialog = ({
         </div>
 
         <div className='mt-8 flex justify-end gap-3'>
-          <button type='button' onClick={onCancel} className={cancelButton}>
-            {t('cancel') || 'Cancel'}
-          </button>
           <button
             type='button'
-            onClick={() => onConfirm(selectedCalendarId)}
+            onClick={onCancel}
+            disabled={isLoading}
+            className={`${cancelButton} disabled:opacity-50`}
+          >
+            {t('cancel') || 'Cancel'}
+          </button>
+          <LoadingButton
+            type='button'
+            onClick={handleConfirm}
+            loading={isLoading}
             className='rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90'
           >
             {t('ok') || 'OK'}
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>

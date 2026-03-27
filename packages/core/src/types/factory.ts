@@ -25,8 +25,8 @@ export interface BaseViewProps<TConfig = unknown> {
   events?: Event[];
 
   // Event management - Optional as they can be derived from app
-  onEventUpdate?: (event: Event) => void;
-  onEventDelete?: (eventId: string) => void;
+  onEventUpdate?: (event: Event) => void | Promise<void>;
+  onEventDelete?: (eventId: string) => void | Promise<void>;
   onEventCreate?: (event: Event) => void;
 
   // Navigation control

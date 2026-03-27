@@ -372,8 +372,8 @@ export const CalendarRoot = ({
             <CreateCalendarDialog
               app={app}
               onClose={() => quickCreate.setIsCreateCalendarOpen(false)}
-              onCreate={calendar => {
-                app.createCalendar(calendar);
+              onCreate={async calendar => {
+                await app.createCalendar(calendar);
                 quickCreate.setIsCreateCalendarOpen(false);
               }}
             />

@@ -15,6 +15,7 @@ import { generateUniKey } from '@/utils/helpers';
 
 import { BlossomColorPicker } from './BlossomColorPicker';
 import { DefaultColorPicker } from './DefaultColorPicker';
+import { LoadingButton } from './LoadingButton';
 
 // Colors for default mode (react-color)
 const PICKER_DEFAULT_COLORS = [
@@ -35,6 +36,7 @@ export const CreateCalendarDialog = ({
   const { t } = useLocale();
   const { effectiveTheme } = useTheme();
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Detect if custom color picker slot is provided
   const hasCustomPicker = app.state.overrides.includes(
@@ -80,36 +82,41 @@ export const CreateCalendarDialog = ({
     layer: 'inner' | 'outer';
   } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isLoading) return;
 
-    let hex: string;
-    if (hasCustomPicker) {
-      hex = customSelectedColor;
-    } else {
-      hex =
-        blossomSelectedColor?.hex ??
-        hslToHex(
-          initialColorData.hue,
-          initialColorData.saturation,
-          initialColorData.lightness
-        );
+    setIsLoading(true);
+    try {
+      let hex: string;
+      if (hasCustomPicker) {
+        hex = customSelectedColor;
+      } else {
+        hex =
+          blossomSelectedColor?.hex ??
+          hslToHex(
+            initialColorData.hue,
+            initialColorData.saturation,
+            initialColorData.lightness
+          );
+      }
+
+      const { colors, darkColors } = getCalendarColorsForHex(hex);
+
+      const newCalendar: CalendarType = {
+        id: generateUniKey(),
+        name: name.trim(),
+        colors,
+        darkColors,
+        isVisible: true,
+        isDefault: false,
+      };
+
+      await onCreate(newCalendar);
+      onClose();
+    } finally {
+      setIsLoading(false);
     }
-
-    const { colors, darkColors } = getCalendarColorsForHex(hex);
-
-    const newCalendar: CalendarType = {
-      id: generateUniKey(),
-      name: name.trim(),
-      colors,
-      darkColors,
-      isVisible: true,
-      isDefault: false,
-    };
-
-    onCreate(newCalendar);
-    onClose();
   };
 
   const handleColorChange = (color: { hex: string }) => {
@@ -316,17 +323,19 @@ export const CreateCalendarDialog = ({
             <button
               type='button'
               onClick={onClose}
+              disabled={isLoading}
               className='rounded border border-slate-200 px-2 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'
             >
               {t('cancel')}
             </button>
-            <button
+            <LoadingButton
               type='submit'
               disabled={!name.trim()}
+              loading={isLoading}
               className='rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50'
             >
               {t('create')}
-            </button>
+            </LoadingButton>
           </div>
         </form>
       </div>

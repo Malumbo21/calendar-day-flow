@@ -1,6 +1,12 @@
 import { JSX } from 'preact';
 import { createPortal } from 'preact/compat';
-import { useMemo, useState, useEffect } from 'preact/hooks';
+import {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
 import RangePicker from '@/components/rangePicker';
@@ -8,11 +14,19 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
 import { useLocale } from '@/locale';
 import { eventDetailPanel } from '@/styles/classNames';
-import { EventDetailPanelProps, CalendarType, ICalendarApp } from '@/types';
+import {
+  Event,
+  EventDetailPanelProps,
+  CalendarType,
+  ICalendarApp,
+} from '@/types';
+import { isEventDeepEqual } from '@/utils/eventUtils';
+import { logger } from '@/utils/logger';
 import { isPlainDate } from '@/utils/temporal';
 import { resolveAppliedTheme } from '@/utils/themeUtils';
 
 import { CalendarOption, CalendarPicker } from './CalendarPicker';
+import { LoadingButton } from './LoadingButton';
 
 interface DefaultEventDetailPanelProps extends EventDetailPanelProps {
   app?: ICalendarApp;
@@ -25,77 +39,114 @@ const DefaultEventDetailPanel = ({
   event,
   position,
   panelRef,
-  isAllDay,
+  isAllDay: _isAllDay,
   eventVisibility,
   calendarRef,
   selectedEventElementRef,
   onEventUpdate,
   onEventDelete,
+  onClose: _onClose,
   app,
 }: DefaultEventDetailPanelProps) => {
   const { effectiveTheme } = useTheme();
   const appliedTheme = resolveAppliedTheme(effectiveTheme);
   const { t } = useLocale();
 
-  // Local state for debounced inputs
-  const [title, setTitle] = useState(event.title);
-  const [description, setDescription] = useState(event.description ?? '');
+  const [draftEvent, setDraftEvent] = useState(event);
+  const [isLoading, setIsLoading] = useState(false);
+  const committedEventRef = useRef(event);
+  const draftEventRef = useRef(event);
+  const skipCommitRef = useRef(false);
 
-  // Sync local state when event prop changes (external updates or navigation)
-  useEffect(() => {
-    setTitle(event.title);
-  }, [event.title]);
+  const commitDraftChanges = useCallback(() => {
+    if (skipCommitRef.current) return;
 
-  useEffect(() => {
-    setDescription(event.description ?? '');
-  }, [event.description]);
+    const committedEvent = committedEventRef.current;
+    const latestDraftEvent = draftEventRef.current;
 
-  // Debounce logic for Title
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (title !== event.title) {
-        onEventUpdate({
-          ...event,
-          title,
-        });
+    if (isEventDeepEqual(committedEvent, latestDraftEvent)) return;
+
+    committedEventRef.current = latestDraftEvent;
+    const updateResult = onEventUpdate(latestDraftEvent);
+    if (updateResult) {
+      Promise.resolve(updateResult).catch(error => {
+        logger.error(
+          'Failed to commit deferred event detail panel update',
+          error
+        );
+      });
+    }
+  }, [onEventUpdate]);
+
+  const applyDraftEventUpdate = useCallback(
+    (nextDraftEvent: Event) => {
+      if (isEventDeepEqual(draftEventRef.current, nextDraftEvent)) return;
+
+      draftEventRef.current = nextDraftEvent;
+      setDraftEvent(nextDraftEvent);
+
+      if (app) {
+        const updateResult = app.updateEvent(
+          nextDraftEvent.id,
+          nextDraftEvent,
+          true
+        );
+        if (updateResult) {
+          Promise.resolve(updateResult).catch(error => {
+            logger.error(
+              'Failed to apply pending event detail panel update',
+              error
+            );
+          });
+        }
       }
-    }, 500);
+    },
+    [app]
+  );
 
-    return () => clearTimeout(timer);
-  }, [title, event]);
-
-  // Debounce logic for Description
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const currentDesc = event.description ?? '';
-      if (description !== currentDesc) {
-        onEventUpdate({
-          ...event,
-          description,
-        });
-      }
-    }, 500);
+    const sameEvent = committedEventRef.current.id === event.id;
 
-    return () => clearTimeout(timer);
-  }, [description, event]);
+    if (!sameEvent) {
+      commitDraftChanges();
+      skipCommitRef.current = false;
+      committedEventRef.current = event;
+      draftEventRef.current = event;
+      setDraftEvent(event);
+      return;
+    }
+
+    if (isEventDeepEqual(committedEventRef.current, draftEventRef.current)) {
+      committedEventRef.current = event;
+      draftEventRef.current = event;
+      setDraftEvent(event);
+    }
+  }, [event, commitDraftChanges]);
+
+  useEffect(
+    () => () => {
+      commitDraftChanges();
+    },
+    [commitDraftChanges]
+  );
 
   const eventTimeZone = useMemo(() => {
-    if (!isPlainDate(event.start)) {
+    if (!isPlainDate(draftEvent.start)) {
       return (
-        (event.start as Temporal.ZonedDateTime).timeZoneId ||
+        (draftEvent.start as Temporal.ZonedDateTime).timeZoneId ||
         Temporal.Now.timeZoneId()
       );
     }
 
-    if (event.end && !isPlainDate(event.end)) {
+    if (draftEvent.end && !isPlainDate(draftEvent.end)) {
       return (
-        (event.end as Temporal.ZonedDateTime).timeZoneId ||
+        (draftEvent.end as Temporal.ZonedDateTime).timeZoneId ||
         Temporal.Now.timeZoneId()
       );
     }
 
     return Temporal.Now.timeZoneId();
-  }, [event.end, event.start]);
+  }, [draftEvent.end, draftEvent.start]);
 
   // Get visible calendar type options
   const colorOptions: CalendarOption[] = useMemo(() => {
@@ -115,6 +166,7 @@ const DefaultEventDetailPanel = ({
       document.documentElement.classList.contains('dark'));
   const isEditable = !app?.state.readOnly;
   const isViewable = app?.getReadOnlyConfig().viewable !== false;
+  const isDraftAllDay = !!draftEvent.allDay;
 
   if (!isViewable) return null;
 
@@ -122,14 +174,16 @@ const DefaultEventDetailPanel = ({
   const arrowBorderColor = isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)';
 
   const convertToAllDay = () => {
-    const plainDate = isPlainDate(event.start)
-      ? event.start
-      : event.start.toPlainDate();
-    const plainEndDate = isPlainDate(event.end)
-      ? event.end
-      : event.end.toPlainDate();
-    onEventUpdate({
-      ...event,
+    if (isLoading) return;
+    const plainDate = isPlainDate(draftEvent.start)
+      ? draftEvent.start
+      : draftEvent.start.toPlainDate();
+    const plainEndDate = isPlainDate(draftEvent.end)
+      ? draftEvent.end
+      : draftEvent.end.toPlainDate();
+
+    applyDraftEventUpdate({
+      ...draftEvent,
       allDay: true,
       start: plainDate,
       end: plainEndDate,
@@ -137,9 +191,10 @@ const DefaultEventDetailPanel = ({
   };
 
   const convertToRegular = () => {
-    const plainDate = isPlainDate(event.start)
-      ? event.start
-      : event.start.toPlainDate();
+    if (isLoading) return;
+    const plainDate = isPlainDate(draftEvent.start)
+      ? draftEvent.start
+      : draftEvent.start.toPlainDate();
     const start = Temporal.ZonedDateTime.from({
       year: plainDate.year,
       month: plainDate.month,
@@ -156,8 +211,9 @@ const DefaultEventDetailPanel = ({
       minute: 0,
       timeZone: Temporal.Now.timeZoneId(),
     });
-    onEventUpdate({
-      ...event,
+
+    applyDraftEventUpdate({
+      ...draftEvent,
       allDay: false,
       start,
       end,
@@ -167,12 +223,25 @@ const DefaultEventDetailPanel = ({
   const handleAllDayRangeChange = (
     nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
   ) => {
+    if (isLoading) return;
     const [start, end] = nextRange;
-    onEventUpdate({
-      ...event,
+
+    applyDraftEventUpdate({
+      ...draftEvent,
       start: start.toPlainDate(),
       end: end.toPlainDate(),
     });
+  };
+
+  const handleEventDelete = async () => {
+    if (isLoading) return;
+    skipCommitRef.current = true;
+    setIsLoading(true);
+    try {
+      await onEventDelete(draftEvent.id);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Calculate arrow style
@@ -322,28 +391,35 @@ const DefaultEventDetailPanel = ({
       <div className='mb-3 flex items-center justify-between gap-3'>
         <div className='flex-1'>
           <input
-            id={`event-title-${event.id}`}
+            id={`event-title-${draftEvent.id}`}
             name='title'
             type='text'
-            value={title}
-            readOnly={!isEditable}
-            disabled={!isEditable}
+            value={draftEvent.title}
+            readOnly={!isEditable || isLoading}
+            disabled={!isEditable || isLoading}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setTitle((e.target as HTMLInputElement).value)
+              applyDraftEventUpdate({
+                ...draftEvent,
+                title: (e.target as HTMLInputElement).value,
+              })
             }
             onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              setTitle((e.target as HTMLInputElement).value)
+              applyDraftEventUpdate({
+                ...draftEvent,
+                title: (e.target as HTMLInputElement).value,
+              })
             }
-            className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+            className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
           />
         </div>
         {isEditable && (
           <CalendarPicker
             options={colorOptions}
-            value={event.calendarId || 'blue'}
+            value={draftEvent.calendarId || 'blue'}
+            disabled={isLoading}
             onChange={value => {
-              onEventUpdate({
-                ...event,
+              applyDraftEventUpdate({
+                ...draftEvent,
                 calendarId: value,
               });
             }}
@@ -352,18 +428,18 @@ const DefaultEventDetailPanel = ({
         )}
       </div>
 
-      {isAllDay ? (
+      {isDraftAllDay ? (
         <div className='mb-3'>
           <div className='mb-1 text-xs text-gray-600 dark:text-gray-300'>
             {t('dateRange')}
           </div>
           <RangePicker
-            value={[event.start, event.end]}
+            value={[draftEvent.start, draftEvent.end]}
             format='YYYY-MM-DD'
             showTime={false}
             timeZone={eventTimeZone}
             matchTriggerWidth
-            disabled={!isEditable}
+            disabled={!isEditable || isLoading}
             onChange={handleAllDayRangeChange}
             locale={app?.state.locale}
           />
@@ -374,15 +450,17 @@ const DefaultEventDetailPanel = ({
             {t('timeRange')}
           </div>
           <RangePicker
-            value={[event.start, event.end]}
+            value={[draftEvent.start, draftEvent.end]}
             timeZone={eventTimeZone}
-            disabled={!isEditable}
+            disabled={!isEditable || isLoading}
             onChange={(
               nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
             ) => {
+              if (isLoading) return;
               const [start, end] = nextRange;
-              onEventUpdate({
-                ...event,
+
+              applyDraftEventUpdate({
+                ...draftEvent,
                 start,
                 end,
               });
@@ -397,48 +475,59 @@ const DefaultEventDetailPanel = ({
           {t('note')}
         </span>
         <textarea
-          id={`event-note-${event.id}`}
+          id={`event-note-${draftEvent.id}`}
           name='note'
-          value={description}
-          readOnly={!isEditable}
-          disabled={!isEditable}
+          value={draftEvent.description ?? ''}
+          readOnly={!isEditable || isLoading}
+          disabled={!isEditable || isLoading}
           onChange={e =>
-            setDescription((e.target as HTMLTextAreaElement).value)
+            applyDraftEventUpdate({
+              ...draftEvent,
+              description: (e.target as HTMLTextAreaElement).value,
+            })
           }
-          onInput={e => setDescription((e.target as HTMLTextAreaElement).value)}
+          onInput={e =>
+            applyDraftEventUpdate({
+              ...draftEvent,
+              description: (e.target as HTMLTextAreaElement).value,
+            })
+          }
           rows={3}
-          className='w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+          className='w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
           placeholder={t('addNotePlaceholder')}
         />
       </div>
 
       {isEditable && (
         <div className='flex space-x-2'>
-          {isAllDay ? (
-            <button
+          {isDraftAllDay ? (
+            <LoadingButton
               type='button'
               className='rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90'
               onClick={convertToRegular}
+              loading={isLoading}
             >
               {t('setAsTimed')}
-            </button>
+            </LoadingButton>
           ) : (
-            <button
+            <LoadingButton
               type='button'
               className='rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90'
               onClick={convertToAllDay}
+              loading={isLoading}
             >
               {t('setAsAllDay')}
-            </button>
+            </LoadingButton>
           )}
 
-          <button
+          <LoadingButton
             type='button'
             className='rounded bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground transition hover:bg-destructive/90'
-            onClick={() => onEventDelete(event.id)}
+            onClick={handleEventDelete}
+            loading={isLoading}
           >
             {t('delete')}
-          </button>
+          </LoadingButton>
         </div>
       )}
     </div>

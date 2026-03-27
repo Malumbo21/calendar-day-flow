@@ -1,5 +1,5 @@
 import { createPortal } from 'preact/compat';
-import { useMemo, useState, useEffect } from 'preact/hooks';
+import { useMemo, useState, useEffect, useRef } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
 import RangePicker from '@/components/rangePicker';
@@ -12,6 +12,7 @@ import { isEventDeepEqual } from '@/utils/eventUtils';
 import { isPlainDate } from '@/utils/temporal';
 
 import { CalendarPicker, CalendarOption } from './CalendarPicker';
+import { LoadingButton } from './LoadingButton';
 
 interface DefaultEventDetailDialogProps extends EventDetailDialogProps {
   app?: ICalendarApp;
@@ -30,11 +31,20 @@ const DefaultEventDetailDialog = ({
   app,
 }: DefaultEventDetailDialogProps) => {
   const [editedEvent, setEditedEvent] = useState(event);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const previousEventIdRef = useRef(event.id);
   const { t } = useLocale();
 
   // Sync state when event prop changes (e.g. if opened with a different event)
   useEffect(() => {
     setEditedEvent(event);
+
+    if (previousEventIdRef.current !== event.id) {
+      setIsSaving(false);
+      setIsDeleting(false);
+      previousEventIdRef.current = event.id;
+    }
   }, [event]);
 
   // Get visible calendar type options
@@ -48,9 +58,26 @@ const DefaultEventDetailDialog = ({
     }));
   }, [app, app?.getCalendars()]);
 
-  const handleSave = () => {
-    onEventUpdate(editedEvent);
-    onClose();
+  const handleSave = async () => {
+    if (isSaving || isDeleting) return;
+    setIsSaving(true);
+    try {
+      await onEventUpdate(editedEvent);
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (isSaving || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await onEventDelete(event.id);
+      onClose();
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const hasChanges = useMemo(
@@ -129,6 +156,7 @@ const DefaultEventDetailDialog = ({
 
   const isEditable = !app?.state.readOnly;
   const isViewable = app?.getReadOnlyConfig().viewable !== false;
+  const isPending = isSaving || isDeleting;
 
   if (!isOpen || !isViewable) return null;
 
@@ -169,7 +197,8 @@ const DefaultEventDetailDialog = ({
         <button
           type='button'
           onClick={onClose}
-          className='absolute top-4 right-4 text-gray-400 transition hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-200'
+          disabled={isPending}
+          className='absolute top-4 right-4 text-gray-400 transition hover:text-gray-600 disabled:opacity-50 dark:text-gray-500 dark:hover:text-gray-200'
           aria-label='Close'
         >
           <svg
@@ -199,21 +228,22 @@ const DefaultEventDetailDialog = ({
                 name='title'
                 type='text'
                 value={editedEvent.title}
-                readOnly={!isEditable}
-                disabled={!isEditable}
+                readOnly={!isEditable || isPending}
+                disabled={!isEditable || isPending}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setEditedEvent({
                     ...editedEvent,
                     title: (e.target as HTMLInputElement).value,
                   });
                 }}
-                className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
               />
             </div>
             {isEditable && (
               <CalendarPicker
                 options={colorOptions}
                 value={editedEvent.calendarId || 'blue'}
+                disabled={isPending}
                 onChange={value => {
                   setEditedEvent({
                     ...editedEvent,
@@ -236,7 +266,7 @@ const DefaultEventDetailDialog = ({
                 showTime={false}
                 timeZone={eventTimeZone}
                 matchTriggerWidth
-                disabled={!isEditable}
+                disabled={!isEditable || isPending}
                 onChange={handleAllDayRangeChange}
                 onOk={handleAllDayRangeChange}
                 locale={app?.state.locale}
@@ -250,7 +280,7 @@ const DefaultEventDetailDialog = ({
               <RangePicker
                 value={[editedEvent.start, editedEvent.end]}
                 timeZone={eventTimeZone}
-                disabled={!isEditable}
+                disabled={!isEditable || isPending}
                 onChange={(
                   nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
                 ) => {
@@ -284,8 +314,8 @@ const DefaultEventDetailDialog = ({
               id={`event-dialog-note-${editedEvent.id}`}
               name='note'
               value={editedEvent.description ?? ''}
-              readOnly={!isEditable}
-              disabled={!isEditable}
+              readOnly={!isEditable || isPending}
+              disabled={!isEditable || isPending}
               onChange={e =>
                 setEditedEvent({
                   ...editedEvent,
@@ -293,7 +323,7 @@ const DefaultEventDetailDialog = ({
                 })
               }
               rows={4}
-              className='w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+              className='w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
               placeholder={t('addNotePlaceholder')}
             />
           </div>
@@ -303,7 +333,8 @@ const DefaultEventDetailDialog = ({
               {editedEvent.allDay ? (
                 <button
                   type='button'
-                  className='rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20'
+                  disabled={isPending}
+                  className='rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20 disabled:opacity-50'
                   onClick={convertToRegular}
                 >
                   {t('setAsTimed')}
@@ -311,25 +342,25 @@ const DefaultEventDetailDialog = ({
               ) : (
                 <button
                   type='button'
-                  className='rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20'
+                  disabled={isPending}
+                  className='rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20 disabled:opacity-50'
                   onClick={convertToAllDay}
                 >
                   {t('setAsAllDay')}
                 </button>
               )}
 
-              <button
+              <LoadingButton
                 type='button'
-                className='rounded-lg border border-border bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition hover:bg-destructive/90'
-                onClick={() => {
-                  onEventDelete(event.id);
-                  onClose();
-                }}
+                disabled={isPending}
+                className='rounded-lg border border-border bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50'
+                onClick={handleDelete}
+                loading={isDeleting}
               >
                 {t('delete')}
-              </button>
+              </LoadingButton>
 
-              <button
+              <LoadingButton
                 type='button'
                 className={`ml-auto rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition ${
                   hasChanges
@@ -337,10 +368,11 @@ const DefaultEventDetailDialog = ({
                     : 'cursor-not-allowed opacity-50 grayscale-[0.5]'
                 }`}
                 onClick={handleSave}
-                disabled={!hasChanges}
+                disabled={!hasChanges || isPending}
+                loading={isSaving}
               >
                 {t('save')}
-              </button>
+              </LoadingButton>
             </div>
           )}
         </div>

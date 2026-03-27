@@ -1,4 +1,5 @@
-import { cancelButton, useLocale } from '@dayflow/core';
+import { cancelButton, useLocale, LoadingButton } from '@dayflow/core';
+import { useState } from 'preact/hooks';
 
 import { CalendarChip } from './CalendarChip';
 
@@ -26,7 +27,7 @@ interface MergeCalendarDialogProps {
   sourceColor: string;
   targetName: string;
   targetColor: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -39,6 +40,7 @@ export const MergeCalendarDialog = ({
   onCancel,
 }: MergeCalendarDialogProps) => {
   const { t } = useLocale();
+  const [isLoading, setIsLoading] = useState(false);
   const source = { name: sourceName, color: sourceColor };
   const target = { name: targetName, color: targetColor };
 
@@ -47,6 +49,16 @@ export const MergeCalendarDialog = ({
     targetName: TARGET_SENTINEL,
   });
   const messageLines = messageTemplate.split('\n');
+
+  const handleConfirm = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className='df-portal fixed inset-0 z-[9999] flex items-center justify-center bg-black/50'>
@@ -62,16 +74,22 @@ export const MergeCalendarDialog = ({
           ))}
         </div>
         <div className='mt-6 flex justify-end gap-3'>
-          <button type='button' onClick={onCancel} className={cancelButton}>
-            {t('cancel')}
-          </button>
           <button
             type='button'
-            onClick={onConfirm}
+            onClick={onCancel}
+            disabled={isLoading}
+            className={`${cancelButton} disabled:opacity-50`}
+          >
+            {t('cancel')}
+          </button>
+          <LoadingButton
+            type='button'
+            onClick={handleConfirm}
+            loading={isLoading}
             className='rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90'
           >
             {t('merge')}
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>

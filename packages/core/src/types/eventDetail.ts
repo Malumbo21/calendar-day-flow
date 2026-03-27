@@ -28,9 +28,9 @@ export interface EventDetailPanelProps {
   /** Selected event element reference */
   selectedEventElementRef: RefObject<HTMLElement | null>;
   /** Event update callback */
-  onEventUpdate: (updatedEvent: Event) => void;
+  onEventUpdate: (updatedEvent: Event) => void | Promise<void>;
   /** Event delete callback */
-  onEventDelete: (eventId: string) => void;
+  onEventDelete: (eventId: string) => void | Promise<void>;
   /** Close panel callback (optional) */
   onClose?: () => void;
 }
@@ -49,9 +49,9 @@ export interface EventDetailContentProps {
   /** Whether the event is all-day */
   isAllDay: boolean;
   /** Event update callback */
-  onEventUpdate: (updatedEvent: Event) => void;
+  onEventUpdate: (updatedEvent: Event) => void | Promise<void>;
   /** Event delete callback */
-  onEventDelete: (eventId: string) => void;
+  onEventDelete: (eventId: string) => void | Promise<void>;
   /** Close panel callback (optional) */
   onClose?: () => void;
   app?: ICalendarApp;
@@ -76,9 +76,9 @@ export interface EventDetailDialogProps {
   /** Whether the event is all-day */
   isAllDay: boolean;
   /** Event update callback */
-  onEventUpdate: (updatedEvent: Event) => void;
+  onEventUpdate: (updatedEvent: Event) => void | Promise<void>;
   /** Event delete callback */
-  onEventDelete: (eventId: string) => void;
+  onEventDelete: (eventId: string) => void | Promise<void>;
   /** Close dialog callback */
   onClose: () => void;
   app?: ICalendarApp;

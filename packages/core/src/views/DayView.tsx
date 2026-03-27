@@ -391,13 +391,10 @@ const DayView = ({
   });
 
   // Event handling functions
-  const handleEventUpdate = (updatedEvent: Event) => {
+  const handleEventUpdate = (updatedEvent: Event) =>
     app.updateEvent(updatedEvent.id, updatedEvent);
-  };
 
-  const handleEventDelete = (eventId: string) => {
-    app.deleteEvent(eventId);
-  };
+  const handleEventDelete = (eventId: string) => app.deleteEvent(eventId);
 
   const timeSlots = Array.from({ length: 24 }, (_, i) => ({
     hour: i + FIRST_HOUR,

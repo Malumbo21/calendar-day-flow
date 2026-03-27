@@ -108,33 +108,35 @@ export class CalendarApp implements ICalendarApp {
       // Sync local state including external events
       this.syncExternalEventsToState();
 
+      let callbackPromise = null;
       if (change.type === 'create') {
-        this.callbacks.onEventCreate?.(change.event);
+        callbackPromise = this.callbacks.onEventCreate?.(change.event);
       } else if (change.type === 'update') {
-        this.callbacks.onEventUpdate?.(change.after);
-      } else if (change.type === 'delete') {
-        this.callbacks.onEventDelete?.(change.event.id);
+        callbackPromise = this.callbacks.onEventUpdate?.(change.after);
       }
 
       this.triggerRender();
       this.notify();
+      return callbackPromise ?? undefined;
     };
 
     this.store.onEventBatchChange = (_changes: EventChange[]) => {
       // Sync local state including external events
       this.syncExternalEventsToState();
 
+      let callbackPromise = null;
       if (
         this.pendingChangeSource !== 'drag' &&
         this.pendingChangeSource !== 'resize'
       ) {
         // Trigger generic batch callback
-        this.callbacks.onEventBatchChange?.(_changes);
+        callbackPromise = this.callbacks.onEventBatchChange?.(_changes);
       }
       this.pendingChangeSource = null;
 
       this.triggerRender();
       this.notify();
+      return callbackPromise ?? undefined;
     };
   }
 
@@ -538,12 +540,12 @@ export class CalendarApp implements ICalendarApp {
     this.state.events = Array.from(eventsById.values());
   };
 
-  updateEvent = (
+  updateEvent = async (
     id: string,
     eventUpdate: Partial<Event>,
     isPending?: boolean,
     source?: 'drag' | 'resize'
-  ): void => {
+  ): Promise<void> => {
     if (!this.isInternalEditable() && !isPending) {
       logger.warn('Cannot update event in read-only mode');
       return;
@@ -587,19 +589,21 @@ export class CalendarApp implements ICalendarApp {
     }
 
     // Committed update -> Store
-    this.store.updateEvent(id, eventUpdate);
+    await this.store.updateEvent(id, eventUpdate);
   };
 
-  deleteEvent = (id: string): void => {
+  deleteEvent = async (id: string): Promise<void> => {
     if (!this.isInternalEditable()) {
       logger.warn('Cannot delete event in read-only mode');
       return;
     }
 
+    await this.callbacks.onEventDelete?.(id);
+
     this.pendingSnapshot = null;
     this.pushToUndo();
 
-    this.store.deleteEvent(id);
+    await this.store.deleteEvent(id);
   };
 
   getAllEvents = (): Event[] => [...this.state.events];
@@ -694,21 +698,24 @@ export class CalendarApp implements ICalendarApp {
     this.notify();
   };
 
-  createCalendar = (calendar: CalendarType): void => {
+  createCalendar = async (calendar: CalendarType): Promise<void> => {
     this.calendarRegistry.register(calendar);
-    this.callbacks.onCalendarCreate?.(calendar);
+    await this.callbacks.onCalendarCreate?.(calendar);
     this.callbacks.onRender?.();
     this.notify();
   };
 
-  deleteCalendar = (id: string): void => {
+  deleteCalendar = async (id: string): Promise<void> => {
     this.calendarRegistry.unregister(id);
-    this.callbacks.onCalendarDelete?.(id);
+    await this.callbacks.onCalendarDelete?.(id);
     this.callbacks.onRender?.();
     this.notify();
   };
 
-  mergeCalendars = (sourceId: string, targetId: string): void => {
+  mergeCalendars = async (
+    sourceId: string,
+    targetId: string
+  ): Promise<void> => {
     const sourceEvents = this.store
       .getAllEvents()
       .filter(e => e.calendarId === sourceId);
@@ -723,13 +730,13 @@ export class CalendarApp implements ICalendarApp {
       this.store.updateEvent(event.id, { calendarId: targetId });
     });
 
-    this.store.endTransaction();
+    await this.store.endTransaction();
 
     // Delete source calendar
-    this.deleteCalendar(sourceId);
+    await this.deleteCalendar(sourceId);
 
     // Call callback
-    this.callbacks.onCalendarMerge?.(sourceId, targetId);
+    await this.callbacks.onCalendarMerge?.(sourceId, targetId);
     // onRender and notify will be triggered by store callbacks
   };
 

@@ -64,16 +64,15 @@ export function createEventsPlugin(
       // Automatically recalculate day field
       if (finalConfig.enableAutoRecalculate) {
         const currentWeekStart = getCurrentWeekStart(app.getCurrentDate());
-        const recalculatedEvents = recalculateEventDays(
+        // Update day field for all events
+        app.state.events = recalculateEventDays(
           app.getAllEvents(),
           currentWeekStart
         );
-        // Update day field for all events
-        app.state.events = recalculatedEvents;
       }
     },
 
-    update: (id: string, updates: Partial<Event>) => {
+    update: async (id: string, updates: Partial<Event>) => {
       const existingEvent = eventsService.getById(id);
       if (!existingEvent) {
         throw new Error(`Event with id ${id} not found`);
@@ -89,23 +88,20 @@ export function createEventsPlugin(
         }
       }
 
-      app.updateEvent(id, updates);
+      await app.updateEvent(id, updates);
 
       // Automatically recalculate day field
       if (finalConfig.enableAutoRecalculate) {
         const currentWeekStart = getCurrentWeekStart(app.getCurrentDate());
-        const recalculatedEvents = recalculateEventDays(
+        app.state.events = recalculateEventDays(
           app.getAllEvents(),
           currentWeekStart
         );
-        app.state.events = recalculatedEvents;
       }
-
-      return app.getAllEvents().find(e => e.id === id)!;
     },
 
-    delete: (id: string) => {
-      app.deleteEvent(id);
+    delete: async (id: string) => {
+      await app.deleteEvent(id);
     },
 
     getByDate: (date: Date) =>
@@ -161,11 +157,6 @@ export function createEventsPlugin(
         event.start >= event.end
       ) {
         errors.push('Start time must be before end time');
-      }
-
-      // ID must be a string
-      if (event.id && typeof event.id !== 'string') {
-        errors.push('Event ID must be a string');
       }
 
       // Commented out day range check, because month view needs to support cross-week events,

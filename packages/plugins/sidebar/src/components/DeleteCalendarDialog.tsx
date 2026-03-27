@@ -3,6 +3,7 @@ import {
   CalendarType,
   cancelButton,
   useLocale,
+  LoadingButton,
 } from '@dayflow/core';
 import { useState } from 'preact/hooks';
 
@@ -26,9 +27,9 @@ interface DeleteCalendarDialogProps {
   calendars: CalendarType[];
   step: 'initial' | 'confirm_delete';
   onStepChange: (step: 'initial' | 'confirm_delete') => void;
-  onConfirmDelete: () => void;
+  onConfirmDelete: () => void | Promise<void>;
   onCancel: () => void;
-  onMergeSelect: (targetId: string) => void;
+  onMergeSelect: (targetId: string) => void | Promise<void>;
 }
 
 export const DeleteCalendarDialog = ({
@@ -42,9 +43,31 @@ export const DeleteCalendarDialog = ({
   onMergeSelect,
 }: DeleteCalendarDialogProps) => {
   const [showMergeDropdown, setShowMergeDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { t } = useLocale();
   const calendarColor =
     calendars.find(c => c.id === calendarId)?.colors.lineColor ?? '#6b7280';
+
+  const handleMergeSelect = async (id: string) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await onMergeSelect(id);
+      setShowMergeDropdown(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await onConfirmDelete();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return createPortal(
     <div className='df-portal fixed inset-0 z-[9999] flex items-center justify-center bg-black/50'>
@@ -65,8 +88,9 @@ export const DeleteCalendarDialog = ({
               <div className='relative'>
                 <button
                   type='button'
+                  disabled={isLoading}
                   onClick={() => setShowMergeDropdown(!showMergeDropdown)}
-                  className='flex items-center gap-1 rounded-md border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-700'
+                  className='flex items-center gap-1 rounded-md border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-700'
                 >
                   {t('merge')}
                 </button>
@@ -79,8 +103,7 @@ export const DeleteCalendarDialog = ({
                           key={calendar.id}
                           className='flex cursor-pointer items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-700'
                           onClick={() => {
-                            onMergeSelect(calendar.id);
-                            setShowMergeDropdown(false);
+                            handleMergeSelect(calendar.id);
                           }}
                         >
                           <div
@@ -101,14 +124,16 @@ export const DeleteCalendarDialog = ({
                 <button
                   type='button'
                   onClick={onCancel}
-                  className={cancelButton}
+                  disabled={isLoading}
+                  className={`${cancelButton} disabled:opacity-50`}
                 >
                   {t('cancel')}
                 </button>
                 <button
                   type='button'
                   onClick={() => onStepChange('confirm_delete')}
-                  className='rounded-md bg-destructive px-4 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90'
+                  disabled={isLoading}
+                  className='rounded-md bg-destructive px-4 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50'
                 >
                   {t('delete')}
                 </button>
@@ -127,17 +152,19 @@ export const DeleteCalendarDialog = ({
               <button
                 type='button'
                 onClick={onCancel}
-                className='rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700'
+                disabled={isLoading}
+                className='rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-700'
               >
                 {t('cancel')}
               </button>
-              <button
+              <LoadingButton
                 type='button'
-                onClick={onConfirmDelete}
+                onClick={handleConfirmDelete}
+                loading={isLoading}
                 className='rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90'
               >
                 {t('delete')}
-              </button>
+              </LoadingButton>
             </div>
           </>
         )}

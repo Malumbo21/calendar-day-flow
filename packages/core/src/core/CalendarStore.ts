@@ -41,7 +41,7 @@ export class CalendarStore {
     this.pendingChanges = [];
   }
 
-  public endTransaction(): void {
+  public endTransaction(): void | Promise<void> {
     if (!this.isInTransaction) return;
 
     // Normalize changes: merge updates, handle create+delete pairs, etc.
@@ -55,22 +55,25 @@ export class CalendarStore {
 
     // Dispatch batch update if there are effective changes
     if (normalizedChanges.length > 0) {
-      this.onEventBatchChange?.(normalizedChanges);
+      return this.onEventBatchChange?.(normalizedChanges);
     }
   }
 
   // CRUD Operations
 
-  public createEvent(event: Event): void {
+  public createEvent(event: Event): void | Promise<void> {
     if (this.events.has(event.id)) {
       throw new Error(`Event with ID ${event.id} already exists.`);
     }
 
     this.events.set(event.id, event);
-    this.emitChange({ type: 'create', event });
+    return this.emitChange({ type: 'create', event });
   }
 
-  public updateEvent(id: string, updates: Partial<Event>): void {
+  public updateEvent(
+    id: string,
+    updates: Partial<Event>
+  ): void | Promise<void> {
     const existingEvent = this.events.get(id);
     if (!existingEvent) {
       throw new Error(`Event with id ${id} not found`);
@@ -78,21 +81,21 @@ export class CalendarStore {
 
     const updatedEvent = { ...existingEvent, ...updates };
     this.events.set(id, updatedEvent);
-    this.emitChange({
+    return this.emitChange({
       type: 'update',
       before: existingEvent,
       after: updatedEvent,
     });
   }
 
-  public deleteEvent(id: string): void {
+  public deleteEvent(id: string): void | Promise<void> {
     const event = this.events.get(id);
     if (!event) {
       return;
     }
 
     this.events.delete(id);
-    this.emitChange({ type: 'delete', event });
+    return this.emitChange({ type: 'delete', event });
   }
 
   // Read Operations
@@ -107,11 +110,11 @@ export class CalendarStore {
 
   // Internal Logic
 
-  private emitChange(change: EventChange): void {
+  private emitChange(change: EventChange): void | Promise<void> {
     if (this.isInTransaction) {
       this.pendingChanges.push(change);
     } else {
-      this.onEventChange?.(change);
+      return this.onEventChange?.(change);
     }
   }
 

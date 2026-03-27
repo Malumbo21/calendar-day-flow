@@ -43,14 +43,22 @@ export {
   ContextMenuSeparator,
   ContextMenuLabel,
   ContextMenuColorPicker,
+  GridContextMenu,
+  EventContextMenu,
 } from './components/contextMenu';
 
 // Calendar Registry helpers
 export { getCalendarColorsForHex } from './core/calendarRegistry';
 
 // Common Components
+export { LoadingButton } from './components/common/LoadingButton';
 export { BlossomColorPicker } from './components/common/BlossomColorPicker';
 export { DefaultColorPicker } from './components/common/DefaultColorPicker';
+export { default as DayflowRangePicker } from './components/rangePicker';
+export type {
+  RangePickerProps,
+  ZonedRange,
+} from './components/rangePicker/types';
 export { MiniCalendar } from './components/common/MiniCalendar';
 export { CreateCalendarDialog } from './components/common/CreateCalendarDialog';
 export { default as DefaultEventDetailPanel } from './components/common/DefaultEventDetailPanel';

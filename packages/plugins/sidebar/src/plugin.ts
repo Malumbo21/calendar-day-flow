@@ -209,8 +209,8 @@ export function createSidebarPlugin(
             if (!showCreateDialog) return null;
 
             const onClose = () => setShowCreateDialog(false);
-            const onCreate = (newCalendar: unknown) => {
-              app.createCalendar(newCalendar as CalendarType);
+            const onCreate = async (newCalendar: unknown) => {
+              await app.createCalendar(newCalendar as CalendarType);
               setShowCreateDialog(false);
               refreshSidebar();
             };

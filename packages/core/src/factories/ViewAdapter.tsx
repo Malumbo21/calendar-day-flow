@@ -38,10 +38,9 @@ export const ViewAdapter = ({
   const handleEventUpdate = useCallback(
     (event: Event) => {
       if (eventsService) {
-        eventsService.update(event.id, event);
-      } else {
-        app.updateEvent(event.id, event);
+        return eventsService.update(event.id, event);
       }
+      return app.updateEvent(event.id, event);
     },
     [eventsService, app]
   );
@@ -49,10 +48,9 @@ export const ViewAdapter = ({
   const handleEventDelete = useCallback(
     (eventId: string) => {
       if (eventsService) {
-        eventsService.delete(eventId);
-      } else {
-        app.deleteEvent(eventId);
+        return eventsService.delete(eventId);
       }
+      return app.deleteEvent(eventId);
     },
     [eventsService, app]
   );

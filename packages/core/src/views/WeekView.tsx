@@ -749,13 +749,10 @@ const WeekView = ({
   }, [swipeOffset, isTransitioning, isSlidingView]);
 
   // Event handling functions
-  const handleEventUpdate = (updatedEvent: Event) => {
+  const handleEventUpdate = (updatedEvent: Event) =>
     app.updateEvent(updatedEvent.id, updatedEvent);
-  };
 
-  const handleEventDelete = (eventId: string) => {
-    app.deleteEvent(eventId);
-  };
+  const handleEventDelete = (eventId: string) => app.deleteEvent(eventId);
 
   // Check if it is the current week
   const isCurrentWeek = useMemo(() => {

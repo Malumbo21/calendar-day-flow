@@ -274,17 +274,17 @@ const DefaultCalendarSidebar = ({
     [contextMenu, handleCloseContextMenu]
   );
 
-  const handleMergeConfirm = useCallback(() => {
+  const handleMergeConfirm = useCallback(async () => {
     if (mergeState) {
       const { sourceId, targetId } = mergeState;
-      app.mergeCalendars(sourceId, targetId);
+      await app.mergeCalendars(sourceId, targetId);
       setMergeState(null);
     }
   }, [app, mergeState]);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     if (deleteState) {
-      app.deleteCalendar(deleteState.calendarId);
+      await app.deleteCalendar(deleteState.calendarId);
       setDeleteState(null);
     }
   }, [app, deleteState]);

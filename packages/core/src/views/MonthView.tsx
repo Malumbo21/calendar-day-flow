@@ -590,16 +590,12 @@ const MonthView = ({
   }, [isFadeMode, scrollDisabled, scrollElementRef]);
 
   const handleEventUpdate = useCallback(
-    (updatedEvent: Event) => {
-      app.updateEvent(updatedEvent.id, updatedEvent);
-    },
+    (updatedEvent: Event) => app.updateEvent(updatedEvent.id, updatedEvent),
     [app]
   );
 
   const handleEventDelete = useCallback(
-    (eventId: string) => {
-      app.deleteEvent(eventId);
-    },
+    (eventId: string) => app.deleteEvent(eventId),
     [app]
   );
 

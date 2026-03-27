@@ -34,7 +34,7 @@ export interface ColorPickerProps {
 
 export interface CreateCalendarDialogProps {
   onClose: () => void;
-  onCreate: (calendar: CalendarType) => void;
+  onCreate: (calendar: CalendarType) => void | Promise<void>;
   app: ICalendarApp;
 }
 
@@ -48,8 +48,8 @@ export interface EventsService {
   getAll: () => Event[];
   getById: (id: string) => Event | undefined;
   add: (event: Event) => void;
-  update: (id: string, updates: Partial<Event>) => Event;
-  delete: (id: string) => void;
+  update: (id: string, updates: Partial<Event>) => void | Promise<void>;
+  delete: (id: string) => void | Promise<void>;
 
   // Event queries
   getByDate: (date: Date) => Event[];

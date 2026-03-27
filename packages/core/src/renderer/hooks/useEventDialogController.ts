@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'preact/hooks';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'preact/hooks';
 
 import { ICalendarApp, Event, EventDetailDialogRenderer } from '@/types';
 import { isPlainDate } from '@/utils/temporal';
@@ -37,14 +43,17 @@ export function useEventDialogController(
   const [detailPanelEventId, setDetailPanelEventId] = useState<string | null>(
     null
   );
+  const dialogEventRef = useRef<Event | null>(null);
 
   // Reset when the app instance is replaced (client-side navigation).
   useEffect(() => {
     setDetailPanelEventId(null);
+    dialogEventRef.current = null;
   }, [app]);
 
   const handleDialogClose = useCallback(() => {
     setDetailPanelEventId(null);
+    dialogEventRef.current = null;
     app.selectEvent(null);
   }, [app]);
 
@@ -54,8 +63,8 @@ export function useEventDialogController(
   );
 
   const handleDialogEventDelete = useCallback(
-    (id: string) => {
-      app.deleteEvent(id);
+    async (id: string) => {
+      await app.deleteEvent(id);
       setDetailPanelEventId(null);
       app.selectEvent(null);
     },
@@ -72,12 +81,21 @@ export function useEventDialogController(
     const selectedEvent = app
       .getEvents()
       .find((e: Event) => e.id === rawEventId);
-    if (!selectedEvent) return null;
+    if (selectedEvent) {
+      dialogEventRef.current = selectedEvent;
+    }
+
+    const dialogEvent =
+      selectedEvent ??
+      (dialogEventRef.current?.id === rawEventId
+        ? dialogEventRef.current
+        : null);
+    if (!dialogEvent) return null;
 
     return {
-      event: selectedEvent,
+      event: dialogEvent,
       isOpen: true,
-      isAllDay: isPlainDate(selectedEvent.start),
+      isAllDay: isPlainDate(dialogEvent.start),
       onEventUpdate: handleDialogEventUpdate,
       onEventDelete: handleDialogEventDelete,
       onClose: handleDialogClose,
