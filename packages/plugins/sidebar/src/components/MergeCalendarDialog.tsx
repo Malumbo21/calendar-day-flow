@@ -86,7 +86,7 @@ export const MergeCalendarDialog = ({
             type='button'
             onClick={handleConfirm}
             loading={isLoading}
-            className='rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90'
+            className='df-fill-destructive df-hover-destructive rounded-md px-3 py-2 text-xs font-medium'
           >
             {t('merge')}
           </LoadingButton>

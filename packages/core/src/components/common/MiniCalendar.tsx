@@ -116,7 +116,15 @@ export const MiniCalendar = ({
           <button
             type='button'
             key={day.fullDate.getTime()}
-            className={` ${miniCalendarDay} ${day.isToday ? miniCalendarToday : day.isCurrentMonth ? miniCalendarCurrentMonth : miniCalendarOtherMonth} ${day.isSelected && !day.isToday ? miniCalendarSelected : ''} `}
+            className={` ${miniCalendarDay} ${
+              day.isToday
+                ? miniCalendarToday
+                : day.isSelected
+                  ? miniCalendarSelected
+                  : day.isCurrentMonth
+                    ? miniCalendarCurrentMonth
+                    : miniCalendarOtherMonth
+            } `}
             onClick={() => onDateSelect(day.fullDate)}
           >
             {day.date}

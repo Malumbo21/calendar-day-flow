@@ -2,6 +2,8 @@
 
 DayFlow Calendar's appearance is controlled by a set of namespaced CSS custom properties (`--df-color-*`). All tokens are defined inside `@layer df-theme`, so host applications can override them without `!important` — regardless of whether they use Tailwind or plain CSS.
 
+Starting with the style refactor, the shared DayFlow foundation CSS is the single source of truth for theme tokens, component primitives, and semantic helper classes such as `df-fill-primary` and `df-focus-ring`.
+
 ## Table of Contents
 
 - [Custom Calendar Type Colors](#custom-calendar-type-colors)
@@ -118,6 +120,25 @@ All DayFlow theme tokens use the `--df-color-` prefix to avoid collisions with a
 | `--df-color-destructive`            | Destructive actions                       |
 | `--df-color-destructive-foreground` | Text on destructive backgrounds           |
 
+## Semantic Helper Classes
+
+In addition to CSS variables, DayFlow now exposes theme-aware semantic helper classes. These are useful when you render custom content inside slots, plugin UI, or wrappers that should visually match the built-in controls.
+
+| Class Name               | Meaning                                                   |
+| ------------------------ | --------------------------------------------------------- |
+| `df-fill-primary`        | Primary filled surface with automatic foreground text     |
+| `df-fill-secondary`      | Secondary filled surface with automatic foreground text   |
+| `df-fill-destructive`    | Destructive filled surface with automatic foreground text |
+| `df-tint-primary`        | Subtle primary selection tint                             |
+| `df-hover-primary`       | Primary-themed hover state                                |
+| `df-hover-primary-solid` | Hover state for filled primary buttons                    |
+| `df-text-primary`        | Primary text color                                        |
+| `df-border-primary`      | Primary border color                                      |
+| `df-ring-primary`        | Primary ring color token                                  |
+| `df-focus-ring`          | Focus helper that applies both primary border and ring    |
+
+Prefer these `df-*` helpers or `--df-color-*` overrides when styling DayFlow. Avoid depending on old internal Tailwind semantic names such as `bg-primary`, `text-primary`, or `hover:bg-primary/90`.
+
 ## Override Methods
 
 ### Method 1 — Container-level override (works everywhere)
@@ -144,7 +165,7 @@ This is the recommended approach for most projects. The variables are scoped to 
 
 ## Tailwind v4 Integration
 
-Tailwind v4 is configured entirely through CSS — there is no `tailwind.config.js`. The library's CSS already includes the necessary `@source` directives to scan its own components.
+Tailwind v4 is configured entirely through CSS — there is no `tailwind.config.js`. DayFlow's distributed CSS already includes the shared foundation layer, so theme tokens and semantic helper classes are available immediately after import.
 
 ### Choosing the right CSS file
 
@@ -167,7 +188,7 @@ If your project does **not** use Tailwind, import the full bundle instead:
 
 ### Utility class scanning (`@source`)
 
-DayFlow's components use Tailwind utility classes (`flex`, `bg-white`, `text-gray-600`, etc.) internally. Your project's Tailwind instance must generate those classes by scanning DayFlow's source files.
+DayFlow's components still use Tailwind utility classes (`flex`, `bg-white`, `text-gray-600`, etc.) internally for layout and neutral styling. Your project's Tailwind instance must generate those classes by scanning DayFlow's source files. The old semantic Tailwind names (`bg-primary`, `text-primary`, etc.) are no longer required by DayFlow internals.
 
 **Vite + `@tailwindcss/vite`** — no extra configuration needed. The Vite plugin automatically discovers DayFlow's files through the module graph.
 
@@ -215,6 +236,14 @@ Add this to your CSS entry file to switch Tailwind to class-based dark mode:
 ```
 
 Without this, `theme.mode: 'dark'` will still update the CSS custom properties (`--df-color-*`) correctly, but Tailwind's `dark:` utility classes inside DayFlow's components will only activate when the system preference is dark.
+
+### Practical recommendation
+
+For most apps, use this order of precedence:
+
+1. Override `--df-color-*` tokens on `.df-calendar-container`, `.df-portal`, or your own wrapper.
+2. Reuse DayFlow's semantic helpers such as `df-fill-primary` and `df-focus-ring` in custom slot/plugin markup.
+3. Only reach for low-level utility overrides when you are changing layout rather than theme.
 
 ### Applying overrides with `@theme`
 

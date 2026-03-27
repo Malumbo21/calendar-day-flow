@@ -24,6 +24,18 @@ function switchTo(newLocale: string, currentPath: string) {
   const next = locales.find(l => l.code === newLocale);
   if (!next) return;
 
+  const isDocsPath = locales.some(
+    locale =>
+      currentPath === locale.prefix ||
+      currentPath.startsWith(`${locale.prefix}/`)
+  );
+
+  if (!isDocsPath) {
+    localStorage.setItem('dayflow-locale', newLocale);
+    window.location.href = BASE + `${next.prefix}/introduction`;
+    return;
+  }
+
   // strip current locale prefix
   let contentPath = currentPath;
   if (current && currentPath.startsWith(current.prefix)) {

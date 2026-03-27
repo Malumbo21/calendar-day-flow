@@ -205,7 +205,7 @@ export const CreateCalendarDialog = ({
                     onChange={e =>
                       setName((e.target as HTMLInputElement).value)
                     }
-                    className='w-full flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                    className='df-focus-ring w-full flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
                     placeholder={t('calendarNamePlaceholder')}
                     autoFocus
                   />
@@ -218,9 +218,9 @@ export const CreateCalendarDialog = ({
                     <button
                       key={color}
                       type='button'
-                      className={`h-7 w-7 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
+                      className={`df-focus-ring-only h-7 w-7 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
                         customSelectedColor === color
-                          ? 'scale-110 ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-800'
+                          ? 'df-ring-primary-solid scale-110 ring-2 ring-offset-2 dark:ring-offset-slate-800'
                           : ''
                       }`}
                       style={{ backgroundColor: color }}
@@ -273,7 +273,7 @@ export const CreateCalendarDialog = ({
                                 <button
                                   type='button'
                                   onClick={handleAccept}
-                                  className='rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm hover:opacity-90'
+                                  className='df-fill-primary rounded-md px-3 py-1.5 text-xs font-medium shadow-sm hover:opacity-90'
                                 >
                                   OK
                                 </button>
@@ -297,7 +297,7 @@ export const CreateCalendarDialog = ({
                   type='text'
                   value={name}
                   onChange={e => setName((e.target as HTMLInputElement).value)}
-                  className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                  className='df-focus-ring w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
                   placeholder={t('calendarNamePlaceholder')}
                   autoFocus
                 />
@@ -332,7 +332,7 @@ export const CreateCalendarDialog = ({
               type='submit'
               disabled={!name.trim()}
               loading={isLoading}
-              className='rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50'
+              className='df-fill-primary df-hover-primary-solid rounded px-2 py-1 text-xs font-medium transition disabled:opacity-50'
             >
               {t('create')}
             </LoadingButton>

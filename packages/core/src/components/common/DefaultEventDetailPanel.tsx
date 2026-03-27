@@ -409,7 +409,7 @@ const DefaultEventDetailPanel = ({
                 title: (e.target as HTMLInputElement).value,
               })
             }
-            className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+            className='df-focus-ring w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
           />
         </div>
         {isEditable && (
@@ -493,7 +493,7 @@ const DefaultEventDetailPanel = ({
             })
           }
           rows={3}
-          className='w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+          className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
           placeholder={t('addNotePlaceholder')}
         />
       </div>
@@ -503,7 +503,7 @@ const DefaultEventDetailPanel = ({
           {isDraftAllDay ? (
             <LoadingButton
               type='button'
-              className='rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90'
+              className='df-fill-primary df-hover-primary-solid rounded px-2 py-1 text-xs font-medium transition'
               onClick={convertToRegular}
               loading={isLoading}
             >
@@ -512,7 +512,7 @@ const DefaultEventDetailPanel = ({
           ) : (
             <LoadingButton
               type='button'
-              className='rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90'
+              className='df-fill-primary df-hover-primary-solid rounded px-2 py-1 text-xs font-medium transition'
               onClick={convertToAllDay}
               loading={isLoading}
             >
@@ -522,7 +522,7 @@ const DefaultEventDetailPanel = ({
 
           <LoadingButton
             type='button'
-            className='rounded bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground transition hover:bg-destructive/90'
+            className='df-fill-destructive df-hover-destructive rounded px-2 py-1 text-xs font-medium transition'
             onClick={handleEventDelete}
             loading={isLoading}
           >

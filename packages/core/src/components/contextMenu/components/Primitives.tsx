@@ -126,7 +126,7 @@ export const ContextMenuItem = ({
         : 'hover:bg-[var(--df-color-primary)] hover:text-[var(--df-color-primary-foreground)] focus:bg-[var(--df-color-primary)] focus:text-[var(--df-color-primary-foreground)]'
     } ${
       danger
-        ? 'text-destructive hover:bg-destructive hover:text-destructive-foreground focus:bg-destructive focus:text-destructive-foreground'
+        ? 'df-text-destructive df-hover-fill-destructive df-focus-fill-destructive'
         : 'text-[var(--df-color-foreground)]'
     }`}
     onClick={e => {
@@ -294,9 +294,9 @@ export const ContextMenuColorPicker = ({
           <button
             key={color}
             type='button'
-            className={`h-5 w-5 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
+            className={`df-focus-ring-only h-5 w-5 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
               selectedColor?.toLowerCase() === color.toLowerCase()
-                ? 'ring-2 ring-primary ring-offset-1 dark:ring-offset-slate-800'
+                ? 'df-ring-primary-solid ring-2 ring-offset-1 dark:ring-offset-slate-800'
                 : ''
             }`}
             style={{ backgroundColor: color }}

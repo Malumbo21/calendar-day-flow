@@ -308,7 +308,7 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
         );
       } else {
         indicator.className +=
-          ' bg-primary/10 text-primary border border-dashed border-primary/50';
+          ' df-tint-primary border border-dashed df-border-primary-soft';
       }
 
       dragIndicatorRef.current = indicator;

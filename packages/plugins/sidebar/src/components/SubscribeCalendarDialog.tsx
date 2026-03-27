@@ -60,7 +60,7 @@ export const SubscribeCalendarDialog = ({
               placeholder={t('calendarUrlPlaceholder')}
               disabled={loading}
               autoFocus
-              className='flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400'
+              className='df-focus-ring flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-1 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400'
             />
           </div>
           {error && (
@@ -83,7 +83,7 @@ export const SubscribeCalendarDialog = ({
             type='button'
             onClick={handleSubmit}
             disabled={loading || !url.trim()}
-            className='rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50'
+            className='df-fill-primary df-hover-primary-solid rounded-md px-4 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50'
           >
             {loading ? t('fetchingCalendar') : t('subscribe')}
           </button>

@@ -442,15 +442,12 @@ const DayView = ({
     [app]
   );
   // Check if it is today
-  const isToday = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const current = new Date(currentDate);
-    current.setHours(0, 0, 0, 0);
-    return current.getTime() === today.getTime();
-  }, [currentDate]);
+  const isToday = useMemo(
+    () => currentDate.toDateString() === new Date().toDateString(),
+    [currentDate]
+  );
 
-  // Initial scroll to current time
+  // Sync scroll on mount
   useLayoutEffect(() => {
     if (config.scrollToCurrentTime) {
       const scrollContainer = calendarRef.current?.querySelector(

@@ -73,7 +73,7 @@ const MobileSearchDialog = ({
               const val = (e.target as HTMLInputElement).value;
               if (val !== keyword) onSearchChange(val);
             }}
-            className='w-full rounded-full border-none bg-gray-100 py-2 pr-10 pl-3 text-gray-900 focus:ring-2 focus:ring-primary focus:outline-none dark:bg-gray-800 dark:text-gray-100'
+            className='df-focus-ring-only w-full rounded-full border-none bg-gray-100 py-2 pr-10 pl-3 text-gray-900 focus:ring-2 focus:outline-none dark:bg-gray-800 dark:text-gray-100'
           />
           {keyword && (
             <button

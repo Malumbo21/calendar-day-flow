@@ -133,7 +133,7 @@ export const DeleteCalendarDialog = ({
                   type='button'
                   onClick={() => onStepChange('confirm_delete')}
                   disabled={isLoading}
-                  className='rounded-md bg-destructive px-4 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50'
+                  className='df-fill-destructive df-hover-destructive rounded-md px-4 py-2 text-xs font-medium disabled:opacity-50'
                 >
                   {t('delete')}
                 </button>
@@ -161,7 +161,7 @@ export const DeleteCalendarDialog = ({
                 type='button'
                 onClick={handleConfirmDelete}
                 loading={isLoading}
-                className='rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground hover:bg-destructive/90'
+                className='df-fill-destructive df-hover-destructive rounded-md px-3 py-2 text-xs font-medium'
               >
                 {t('delete')}
               </LoadingButton>

@@ -67,8 +67,8 @@ const TimeSelector = ({
                   onClick={() => onHourSelect(field, hour)}
                   className={`flex h-8 w-full items-center justify-center text-sm transition ${
                     isActive
-                      ? 'bg-primary font-semibold text-primary-foreground'
-                      : 'text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-gray-300'
+                      ? 'df-fill-primary font-semibold'
+                      : 'df-hover-primary text-slate-600 dark:text-gray-300'
                   }`}
                   data-active={isActive ? 'true' : undefined}
                 >
@@ -101,8 +101,8 @@ const TimeSelector = ({
                   onClick={() => onMinuteSelect(field, minute)}
                   className={`flex h-8 w-full items-center justify-center text-sm transition ${
                     isActive
-                      ? 'bg-primary font-semibold text-primary-foreground'
-                      : 'text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-gray-300'
+                      ? 'df-fill-primary font-semibold'
+                      : 'df-hover-primary text-slate-600 dark:text-gray-300'
                   }`}
                   data-active={isActive ? 'true' : undefined}
                 >

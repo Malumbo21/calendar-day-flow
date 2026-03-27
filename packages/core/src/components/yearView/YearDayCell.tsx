@@ -47,14 +47,14 @@ export const YearDayCell = memo(
       >
         <div className='flex h-6 shrink-0 items-center px-1 py-1'>
           {isFirstDay && (
-            <span className='rounded-sm bg-primary px-1 py-0.5 text-[9px] leading-none font-bold text-primary-foreground'>
+            <span className='df-fill-primary rounded-sm px-1 py-0.5 text-[9px] leading-none font-bold'>
               {monthLabel}
             </span>
           )}
           <span
             className={`ml-auto text-[10px] font-medium ${
               isToday
-                ? 'flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground'
+                ? 'df-fill-primary flex h-5 w-5 items-center justify-center rounded-full'
                 : 'text-gray-700 dark:text-gray-300'
             }`}
           >

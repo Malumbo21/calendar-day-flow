@@ -46,9 +46,13 @@ function extractBlock(css: string, selectorPattern: RegExp): string | null {
   return match ? match[1] : null;
 }
 
+function extractToken(css: string, token: string): string | undefined {
+  return css.match(new RegExp(`${token}:\\s*([^;]+)`))?.[1]?.trim();
+}
+
 // ─── fixtures ──────────────────────────────────────────────────────────────
 
-// All --color-* tokens that must be mapped inside the DayFlow container/portal
+// All --color-* tokens that must be mapped inside the DayFlow scoped root
 // block so that host-Tailwind-generated utilities resolve to DayFlow's own
 // design tokens rather than the host application's theme.
 const REQUIRED_COLOR_MAPPINGS: string[] = [
@@ -103,6 +107,9 @@ function isDayFlowSelector(sel: string): boolean {
   );
 }
 
+const SCOPE_BLOCK_SELECTOR =
+  /\.df-calendar-container,\s*\n?\s*\.df-portal,\s*\n?\s*\.df-event-detail-panel,\s*\n?\s*\.df-dialog-container,\s*\n?\s*\.df-range-picker/;
+
 // ─── tests ─────────────────────────────────────────────────────────────────
 
 describe('CSS dist output integrity', () => {
@@ -145,42 +152,33 @@ describe('CSS dist output integrity', () => {
     });
   });
 
-  // ── Guard #2: All color token mappings present in the portal block ──
+  // ── Guard #2: All color token mappings present in the scoped root block ──
   //
-  // The .df-calendar-container, .df-portal block remaps Tailwind's semantic
-  // --color-* tokens to DayFlow's own --df-color-* variables.
+  // The scoped DayFlow root block remaps Tailwind's semantic --color-* tokens
+  // to DayFlow's own --df-color-* variables.
   // Missing entries cause host-Tailwind-generated utility classes (e.g.
   // bg-secondary, border-border) to resolve to the host theme's colors
   // instead of DayFlow's, producing wrong colors inside the calendar.
   describe.each([
     ['styles.components.css', () => componentsCss],
     ['styles.css', () => fullCss],
-  ] as const)(
-    '%s — .df-calendar-container, .df-portal block',
-    (_file, getCss) => {
-      it('block exists in the file', () => {
-        const block = extractBlock(
-          getCss(),
-          /\.df-calendar-container,\s*\n?\.df-portal/
-        );
-        expect(block).not.toBeNull();
-      });
+  ] as const)('%s — scoped root mapping block', (_file, getCss) => {
+    it('block exists in the file', () => {
+      const block = extractBlock(getCss(), SCOPE_BLOCK_SELECTOR);
+      expect(block).not.toBeNull();
+    });
 
-      test.each(REQUIRED_COLOR_MAPPINGS)(
-        'maps %s to a DayFlow variable',
-        token => {
-          const block = extractBlock(
-            getCss(),
-            /\.df-calendar-container,\s*\n?\.df-portal/
-          );
-          // Each token must be present and point to a --df-color-* variable
-          expect(block).toContain(token);
-          const tokenLine = block!.split('\n').find(l => l.includes(token));
-          expect(tokenLine).toMatch(/var\(--df-color-|var\(--df-/);
-        }
-      );
-    }
-  );
+    test.each(REQUIRED_COLOR_MAPPINGS)(
+      'maps %s to a DayFlow variable',
+      token => {
+        const block = extractBlock(getCss(), SCOPE_BLOCK_SELECTOR);
+        // Each token must be present and point to a --df-color-* variable
+        expect(block).toContain(token);
+        const tokenLine = block!.split('\n').find(l => l.includes(token));
+        expect(tokenLine).toMatch(/var\(--df-color-|var\(--df-/);
+      }
+    );
+  });
 
   // ── Guard #3: Component rules use CSS variables, not hardcoded gray values ──
   //
@@ -238,4 +236,78 @@ describe('CSS dist output integrity', () => {
       });
     }
   );
+
+  describe('styles.components.css — semantic fallback coverage', () => {
+    it('no longer relies on dark:bg-primary/20 fallback after df-* migration', () => {
+      expect(componentsCss).not.toMatch(/\.dark\\:bg-primary\\\/20/);
+    });
+
+    it('no longer relies on shadow-primary fallback after df-* migration', () => {
+      expect(componentsCss).not.toMatch(/\.shadow-primary\\(?:\/20)?/);
+    });
+
+    it('no longer relies on destructive hover/focus fallback after df-* migration', () => {
+      expect(componentsCss).not.toMatch(/\.hover\\:bg-destructive:hover/);
+      expect(componentsCss).not.toMatch(/\.focus\\:bg-destructive:focus/);
+      expect(componentsCss).not.toMatch(
+        /\.hover\\:text-destructive-foreground:hover/
+      );
+      expect(componentsCss).not.toMatch(
+        /\.focus\\:text-destructive-foreground:focus/
+      );
+    });
+
+    it('includes portal and range picker scope selectors', () => {
+      expect(componentsCss).toMatch(
+        /df-portal[\s\S]*df-range-picker|df-range-picker[\s\S]*df-portal/
+      );
+    });
+  });
+
+  describe.each([
+    ['styles.components.css', () => componentsCss],
+    ['styles.css', () => fullCss],
+  ] as const)('%s — df-* semantic classes are emitted', (_file, getCss) => {
+    it('includes df-fill-primary and df-tint-primary rules', () => {
+      expect(getCss()).toMatch(/\.df-fill-primary\s*\{/);
+      expect(getCss()).toMatch(/\.df-tint-primary\s*\{/);
+    });
+
+    it('includes df-focus-ring and df-ring-primary-solid rules', () => {
+      expect(getCss()).toMatch(/\.df-focus-ring:focus\s*\{/);
+      expect(getCss()).toMatch(/\.df-ring-primary-solid\s*\{/);
+    });
+
+    it('includes df-fill-destructive and df-hover-destructive rules', () => {
+      expect(getCss()).toMatch(/\.df-fill-destructive\s*\{/);
+      expect(getCss()).toMatch(/\.df-hover-destructive:hover\s*\{/);
+    });
+  });
+
+  describe('shared foundation parity', () => {
+    it('shares core token values across both dist files', () => {
+      [
+        '--df-color-background',
+        '--df-color-primary',
+        '--df-color-border',
+      ].forEach(token => {
+        expect(extractToken(fullCss, token)).toBe(
+          extractToken(componentsCss, token)
+        );
+      });
+    });
+
+    it('shares system-preference dark tokens across both dist files', () => {
+      const pattern =
+        /@media\s*\(prefers-color-scheme:\s*dark\)[\s\S]*?--df-color-background:\s*([^;]+)/;
+      expect(fullCss.match(pattern)?.[1]?.trim()).toBe(
+        componentsCss.match(pattern)?.[1]?.trim()
+      );
+    });
+
+    it('keeps df-portal scope in both dist files', () => {
+      expect(fullCss).toMatch(/\.df-portal/);
+      expect(componentsCss).toMatch(/\.df-portal/);
+    });
+  });
 });

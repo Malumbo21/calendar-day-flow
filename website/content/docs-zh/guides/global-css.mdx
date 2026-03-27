@@ -5,6 +5,7 @@ DayFlow 提供了一组带有 `df-` 前缀的 CSS 类，允许您自定义日历
 ## 目录
 
 - [通用类](#通用)
+- [语义辅助类](#语义辅助类)
 - [日视图类](#日视图)
 - [周视图类](#周视图)
 - [月视图类](#月视图)
@@ -43,6 +44,35 @@ DayFlow 提供了一组带有 `df-` 前缀的 CSS 类，允许您自定义日历
 | `df-current-time-line`     | 当前时间指示线容器                                                                     |
 | `df-current-time-label`    | 当前时间标签文本                                                                       |
 | `df-current-time-bar`      | 当前时间水平线                                                                         |
+| `df-portal`                | 通过 portal 渲染的浮层根作用域类                                                       |
+| `df-range-picker`          | Range Picker 触发器与弹层共用的根作用域类                                              |
+
+---
+
+## 语义辅助类
+
+这次样式重构后，DayFlow 对外公开了一组稳定的 `df-*` 语义类，用来表达按钮填充态、选中态、危险操作态、焦点环等主题语义。它们定义在共享基础样式中，适合在自定义 slot、插件 UI 或包裹层里复用。
+
+| 类名                     | 用途                               |
+| ------------------------ | ---------------------------------- |
+| `df-fill-primary`        | 主色填充背景 + 自动前景文字        |
+| `df-fill-secondary`      | 次色填充背景 + 自动前景文字        |
+| `df-fill-destructive`    | 危险态填充背景 + 自动前景文字      |
+| `df-tint-primary`        | 主色 10% 轻染背景                  |
+| `df-tint-primary-md`     | 主色 20% 轻染背景                  |
+| `df-tint-primary-lg`     | 主色 30% 轻染背景                  |
+| `df-hover-primary`       | 主色语义悬停态                     |
+| `df-hover-primary-solid` | 主色实心按钮的悬停态               |
+| `df-hover-destructive`   | 危险态悬停效果                     |
+| `df-text-primary`        | 主色文字                           |
+| `df-text-primary-fg`     | 主色填充背景上的文字               |
+| `df-text-destructive`    | 危险态文字                         |
+| `df-border-primary`      | 主色边框                           |
+| `df-ring-primary`        | 主色 ring 颜色 token               |
+| `df-shadow-primary`      | 主色阴影 token                     |
+| `df-focus-ring`          | `:focus` 时同时设置主色边框与 ring |
+
+推荐优先使用这些 `df-*` 类或 `--df-color-*` 变量来做主题定制，不要再依赖 `bg-primary`、`text-primary`、`hover:bg-primary/90` 这类旧的内部 Tailwind 语义类名。
 
 ---
 
@@ -163,6 +193,7 @@ DayFlow 提供了一组带有 `df-` 前缀的 CSS 类，允许您自定义日历
 | `df-event-detail-panel` | 浮动事件详情面板 |
 | `df-dialog-overlay`     | 对话框背景遮罩   |
 | `df-dialog-container`   | 对话框内容容器   |
+| `df-portal`             | 浮层根节点作用域 |
 
 ---
 
@@ -179,7 +210,7 @@ DayFlow 提供了一组带有 `df-` 前缀的 CSS 类，允许您自定义日历
 
 ## 如何自定义
 
-要自定义外观，您可以在全局 CSS 文件中针对这些类进行设置。由于 DayFlow 内部使用 Tailwind CSS，如果您的样式被覆盖，您可能需要使用 `!important` 或增加选择器特异性。
+要自定义外观，建议优先覆盖这些类或 `--df-color-*` 变量。大多数主题层面的调整不需要 `!important`；只有在你明确要压过某条高特异性局部规则时才需要它。
 
 ### 示例
 
@@ -211,6 +242,12 @@ DayFlow 提供了一组带有 `df-` 前缀的 CSS 类，允许您自定义日历
 /* 设置迷你日历样式 */
 .df-mini-calendar-day:hover {
   background-color: #e2e8f0;
+}
+
+/* 在自定义 slot / 插件 UI 中复用 DayFlow 的语义类 */
+.my-custom-primary-chip {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
 }
 
 /* 深色模式覆盖 */

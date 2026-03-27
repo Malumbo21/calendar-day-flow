@@ -92,7 +92,9 @@ const EventContextMenu = ({
               >
                 <div className='flex w-full items-center'>
                   <div className='w-4 shrink-0'>
-                    {isSelected && <Check className='h-3 w-3 text-primary' />}
+                    {isSelected && (
+                      <Check className='df-text-primary h-3 w-3' />
+                    )}
                   </div>
                   <div className='flex min-w-0 items-center gap-1.5'>
                     <div

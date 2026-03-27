@@ -84,7 +84,7 @@ export const ImportCalendarDialog = ({
     return createPortal(
       <div
         ref={dropdownRef}
-        className={`fixed z-110 mt-1 max-h-60 origin-top overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-slate-700 dark:bg-slate-800 ${
+        className={`df-portal fixed z-110 mt-1 max-h-60 origin-top overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-slate-700 dark:bg-slate-800 ${
           isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
         style={{
@@ -98,7 +98,7 @@ export const ImportCalendarDialog = ({
           {calendars.map(calendar => (
             <div
               key={calendar.id}
-              className={`flex cursor-pointer items-center px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 ${selectedCalendarId === calendar.id ? 'bg-primary/10' : ''}`}
+              className={`flex cursor-pointer items-center px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 ${selectedCalendarId === calendar.id ? 'df-tint-primary' : ''}`}
               onClick={() => handleSelect(calendar.id)}
             >
               <div
@@ -106,27 +106,27 @@ export const ImportCalendarDialog = ({
                 style={{ backgroundColor: calendar.colors.lineColor }}
               />
               <span
-                className={`flex-1 truncate text-sm ${selectedCalendarId === calendar.id ? 'font-medium text-primary' : 'text-gray-700 dark:text-gray-200'}`}
+                className={`flex-1 truncate text-sm ${selectedCalendarId === calendar.id ? 'df-text-primary font-medium' : 'text-gray-700 dark:text-gray-200'}`}
               >
                 {calendar.name || calendar.id}
               </span>
               {selectedCalendarId === calendar.id && (
-                <Check className='ml-2 h-4 w-4 shrink-0 text-primary' />
+                <Check className='df-text-primary ml-2 h-4 w-4 shrink-0' />
               )}
             </div>
           ))}
           <div className='my-1 border-t border-gray-100 dark:border-slate-700' />
           <div
-            className={`flex cursor-pointer items-center px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 ${isNewSelected ? 'bg-primary/10' : ''}`}
+            className={`flex cursor-pointer items-center px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 ${isNewSelected ? 'df-tint-primary' : ''}`}
             onClick={() => handleSelect(NEW_CALENDAR_ID)}
           >
             <span
-              className={`flex-1 truncate text-sm ${isNewSelected ? 'font-medium text-primary' : 'pl-6 text-gray-700 dark:text-gray-200'}`}
+              className={`flex-1 truncate text-sm ${isNewSelected ? 'df-text-primary font-medium' : 'pl-6 text-gray-700 dark:text-gray-200'}`}
             >
               {t('newCalendar') || 'New Calendar'}: {filename}
             </span>
             {isNewSelected && (
-              <Check className='ml-2 h-4 w-4 shrink-0 text-primary' />
+              <Check className='df-text-primary ml-2 h-4 w-4 shrink-0' />
             )}
           </div>
         </div>
@@ -185,7 +185,7 @@ export const ImportCalendarDialog = ({
             type='button'
             onClick={handleConfirm}
             loading={isLoading}
-            className='rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90'
+            className='df-fill-primary df-hover-primary-solid rounded-md px-6 py-2 text-sm font-medium shadow-sm transition-colors'
           >
             {t('ok') || 'OK'}
           </LoadingButton>

@@ -33,15 +33,15 @@ const CalendarGrid = ({
 
     const stateClass = (() => {
       if (isStart || isEnd) {
-        return 'bg-primary text-primary-foreground font-semibold';
+        return 'df-fill-primary font-semibold';
       }
       if (isInRange) {
-        return 'bg-primary/10 text-primary';
+        return 'df-tint-primary';
       }
       if (isOutsideMonth) {
         return 'text-slate-300 dark:text-gray-600';
       }
-      return 'text-slate-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary';
+      return 'text-slate-700 dark:text-gray-300 df-hover-primary';
     })();
 
     return (

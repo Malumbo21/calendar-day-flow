@@ -450,7 +450,7 @@ export function InteractiveCalendar() {
           This ensures all internal translated strings and plugin states are reset correctly.
         */}
           <CalendarViewer
-            key={`${locale}-${selectedViews.join(',')}-${yearMode}`}
+            key={`${locale}-${selectedViews.join(',')}-${yearMode}-${showSidebar}-${showHeader}-${enableDrag}-${enableShortcuts}-${themeMode}`}
             config={config}
             calendarRef={calendarRef}
           />
