@@ -1,5 +1,7 @@
 pre-commit:
   jobs:
+    - run: pnpm --filter @dayflow/core run check:css
+
     - run: pnpm format
       stage_fixed: true
 

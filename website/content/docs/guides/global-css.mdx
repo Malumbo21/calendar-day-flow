@@ -5,6 +5,7 @@ DayFlow provides a set of CSS classes with the `df-` prefix that allow you to cu
 ## Table of Contents
 
 - [Common Classes](#common)
+- [Semantic Utility Classes](#semantic-utility-classes)
 - [Day View Classes](#day-view)
 - [Week View Classes](#week-view)
 - [Month View Classes](#month-view)
@@ -43,6 +44,38 @@ Common CSS classes used across all calendar views.
 | `df-current-time-line`     | Current time indicator line container                                                                                                                |
 | `df-current-time-label`    | Current time label text                                                                                                                              |
 | `df-current-time-bar`      | Current time horizontal line                                                                                                                         |
+| `df-portal`                | Root scope class used by floating overlays rendered with portals                                                                                     |
+| `df-range-picker`          | Root scope class used by the range picker popup and trigger wrapper                                                                                  |
+
+---
+
+## Semantic Utility Classes
+
+DayFlow now exposes a stable set of `df-*` semantic classes for internal states such as selected buttons, highlighted dates, destructive actions, and focus rings. These are defined inside the shared foundation CSS and are safe to target from your own stylesheet.
+
+Use these classes when you want to align custom content, plugin UI, or content-slot output with DayFlow's theme tokens:
+
+| Class Name               | Purpose                                                        |
+| ------------------------ | -------------------------------------------------------------- |
+| `df-fill-primary`        | Primary filled background + matching foreground text           |
+| `df-fill-secondary`      | Secondary filled background + matching foreground text         |
+| `df-fill-destructive`    | Destructive filled background + matching foreground text       |
+| `df-tint-primary`        | Primary 10% tint + primary text                                |
+| `df-tint-primary-md`     | Primary 20% tint + primary text                                |
+| `df-tint-primary-lg`     | Primary 30% tint + primary text                                |
+| `df-hover-primary`       | Primary-tinted hover state                                     |
+| `df-hover-primary-solid` | Solid primary hover state for filled buttons                   |
+| `df-hover-destructive`   | Destructive hover state                                        |
+| `df-text-primary`        | Primary text color                                             |
+| `df-text-primary-fg`     | Text color for primary-filled backgrounds                      |
+| `df-text-destructive`    | Destructive text color                                         |
+| `df-border-primary`      | Primary border color                                           |
+| `df-ring-primary`        | Primary focus/selection ring color                             |
+| `df-shadow-primary`      | Primary shadow color token                                     |
+| `df-focus-ring`          | Combined primary `border-color` + `ring-color` on `:focus`     |
+| `df-focus-ring-only`     | Primary `ring-color` on `:focus` without changing border color |
+
+Prefer these classes or the `--df-color-*` variables for theming. Avoid targeting old internal combinations such as `bg-primary`, `text-primary`, or `hover:bg-primary/90` on DayFlow internals, because those Tailwind semantic names are no longer part of the public styling contract.
 
 ---
 
@@ -163,6 +196,7 @@ CSS classes for event detail panels and dialogs.
 | `df-event-detail-panel` | Floating event detail panel |
 | `df-dialog-overlay`     | Dialog background overlay   |
 | `df-dialog-container`   | Dialog content container    |
+| `df-portal`             | Shared portal root class    |
 
 ---
 
@@ -179,7 +213,7 @@ CSS classes used for the Content Slot rendering system.
 
 ## How to Customize
 
-To customize the appearance, you can target these classes in your global CSS file. Since DayFlow uses Tailwind CSS internally, you might need to use `!important` or increase selector specificity if your styles are being overridden.
+To customize the appearance, target these classes or override the `--df-color-*` variables in your global CSS. Most theme-level changes should not need `!important`; use it only when you intentionally want to beat a highly specific local rule.
 
 ### Example
 
@@ -211,6 +245,12 @@ To customize the appearance, you can target these classes in your global CSS fil
 /* Style mini calendar */
 .df-mini-calendar-day:hover {
   background-color: #e2e8f0;
+}
+
+/* Reuse DayFlow semantic helpers in your own slot or plugin markup */
+.my-custom-primary-chip {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
 }
 
 /* Dark mode overrides */

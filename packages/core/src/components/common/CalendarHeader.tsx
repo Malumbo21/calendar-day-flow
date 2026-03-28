@@ -98,9 +98,9 @@ const CalendarHeader = ({
         </button>
 
         {/* Desktop Search Bar */}
-        <div className='group relative hidden md:block'>
+        <div className='df-search-group group relative hidden md:block'>
           <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
-            <span className='text-gray-400 transition-colors group-focus-within:text-primary'>
+            <span className='df-search-focus-within-primary text-gray-400 transition-colors'>
               <Search width={16} height={16} />
             </span>
           </div>

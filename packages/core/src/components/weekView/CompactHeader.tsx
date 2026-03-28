@@ -39,7 +39,7 @@ export const CompactHeader = ({
       {fullWeekDates.map((day, index) => (
         <div key={`label-${index}`} className='flex justify-center'>
           <span
-            className={`text-[10px] font-medium ${day.isToday ? 'text-primary' : 'text-gray-500'}`}
+            className={`text-[10px] font-medium ${day.isToday ? 'df-text-primary' : 'text-gray-500'}`}
           >
             {formatLabel(day.dayName)}
           </span>
@@ -93,11 +93,11 @@ export const CompactHeader = ({
                   }}
                 >
                   <div
-                    className={`relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${isSelected ? 'bg-gray-900 text-white shadow-sm dark:bg-gray-100 dark:text-gray-900' : day.isToday ? 'font-bold text-primary' : isInsidePill ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'} `}
+                    className={`relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${isSelected ? 'bg-gray-900 text-white shadow-sm dark:bg-gray-100 dark:text-gray-900' : day.isToday ? 'df-text-primary font-bold' : isInsidePill ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'} `}
                   >
                     {day.date}
                     {day.isToday && !isSelected && (
-                      <div className='absolute bottom-1 h-1 w-1 rounded-full bg-primary'></div>
+                      <div className='df-fill-primary absolute bottom-1 h-1 w-1 rounded-full'></div>
                     )}
                   </div>
                 </div>

@@ -681,26 +681,22 @@ const WeekView = ({
 
   // Generate week date data
   const weekDates = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Compare date part only
+    const todayKey = new Date().toDateString();
     return weekDaysLabels.map((_, index) => {
       const date = new Date(displayStart);
       date.setDate(displayStart.getDate() + index);
-      const dateOnly = new Date(date);
-      dateOnly.setHours(0, 0, 0, 0);
       return {
         date: date.getDate(),
         month: date.toLocaleString(locale, { month: 'short' }),
         fullDate: new Date(date),
-        isToday: dateOnly.getTime() === today.getTime(),
+        isToday: date.toDateString() === todayKey,
       };
     });
   }, [displayStart, weekDaysLabels, locale]);
 
   // Generate full 7-day week data for mobile header
   const fullWeekDates = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayKey = new Date().toDateString();
     const start = standardWeekStart;
     return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(start);
@@ -711,7 +707,7 @@ const WeekView = ({
         date: date.getDate(),
         month: date.toLocaleString(locale, { month: 'short' }),
         fullDate: new Date(date),
-        isToday: dateOnly.getTime() === today.getTime(),
+        isToday: date.toDateString() === todayKey,
         isCurrent:
           dateOnly.getTime() === new Date(currentDate).setHours(0, 0, 0, 0),
         dayName: date.toLocaleDateString(locale, { weekday: 'short' }),

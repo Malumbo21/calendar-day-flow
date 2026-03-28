@@ -10,6 +10,7 @@ import {
   monthDayCell,
   monthDateNumberContainer,
   monthDateNumber,
+  miniCalendarToday,
   monthMoreEvents,
   monthTitle,
   cn,
@@ -902,7 +903,7 @@ const WeekComponent = memo(
             )}
             {
               <span
-                className={` ${monthDateNumber} ${day.isToday ? 'bg-primary text-primary-foreground' : belongsToCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'} `}
+                className={` ${monthDateNumber} ${day.isToday ? miniCalendarToday : belongsToCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'} `}
               >
                 {day.day === 1 && screenSize === 'desktop'
                   ? day.date.toLocaleDateString(locale, {

@@ -678,13 +678,13 @@ export const FixedWeekYearView = ({
                     <div
                       key={date.getTime()}
                       data-date={dateString}
-                      className={`relative flex cursor-pointer items-start justify-end border-r border-b border-gray-200 p-0.5 transition-colors hover:bg-blue-100 dark:border-gray-700 dark:hover:bg-primary/20 ${isWeekend ? 'df-year-view-weekend-cell bg-blue-50 dark:bg-blue-900/30' : ''} `}
+                      className={`df-hover-primary-dark-md relative flex cursor-pointer items-start justify-end border-r border-b border-gray-200 p-0.5 transition-colors hover:bg-blue-100 dark:border-gray-700 ${isWeekend ? 'df-year-view-weekend-cell bg-blue-50 dark:bg-blue-900/30' : ''} `}
                       onClick={() => app.selectDate(date)}
                       onDblClick={e => handleCellDoubleClick(e, date)}
                       onContextMenu={e => handleContextMenu(e, date)}
                     >
                       <span
-                        className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium ${isToday ? 'bg-primary font-bold text-primary-foreground shadow-sm' : 'text-gray-700 dark:text-gray-300'} `}
+                        className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium ${isToday ? 'df-fill-primary font-bold shadow-sm' : 'text-gray-700 dark:text-gray-300'} `}
                       >
                         {date.getDate()}
                       </span>

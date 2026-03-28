@@ -61,19 +61,18 @@ export const themeClasses = {
   hover: 'hover:bg-gray-100 dark:hover:bg-gray-800',
   hoverSubtle: 'hover:bg-gray-50 dark:hover:bg-gray-900',
   active: 'bg-gray-200 dark:bg-gray-700',
-  focus: 'focus:ring-primary',
+  focus: 'df-focus-ring-only',
 
   // Input styles
   input:
     'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100',
-  inputFocus: 'focus:border-primary focus:ring-primary',
+  inputFocus: 'df-focus-ring',
 
   // Button styles
-  buttonPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  buttonPrimary: 'df-fill-primary df-hover-primary-solid',
   buttonSecondary:
     'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600',
-  buttonDanger:
-    'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+  buttonDanger: 'df-fill-destructive df-hover-destructive',
   buttonSuccess:
     'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800',
 

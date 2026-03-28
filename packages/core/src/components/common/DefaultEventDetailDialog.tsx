@@ -236,7 +236,7 @@ const DefaultEventDetailDialog = ({
                     title: (e.target as HTMLInputElement).value,
                   });
                 }}
-                className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                className='df-focus-ring w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
               />
             </div>
             {isEditable && (
@@ -323,7 +323,7 @@ const DefaultEventDetailDialog = ({
                 })
               }
               rows={4}
-              className='w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+              className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
               placeholder={t('addNotePlaceholder')}
             />
           </div>
@@ -334,7 +334,7 @@ const DefaultEventDetailDialog = ({
                 <button
                   type='button'
                   disabled={isPending}
-                  className='rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20 disabled:opacity-50'
+                  className='df-tint-primary df-hover-primary-md rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-50'
                   onClick={convertToRegular}
                 >
                   {t('setAsTimed')}
@@ -343,7 +343,7 @@ const DefaultEventDetailDialog = ({
                 <button
                   type='button'
                   disabled={isPending}
-                  className='rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20 disabled:opacity-50'
+                  className='df-tint-primary df-hover-primary-md rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-50'
                   onClick={convertToAllDay}
                 >
                   {t('setAsAllDay')}
@@ -353,7 +353,7 @@ const DefaultEventDetailDialog = ({
               <LoadingButton
                 type='button'
                 disabled={isPending}
-                className='rounded-lg border border-border bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50'
+                className='df-fill-destructive df-hover-destructive rounded-lg border border-border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50'
                 onClick={handleDelete}
                 loading={isDeleting}
               >
@@ -362,9 +362,9 @@ const DefaultEventDetailDialog = ({
 
               <LoadingButton
                 type='button'
-                className={`ml-auto rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition ${
+                className={`df-fill-primary ml-auto rounded-lg px-3 py-2 text-xs font-medium transition ${
                   hasChanges
-                    ? 'shadow-lg shadow-primary/20 hover:bg-primary/90'
+                    ? 'df-shadow-primary df-hover-primary-solid shadow-lg'
                     : 'cursor-not-allowed opacity-50 grayscale-[0.5]'
                 }`}
                 onClick={handleSave}

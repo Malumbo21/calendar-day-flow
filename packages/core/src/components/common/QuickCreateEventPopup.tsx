@@ -280,7 +280,7 @@ export const QuickCreateEventPopup = ({
           <input
             ref={inputRef}
             type='text'
-            className='w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+            className='df-focus-ring w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
             placeholder={
               t('quickCreatePlaceholder') || 'Enter title (e.g. Code review)'
             }
@@ -302,7 +302,7 @@ export const QuickCreateEventPopup = ({
             key={`${item.type}-${index}`}
             className={`flex cursor-pointer items-center rounded-lg px-4 py-2 transition-colors ${
               index === selectedIndex
-                ? 'bg-primary/10 ring-1 ring-primary/20 ring-inset dark:bg-primary/20'
+                ? 'df-tint-primary df-dark-tint-primary-md df-ring-primary ring-1 ring-inset'
                 : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
             }`}
             onClick={() => handleCreate(item)}

@@ -5,6 +5,7 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 ## 目次
 
 - [共通クラス](#共通)
+- [セマンティック補助クラス](#セマンティック補助クラス)
 - [日ビュークラス](#日ビュー)
 - [週ビュークラス](#週ビュー)
 - [月ビュークラス](#月ビュー)
@@ -43,6 +44,35 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 | `df-current-time-line`     | 現在時刻インジケーターラインコンテナ                                                                                                          |
 | `df-current-time-label`    | 現在時刻ラベルテキスト                                                                                                                        |
 | `df-current-time-bar`      | 現在時刻の水平線                                                                                                                              |
+| `df-portal`                | Portal で描画されるフローティング UI のルートスコープクラス                                                                                   |
+| `df-range-picker`          | Range Picker のトリガーとポップアップに付くルートスコープクラス                                                                               |
+
+---
+
+## セマンティック補助クラス
+
+今回のスタイル再構成により、DayFlow はボタン状態や選択状態、破壊的アクション、フォーカスリングなどを表す安定した `df-*` セマンティッククラスを公開しています。これらは共有基盤 CSS で定義されており、カスタム slot やプラグイン UI から安全に再利用できます。
+
+| クラス名                 | 用途                                          |
+| ------------------------ | --------------------------------------------- |
+| `df-fill-primary`        | プライマリ塗りつぶし背景 + 自動前景文字色     |
+| `df-fill-secondary`      | セカンダリ塗りつぶし背景 + 自動前景文字色     |
+| `df-fill-destructive`    | 破壊的アクション背景 + 自動前景文字色         |
+| `df-tint-primary`        | プライマリ 10% ティント                       |
+| `df-tint-primary-md`     | プライマリ 20% ティント                       |
+| `df-tint-primary-lg`     | プライマリ 30% ティント                       |
+| `df-hover-primary`       | プライマリ系ホバー状態                        |
+| `df-hover-primary-solid` | プライマリ塗りつぶしボタンのホバー状態        |
+| `df-hover-destructive`   | 破壊的アクションのホバー状態                  |
+| `df-text-primary`        | プライマリ文字色                              |
+| `df-text-primary-fg`     | プライマリ背景上の文字色                      |
+| `df-text-destructive`    | 破壊的アクション文字色                        |
+| `df-border-primary`      | プライマリ枠線色                              |
+| `df-ring-primary`        | プライマリ ring トークン                      |
+| `df-shadow-primary`      | プライマリ shadow トークン                    |
+| `df-focus-ring`          | `:focus` 時にプライマリ border と ring を適用 |
+
+テーマ調整では、これらの `df-*` クラスまたは `--df-color-*` 変数を優先してください。`bg-primary`、`text-primary`、`hover:bg-primary/90` のような旧来の内部 Tailwind セマンティック名に依存しないでください。
 
 ---
 
@@ -163,6 +193,7 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 | `df-event-detail-panel` | フローティングイベント詳細パネル |
 | `df-dialog-overlay`     | ダイアログ背景オーバーレイ       |
 | `df-dialog-container`   | ダイアログコンテンツコンテナ     |
+| `df-portal`             | フローティング UI の共通ルート   |
 
 ---
 
@@ -179,7 +210,7 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 ## カスタマイズ方法
 
-外観をカスタマイズするには、グローバル CSS ファイルでこれらのクラスをターゲットにします。DayFlow は内部で Tailwind CSS を使用しているため、スタイルが上書きされる場合は `!important` を使用するか、セレクターの詳細度を上げる必要がある場合があります。
+外観をカスタマイズするには、これらのクラスや `--df-color-*` 変数をグローバル CSS から上書きします。ほとんどのテーマ調整では `!important` は不要で、高い詳細度の局所ルールを意図的に上書きしたい場合だけ使ってください。
 
 ### 例
 
@@ -211,6 +242,12 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 /* ミニカレンダーのスタイル設定 */
 .df-mini-calendar-day:hover {
   background-color: #e2e8f0;
+}
+
+/* カスタム slot / プラグイン UI で DayFlow のセマンティック色を再利用 */
+.my-custom-primary-chip {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
 }
 
 /* ダークモードの上書き */

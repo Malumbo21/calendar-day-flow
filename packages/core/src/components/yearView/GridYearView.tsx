@@ -347,7 +347,7 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
                         <span
                           className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-medium ${
                             isToday
-                              ? 'bg-primary font-bold text-primary-foreground'
+                              ? 'df-fill-primary font-bold'
                               : isCurrentMonth
                                 ? eventCount > 0
                                   ? eventCount >= 4

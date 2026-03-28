@@ -47,13 +47,13 @@ export const buttonGroup = 'df-navigation flex items-center';
  * Navigation button (forward/backward)
  */
 export const navButton =
-  'p-1 text-gray-600 dark:text-gray-300 hover:bg-primary/10 hover:text-primary rounded transition-colors';
+  'p-1 text-gray-600 dark:text-gray-300 df-hover-primary rounded transition-colors';
 
 /**
  * Today button
  */
 export const todayButton =
-  'px-4 py-1 text-sm text-primary font-medium hover:bg-primary/10 rounded transition-colors';
+  'px-4 py-1 text-sm df-text-primary font-medium df-hover-primary rounded transition-colors';
 
 /**
  * Icon button size
@@ -152,7 +152,7 @@ export const calendarContent = 'relative overflow-y-auto df-calendar-content';
 /**
  * Hide scrollbar
  */
-export const scrollbarHide = 'scrollbar-hide';
+export const scrollbarHide = 'df-scrollbar-hide';
 
 // ==================== Time-Related Styles ====================
 
@@ -193,13 +193,13 @@ export const currentTimeLine =
  * Current time label
  */
 export const currentTimeLabel =
-  'df-current-time-label ml-2 text-primary-foreground text-xs font-bold px-1.5 bg-primary rounded-sm';
+  'df-current-time-label ml-2 df-fill-primary text-xs font-bold px-1.5 rounded-sm';
 
 /**
  * Current time line bar
  */
 export const currentTimeLineBar =
-  'df-current-time-bar h-0.5 w-full bg-primary relative';
+  'df-current-time-bar h-0.5 w-full df-fill-primary relative';
 
 // ==================== All-Day Event Area ====================
 
@@ -367,14 +367,13 @@ export const miniCalendarOtherMonth = 'text-gray-400 dark:text-gray-600';
 /**
  * Mini calendar today
  */
-export const miniCalendarToday =
-  'bg-primary rounded-full text-primary-foreground';
+export const miniCalendarToday = 'df-fill-primary rounded-full';
 
 /**
  * Mini calendar selected date
  */
 export const miniCalendarSelected =
-  'bg-secondary text-secondary-foreground rounded-full font-medium';
+  'df-fill-secondary rounded-full font-medium';
 
 // ==================== Navigation Button Styles ====================
 
@@ -405,7 +404,7 @@ export const navButtonIcon =
  * Used in DefaultEventDetailPanel, EventDetailPanelWithContent
  */
 export const eventDetailPanel =
-  'df-event-detail-panel fixed shadow-lg border rounded-lg';
+  'df-event-detail-panel df-portal fixed shadow-lg border rounded-lg';
 
 /**
  * Event detail dialog overlay
@@ -430,7 +429,7 @@ export const dropdownPanel =
  * Calendar picker dropdown (for selecting calendar for an event)
  */
 export const calendarPickerDropdown =
-  'bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 origin-top-right df-animate-in df-fade-in df-zoom-in-95';
+  'df-portal bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 origin-top-right df-animate-in df-fade-in df-zoom-in-95';
 
 // ==================== Time Grid Boundary Styles ====================
 
@@ -482,7 +481,7 @@ export const mobileFullscreen =
  * Search input
  */
 export const searchInput =
-  'pl-9 pr-8 py-1 h-7 text-sm border border-slate-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition resize-none';
+  'pl-9 pr-8 py-1 h-7 text-sm border border-slate-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 df-focus-ring transition resize-none';
 
 /**
  * Icon button (square, no text)

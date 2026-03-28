@@ -107,7 +107,7 @@ export const RightPanel = ({
                 {sortedEvents.map((event: Event) => (
                   <div
                     key={event.id}
-                    className={` ${p2} cursor-pointer rounded border-l-4 transition-colors ${selectedEvent?.id === event.id ? 'border-primary bg-primary/10' : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800'} hover:bg-gray-100 dark:hover:bg-gray-700`}
+                    className={` ${p2} cursor-pointer rounded border-l-4 transition-colors ${selectedEvent?.id === event.id ? 'df-border-primary df-tint-primary' : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800'} hover:bg-gray-100 dark:hover:bg-gray-700`}
                     style={{
                       borderLeftColor: getLineColor(event.calendarId || 'blue'),
                     }}

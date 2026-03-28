@@ -321,7 +321,7 @@ export const MobileEventDrawer = ({
               disabled={!hasChanges}
               className={`px-2 py-1 font-bold transition-colors ${
                 hasChanges
-                  ? 'text-primary'
+                  ? 'df-text-primary'
                   : 'cursor-not-allowed text-gray-400 opacity-50'
               }`}
             >
@@ -397,7 +397,7 @@ export const MobileEventDrawer = ({
               <div className='flex space-x-2'>
                 <button
                   type='button'
-                  className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'start-date' ? 'bg-gray-200 text-primary dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
+                  className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'start-date' ? 'df-text-primary bg-gray-200 dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
                   onClick={() => isEditable && toggleExpand('start-date')}
                   disabled={!isEditable}
                 >
@@ -406,7 +406,7 @@ export const MobileEventDrawer = ({
                 {!isAllDay && (
                   <button
                     type='button'
-                    className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'start-time' ? 'bg-gray-200 text-primary dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
+                    className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'start-time' ? 'df-text-primary bg-gray-200 dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
                     onClick={() => isEditable && toggleExpand('start-time')}
                     disabled={!isEditable}
                   >
@@ -455,7 +455,7 @@ export const MobileEventDrawer = ({
               <div className='flex space-x-2'>
                 <button
                   type='button'
-                  className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'end-date' ? 'bg-gray-200 text-primary dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
+                  className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'end-date' ? 'df-text-primary bg-gray-200 dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
                   onClick={() => isEditable && toggleExpand('end-date')}
                   disabled={!isEditable}
                 >
@@ -464,7 +464,7 @@ export const MobileEventDrawer = ({
                 {!isAllDay && (
                   <button
                     type='button'
-                    className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'end-time' ? 'bg-gray-200 text-primary dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
+                    className={`rounded-md px-3 py-1 transition-colors ${expandedPicker === 'end-time' ? 'df-text-primary bg-gray-200 dark:bg-gray-700 dark:text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
                     onClick={() => isEditable && toggleExpand('end-time')}
                     disabled={!isEditable}
                   >

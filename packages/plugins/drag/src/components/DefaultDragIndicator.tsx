@@ -140,10 +140,10 @@ export const DefaultDragIndicatorRenderer: DragIndicatorRenderer = {
 
     return (
       <>
-        <div className='absolute top-1 bottom-1 left-0.5 w-0.5 rounded-full bg-primary' />
+        <div className='df-fill-primary absolute top-1 bottom-1 left-0.5 w-0.5 rounded-full' />
         <div className='flex h-full flex-col overflow-hidden p-1 pl-3'>
           <div
-            className={`pr-1 text-xs font-medium text-primary ${isMobile ? 'df-mobile-mask-fade' : 'truncate'}`}
+            className={`df-text-primary pr-1 text-xs font-medium ${isMobile ? 'df-mobile-mask-fade' : 'truncate'}`}
             style={
               isMobile
                 ? {

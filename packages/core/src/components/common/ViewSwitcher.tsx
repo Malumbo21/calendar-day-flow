@@ -104,7 +104,7 @@ const ViewSwitcher = ({ calendar, mode = 'buttons' }: ViewSwitcherProps) => {
                   }}
                   className={`w-full rounded px-3 py-0.5 text-left text-sm transition-colors duration-150 focus:outline-none ${
                     currentView === viewType
-                      ? 'bg-primary/10 font-medium text-primary'
+                      ? 'df-tint-primary font-medium'
                       : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
                   }`}
                   role='option'

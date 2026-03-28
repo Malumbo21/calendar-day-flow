@@ -59,7 +59,7 @@ export const getSearchHeaderInfo = (
   if (diffDays === 0) {
     // Today
     title = t('today') || 'Today';
-    colorClass = 'text-primary'; // Primary color
+    colorClass = 'df-text-primary'; // Primary color
   } else if (diffDays === 1 || diffDays === 2) {
     // Tomorrow or Day after tomorrow
     try {

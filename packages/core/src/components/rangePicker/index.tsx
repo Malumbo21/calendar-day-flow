@@ -244,7 +244,7 @@ const RangePicker = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: PointerEvent) => {
       const target = event.target as HTMLElement;
       // Check if click is inside the input container
       if (containerRef.current?.contains(target)) {
@@ -265,14 +265,12 @@ const RangePicker = ({
       setIsOpen(false);
     };
 
-    // Delay adding listener to ensure popup is rendered
-    const timerId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 100); // Increased delay to ensure Portal is mounted
+    // Use capture phase so host popovers/modals cannot swallow the event
+    // before RangePicker has a chance to close itself.
+    document.addEventListener('pointerdown', handleClickOutside, true);
 
     return () => {
-      clearTimeout(timerId);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handleClickOutside, true);
     };
   }, [isOpen]);
 
@@ -793,13 +791,13 @@ const RangePicker = ({
   };
 
   return (
-    <div className='relative max-w-100' ref={containerRef}>
+    <div className='df-range-picker relative w-full min-w-0' ref={containerRef}>
       <div
         className={`flex items-center gap-2 rounded-lg border text-sm shadow-sm transition ${
           disabled
             ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
             : isOpen
-              ? 'border-primary bg-white shadow-md dark:bg-gray-700'
+              ? 'df-border-primary bg-white shadow-md dark:bg-gray-700'
               : 'border-slate-200 bg-white dark:border-gray-600 dark:bg-gray-700'
         }`}
       >
@@ -817,7 +815,7 @@ const RangePicker = ({
               disabled
                 ? 'cursor-not-allowed border-transparent bg-transparent text-slate-400 dark:text-gray-500'
                 : focusedField === 'start' && isOpen
-                  ? 'bg-white text-primary dark:bg-gray-700'
+                  ? 'df-text-primary bg-white dark:bg-gray-700'
                   : 'border-transparent bg-transparent text-slate-700 dark:text-gray-300'
             }`}
             placeholder={formatTemplate}
@@ -842,7 +840,7 @@ const RangePicker = ({
               disabled
                 ? 'cursor-not-allowed border-transparent bg-transparent text-slate-400 dark:text-gray-500'
                 : focusedField === 'end' && isOpen
-                  ? 'bg-white text-primary dark:bg-gray-700'
+                  ? 'df-text-primary bg-white dark:bg-gray-700'
                   : 'border-transparent bg-transparent text-slate-700 dark:text-gray-300'
             }`}
             placeholder={formatTemplate}

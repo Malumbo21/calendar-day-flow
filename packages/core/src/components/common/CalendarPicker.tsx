@@ -128,7 +128,7 @@ export const CalendarPicker = ({
               <div className='mr-3 flex min-w-0 flex-1 items-center'>
                 <div className='mr-2 flex w-5 justify-center'>
                   {opt.value === value && (
-                    <Check className='h-4 w-4 text-primary' />
+                    <Check className='df-text-primary h-4 w-4' />
                   )}
                 </div>
                 <span className='truncate text-sm text-gray-700 dark:text-gray-200'>
@@ -150,7 +150,7 @@ export const CalendarPicker = ({
       <ul
         data-calendar-picker-dropdown='true'
         style={dropdownStyle}
-        className='df-animate-in df-fade-in df-zoom-in-95 origin-top-left overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-gray-600 dark:bg-gray-700 dark:shadow-gray-900/50'
+        className='df-portal df-animate-in df-fade-in df-zoom-in-95 origin-top-left overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-gray-600 dark:bg-gray-700 dark:shadow-gray-900/50'
       >
         {options.map(opt => (
           <li
@@ -161,7 +161,7 @@ export const CalendarPicker = ({
             onClick={e => handleSelect(e, opt.value)}
           >
             {value === opt.value ? (
-              <span className='mr-2 text-sm text-primary'>
+              <span className='df-text-primary mr-2 text-sm'>
                 <Check width={12} height={12} />
               </span>
             ) : (

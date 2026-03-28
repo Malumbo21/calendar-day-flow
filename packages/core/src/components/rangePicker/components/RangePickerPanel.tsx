@@ -56,7 +56,12 @@ const RangePickerPanel = ({
   const endDate = draftRange[1].toPlainDate();
 
   return (
-    <div ref={popupRef} style={getPopupStyle()} data-range-picker-popup='true'>
+    <div
+      ref={popupRef}
+      className='df-range-picker'
+      style={getPopupStyle()}
+      data-range-picker-popup='true'
+    >
       <div
         className='space-y-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800'
         style={{
@@ -103,7 +108,7 @@ const RangePickerPanel = ({
             type='button'
             onClick={onOk}
             disabled={disabled}
-            className='inline-flex items-center rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50'
+            className='df-fill-primary df-hover-primary-solid inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50'
           >
             OK
           </button>

@@ -361,8 +361,8 @@ export const TimeGrid = ({
                             <div
                               className={`relative h-0.5 w-full ${
                                 idx === todayIndex
-                                  ? 'bg-primary'
-                                  : 'bg-primary/30'
+                                  ? 'df-fill-primary'
+                                  : 'df-tint-primary-lg'
                               }`}
                               style={{
                                 zIndex: 9999,
@@ -370,7 +370,7 @@ export const TimeGrid = ({
                             >
                               {idx === todayIndex && todayIndex !== 0 && (
                                 <div
-                                  className='absolute h-2 w-2 rounded-full bg-primary'
+                                  className='df-fill-primary absolute h-2 w-2 rounded-full'
                                   style={{ top: '-3px', left: '-4px' }}
                                 />
                               )}
