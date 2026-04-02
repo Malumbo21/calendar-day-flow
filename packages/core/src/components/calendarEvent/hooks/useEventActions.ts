@@ -142,7 +142,7 @@ export const useEventActions = ({
       clearPendingClick();
       e.preventDefault();
       e.stopPropagation();
-      if (app && !app.canMutateFromUI()) return;
+      if (app && !app.canMutateFromUI(event.id)) return;
       if (onEventSelect) onEventSelect(event.id);
       setContextMenuPosition({ x: e.clientX, y: e.clientY });
     },

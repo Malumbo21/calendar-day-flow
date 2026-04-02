@@ -91,9 +91,17 @@ DayFlow はファイルを取得してイベントを解析し、新しいカレ
 - 購読から取得したイベントが、コアストア内の既存イベントと同じ `id` を持っている場合、購読側のバージョンが優先されます。
 - これにより、ページをリロードした後にイベントが「二重に」表示されることなく、常に最新の情報を UI に表示できます。
 
-### 登録済みカレンダーの永続化
+### 購読カレンダーの永続化
 
-DayFlow は `CalendarType` オブジェクトに `subscribed: true` フラグを保存します。カレンダーの状態をバックエンドに保存する際はこのフィールドを保持し、次回の読み込み時に復元することでバッジが引き続き表示されます：
+DayFlow は `CalendarType` に `subscription` オブジェクトが存在するかどうかで購読カレンダーを識別します。
+
+**購読カレンダーのデフォルト動作：**
+
+- **読み取り専用**：タイトル編集、カレンダー変更、削除などの UI 操作が `canMutateFromUI()` を介して無効化されます。
+- **ドラッグ不可**：ドラッグ＆ドロップ操作（移動、リサイズ）が無効化されます。
+- **備考の非表示**：イベントに説明がない場合、詳細パネルの「備考」フィールドは非表示になり、UI が整理されます。
+
+ユーザーに購読イベントの編集や移動を許可したい場合は、カレンダーオブジェクトに `readOnly: false` を設定することで、これらのデフォルトの保護を明示的に上書きできます：
 
 ```tsx
 const calendar = useCalendarApp({
@@ -101,17 +109,26 @@ const calendar = useCalendarApp({
     {
       id: 'team-ics',
       name: 'チームカレンダー',
-      subscribed: true,
-      lightColors: {
-        /* ... */
+      subscription: {
+        url: 'https://example.com/calendar.ics',
+        status: 'ready',
       },
-      darkColors: {
+      // デフォルトの保護を上書き：
+      readOnly: false, // UI 操作とドラッグ＆ドロップの両方を有効化
+      colors: {
         /* ... */
       },
     },
   ],
 });
 ```
+
+カレンダーの状態をバックエンドに保存する際は `subscription` フィールドを保持し、次回の読み込み時に復元してください。
+},
+],
+});
+
+````
 
 > **注意:** DayFlow は登録済みフィードを自動更新しません。イベントを最新の状態に保つには、アプリ側で定期的な取得を実装し、`app.addEvent()` / `app.removeEvent()` でイベントを更新してください。
 
@@ -180,7 +197,7 @@ const CustomSidebar = ({
 const sidebarPlugin = createSidebarPlugin({
   render: props => <CustomSidebar {...props} />,
 });
-```
+````
 
 ## カスタムコンテキストメニュー
 

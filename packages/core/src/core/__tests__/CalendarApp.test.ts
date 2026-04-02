@@ -161,6 +161,79 @@ describe('CalendarApp', () => {
       expect(readOnlyApp.canMutateFromUI()).toBe(false);
       expect(partialReadOnlyApp.canMutateFromUI()).toBe(false);
     });
+
+    it('canMutateFromUI should respect per-calendar read-only status', () => {
+      const app = new CalendarApp({
+        views: [],
+        plugins: [],
+        events: [
+          {
+            id: 'event-1',
+            title: 'Subscribed Event',
+            start: Temporal.Now.plainDateISO(),
+            end: Temporal.Now.plainDateISO(),
+            calendarId: 'sub-cal',
+          },
+          {
+            id: 'event-2',
+            title: 'Regular Event',
+            start: Temporal.Now.plainDateISO(),
+            end: Temporal.Now.plainDateISO(),
+            calendarId: 'reg-cal',
+          },
+        ],
+        calendars: [
+          {
+            id: 'sub-cal',
+            name: 'Subscribed',
+            colors: {
+              eventColor: '#000',
+              eventSelectedColor: '#000',
+              lineColor: '#000',
+              textColor: '#000',
+            },
+            subscription: {
+              url: 'http://example.com/cal.ics',
+              status: 'ready',
+            },
+          },
+          {
+            id: 'reg-cal',
+            name: 'Regular',
+            colors: {
+              eventColor: '#000',
+              eventSelectedColor: '#000',
+              lineColor: '#000',
+              textColor: '#000',
+            },
+          },
+        ],
+        readOnly: false,
+      });
+
+      // Default subscribed calendar is read-only
+      expect(app.canMutateFromUI('sub-cal')).toBe(false);
+      expect(app.canMutateFromUI('event-1')).toBe(false);
+
+      // Regular calendar is editable
+      expect(app.canMutateFromUI('reg-cal')).toBe(true);
+      expect(app.canMutateFromUI('event-2')).toBe(true);
+
+      // Explicit read-only on regular calendar
+      app.updateCalendar('reg-cal', { readOnly: true });
+      expect(app.canMutateFromUI('reg-cal')).toBe(false);
+      expect(app.canMutateFromUI('event-2')).toBe(false);
+
+      // Explicit override for subscribed calendar
+      app.updateCalendar('sub-cal', { readOnly: false });
+      expect(app.canMutateFromUI('sub-cal')).toBe(true);
+      expect(app.canMutateFromUI('event-1')).toBe(true);
+
+      // Global read-only overrides everything
+      app.updateConfig({ readOnly: true });
+      expect(app.canMutateFromUI('sub-cal')).toBe(false);
+      expect(app.canMutateFromUI('reg-cal')).toBe(false);
+    });
   });
 
   describe('View Management', () => {

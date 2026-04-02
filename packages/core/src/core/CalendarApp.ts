@@ -196,21 +196,83 @@ export class CalendarApp implements ICalendarApp {
     }
   };
 
-  getReadOnlyConfig = (): ReadOnlyConfig => {
+  getReadOnlyConfig = (id?: string): ReadOnlyConfig => {
     const ro = this.state.readOnly;
+
+    // 1. Start with global config
+    let draggable = true;
+    let viewable = true;
+
     if (ro === true) {
-      return { draggable: false, viewable: false };
+      draggable = false;
+      viewable = false;
+    } else if (ro === false) {
+      draggable = true;
+      viewable = true;
+    } else {
+      draggable = ro.draggable ?? true;
+      viewable = ro.viewable ?? true;
     }
-    if (ro === false) {
-      return { draggable: true, viewable: true };
+
+    // 2. If ID provided, check for per-calendar readOnly and subscription status
+    if (id && (draggable || viewable)) {
+      let calendarId = id;
+      const event = this.state.events.find(e => e.id === id);
+      if (event && event.calendarId) {
+        calendarId = event.calendarId;
+      }
+
+      const calendar = this.calendarRegistry.get(calendarId);
+      if (calendar) {
+        // If calendar explicitly defines readOnly, it overrides global draggable/viewable
+        if (calendar.readOnly === true) {
+          draggable = false;
+          // Note: we don't necessarily hide viewing just because it's readOnly,
+          // but canMutateFromUI(id) will return false.
+          // Usually readOnly on calendar means no edits.
+        }
+
+        // Subscribed calendars are read-only (not draggable) by default
+        if (calendar.subscription && calendar.readOnly === undefined) {
+          draggable = false;
+        }
+      }
     }
+
     return {
-      draggable: ro.draggable ?? false,
-      viewable: ro.viewable ?? false,
+      draggable,
+      viewable,
     };
   };
 
-  canMutateFromUI = (): boolean => this.state.readOnly === false;
+  canMutateFromUI = (id?: string): boolean => {
+    // 1. If global readOnly is set, respect it
+    if (this.state.readOnly !== false) return false;
+
+    // 2. If an ID is provided, check the specific calendar's status
+    if (id) {
+      // Try to find if it's an event ID first
+      let calendarId = id;
+      const event = this.state.events.find(e => e.id === id);
+      if (event && event.calendarId) {
+        calendarId = event.calendarId;
+      }
+
+      const calendar = this.calendarRegistry.get(calendarId);
+      if (calendar) {
+        // If calendar explicitly defines readOnly, use it
+        if (calendar.readOnly !== undefined) {
+          return !calendar.readOnly;
+        }
+        // Subscribed calendars are read-only by default
+        if (calendar.subscription) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
 
   // View management
   changeView = (view: CalendarViewType): void => {

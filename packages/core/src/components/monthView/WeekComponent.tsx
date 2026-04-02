@@ -403,16 +403,12 @@ const WeekComponent = memo(
       const availableHeight = weekHeight - MULTI_DAY_TOP_OFFSET;
       if (availableHeight <= 0) return { maxSlots: 0, maxSlotsWithMore: 0 };
 
-      const hardCap = 4;
-      const maxSlots = Math.min(
-        hardCap,
-        Math.floor(availableHeight / ROW_SPACING)
-      );
+      const maxSlots = Math.floor(availableHeight / ROW_SPACING);
 
       const spaceForMore = availableHeight - MORE_TEXT_HEIGHT;
-      const maxSlotsWithMoreRaw = Math.min(
-        hardCap,
-        Math.max(0, Math.floor(spaceForMore / ROW_SPACING))
+      const maxSlotsWithMoreRaw = Math.max(
+        0,
+        Math.floor(spaceForMore / ROW_SPACING)
       );
 
       // Ensure maxSlotsWithMore is always at most maxSlots - 1 to leave room for the "+ x more" indicator

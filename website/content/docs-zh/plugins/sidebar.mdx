@@ -91,9 +91,17 @@ DayFlow 会自动获取该文件、解析事件并创建一个新日历。已订
 - 如果来自订阅的事件与核心存储中已有的事件具有相同的 `id`，订阅版本的事件将优先显示。
 - 这确保了你的 UI 始终显示最新信息，而不会在页面刷新后出现“双重”事件。
 
-### 持久化已订阅日历
+### 持久化订阅日历
 
-DayFlow 会在 `CalendarType` 对象上存储 `subscribed: true` 标志。将日历状态保存到后端时，请保留该字段，并在下次加载时恢复，以确保标识图标正常显示：
+DayFlow 通过 `CalendarType` 对象上是否存在 `subscription` 字段来识别订阅日历。
+
+**订阅日历的默认行为：**
+
+- **只读**：UI 修改操作（编辑标题、更换日历、删除）会通过 `canMutateFromUI()` 禁用。
+- **不可拖拽**：禁用拖放操作（移动、调整大小）。
+- **隐藏备注**：如果事件没有描述，详情面板中的“备注”字段将被隐藏，以保持界面整洁。
+
+如果您希望允许用户修改订阅事件或移动它们，可以通过在日历对象上设置 `readOnly: false` 来显式覆盖这些默认保护：
 
 ```tsx
 const calendar = useCalendarApp({
@@ -101,17 +109,26 @@ const calendar = useCalendarApp({
     {
       id: 'team-ics',
       name: '团队日历',
-      subscribed: true,
-      lightColors: {
-        /* ... */
+      subscription: {
+        url: 'https://example.com/calendar.ics',
+        status: 'ready',
       },
-      darkColors: {
+      // 覆盖默认保护：
+      readOnly: false, // 同时启用 UI 修改和拖放操作
+      colors: {
         /* ... */
       },
     },
   ],
 });
 ```
+
+将日历状态保存到后端时，请保留 `subscription` 字段，并在下次加载时恢复。
+},
+],
+});
+
+````
 
 > **注意：** DayFlow 不会自动刷新已订阅的日历源。如需保持事件最新，请在应用中自行实现定期拉取逻辑，并通过 `app.addEvent()` / `app.removeEvent()` 更新事件。
 
@@ -180,7 +197,7 @@ const CustomSidebar = ({
 const sidebarPlugin = createSidebarPlugin({
   render: props => <CustomSidebar {...props} />,
 });
-```
+````
 
 ## 自定义右键菜单
 

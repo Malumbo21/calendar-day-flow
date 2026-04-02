@@ -10,7 +10,7 @@ import {
 import { EventContextMenu } from '@/components/contextMenu';
 import { ContentSlot } from '@/renderer/ContentSlot';
 import { CustomRenderingContext } from '@/renderer/CustomRenderingContext';
-import { Event, ViewType } from '@/types';
+import { Event, ViewType, ReadOnlyConfig } from '@/types';
 import {
   getSelectedBgColor,
   getEventBgColor,
@@ -103,8 +103,8 @@ const CalendarEvent = ({
   const showDetailPanelForClickOutside =
     showDetailPanel && !customEventDetailDialog;
 
-  const readOnlyConfig = app?.getReadOnlyConfig();
-  const isEditable = app?.canMutateFromUI() ?? false;
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as ReadOnlyConfig;
+  const isEditable = app?.canMutateFromUI(event.id) ?? false;
   const canOpenDetail = readOnlyConfig?.viewable !== false;
   const isDraggable = readOnlyConfig?.draggable !== false;
 

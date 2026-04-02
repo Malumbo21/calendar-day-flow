@@ -30,7 +30,7 @@ const EventContextMenu = ({
   app,
 }: EventContextMenuProps) => {
   const { t } = useLocale();
-  if (!app.canMutateFromUI()) return null;
+  if (!app.canMutateFromUI(event.id)) return null;
 
   const calendars = app.getCalendars();
 

@@ -44,7 +44,6 @@ export async function subscribeCalendar(url: string): Promise<SubscribeResult> {
       id: generateUniKey(),
       name: calendarName,
       isVisible: true,
-      subscribed: true,
       colors,
       darkColors,
       subscription: {

@@ -162,9 +162,8 @@ const CalendarItem = ({
                   title='Failed to load subscription'
                 />
               )}
-              {calendar.subscribed &&
-                (!calendar.subscription ||
-                  calendar.subscription.status === 'ready') && (
+              {calendar.subscription &&
+                calendar.subscription.status === 'ready' && (
                   <AudioLines
                     width={13}
                     height={13}

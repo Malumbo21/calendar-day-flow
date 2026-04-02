@@ -43,8 +43,8 @@ export interface CalendarType {
   /** Whether events of this type should be visible */
   isVisible?: boolean;
 
-  /** Whether this calendar was created by subscribing to a remote ICS URL */
-  subscribed?: boolean;
+  /** Whether this calendar is read-only (disables UI mutations like drag/edit) */
+  readOnly?: boolean;
 
   /** The source of this calendar (e.g., 'Google Calendar', 'iCloud', 'Outlook') */
   source?: string;

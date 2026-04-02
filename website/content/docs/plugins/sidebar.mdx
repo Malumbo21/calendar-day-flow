@@ -93,7 +93,15 @@ To prevent visual duplicates when combining locally cached events with fresh sub
 
 ### Persisting Subscribed Calendars
 
-DayFlow stores a `subscribed: true` flag on the `CalendarType` object. When saving calendar state to a backend, preserve this field and restore it on the next load so the badge remains visible:
+DayFlow identifies subscribed calendars by the presence of a `subscription` object on the `CalendarType`.
+
+**Default Behavior for Subscriptions:**
+
+- **Read-only**: UI mutations (editing title, changing calendar, deleting) are disabled via `canMutateFromUI()`.
+- **Non-draggable**: Drag-and-drop actions (moving, resizing) are disabled.
+- **Hidden Notes**: If an event has no description, the "Note" field is hidden in the detail panel to keep the UI clean.
+
+To allow users to modify subscribed events or move them around, you can explicitly override these protections by setting `readOnly: false` on the calendar object:
 
 ```tsx
 const calendar = useCalendarApp({
@@ -101,17 +109,21 @@ const calendar = useCalendarApp({
     {
       id: 'team-ics',
       name: 'Team Calendar',
-      subscribed: true,
-      lightColors: {
-        /* ... */
+      subscription: {
+        url: 'https://example.com/calendar.ics',
+        status: 'ready',
       },
-      darkColors: {
+      // Override default protections:
+      readOnly: false, // Enables both UI mutations and drag-and-drop
+      colors: {
         /* ... */
       },
     },
   ],
 });
 ```
+
+When saving calendar state to a backend, preserve the `subscription` field and restore it on the next load.
 
 > **Note:** DayFlow does not auto-refresh subscribed feeds. To keep events up to date, implement periodic fetching in your app and update events via `app.addEvent()` / `app.removeEvent()`.
 

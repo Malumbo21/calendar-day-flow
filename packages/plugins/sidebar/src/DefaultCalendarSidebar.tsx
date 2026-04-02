@@ -563,7 +563,7 @@ const DefaultCalendarSidebar = ({
         </>
       )}
 
-      {isEditable && contextMenu && (
+      {contextMenu && app.canMutateFromUI(contextMenu.calendarId) && (
         <ContextMenu
           ref={contextMenuRef}
           x={contextMenu.x}

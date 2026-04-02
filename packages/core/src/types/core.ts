@@ -193,8 +193,8 @@ export interface CalendarAppState {
 export interface ICalendarApp {
   // State
   state: CalendarAppState;
-  getReadOnlyConfig: () => ReadOnlyConfig;
-  canMutateFromUI: () => boolean;
+  getReadOnlyConfig: (id?: string) => ReadOnlyConfig;
+  canMutateFromUI: (id?: string) => boolean;
 
   // Subscription management
   subscribe: (listener: (app: ICalendarApp) => void) => () => void;
@@ -345,7 +345,7 @@ export interface UseCalendarAppReturn {
     end: Date,
     reason?: RangeChangeReason
   ) => void;
-  canMutateFromUI: () => boolean;
+  canMutateFromUI: (id?: string) => boolean;
   readOnlyConfig: ReadOnlyConfig;
 }
 

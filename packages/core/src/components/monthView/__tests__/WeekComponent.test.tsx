@@ -105,9 +105,9 @@ describe('WeekComponent', () => {
           index: 0,
           weekData: generateWeekData(new Date(2026, 2, 9)),
           top: 0,
-          height: 119,
+          height: 113,
         }}
-        weekHeight={119}
+        weekHeight={113}
         events={events}
         dragState={{
           active: false,
@@ -170,11 +170,11 @@ describe('WeekComponent', () => {
       current: HTMLDivElement;
     };
 
-    // Set weekHeight such that availableHeight is 88px.
-    // 88 / 17 = 5.17, so floor is 5. But capped at 4. So maxSlots = 4.
-    // (88 - 20) / 17 = 4, so maxSlotsWithMore = 4.
-    // We want to verify that it instead uses 3 for maxSlotsWithMore.
-    const weekHeight = 88 + 33; // 121
+    // Set weekHeight such that availableHeight is 80px.
+    // 80 / 17 = 4.7, floor = 4. So maxSlots = 4.
+    // (80 - 20) / 17 = 3.5, floor = 3. So maxSlotsWithMoreRaw = 3.
+    // We want to verify that maxSlotsWithMore = min(3, 4-1) = 3, not 4.
+    const weekHeight = 80 + 33; // 113
 
     const { container } = render(
       <WeekComponent
@@ -252,7 +252,8 @@ describe('WeekComponent', () => {
     };
 
     // Set weekHeight such that maxSlots = 4 and maxSlotsWithMore = 3
-    const weekHeight = 88 + 33;
+    // availableHeight = 80: floor(80/17) = 4, floor((80-20)/17) = 3
+    const weekHeight = 80 + 33; // 113
 
     const { container } = render(
       <WeekComponent

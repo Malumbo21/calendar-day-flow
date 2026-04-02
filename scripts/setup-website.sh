@@ -6,36 +6,6 @@ set -e
 # Get root directory
 ROOT_DIR=$(pwd)
 
-echo "🚀 Starting build process..."
-pnpm -r build
-
-echo "📦 Packing all packages..."
-PACK_DIRS=(
-  "packages/core"
-  "packages/react"
-  "packages/angular"
-  "packages/svelte"
-  "packages/vue"
-  "packages/plugins/drag"
-  "packages/plugins/keyboard-shortcuts"
-  "packages/plugins/localization"
-  "packages/plugins/sidebar"
-)
-
-for dir in "${PACK_DIRS[@]}"; do
-  if [ -d "$dir" ]; then
-    echo "Packing $dir..."
-    (cd "$dir" && pnpm pack)
-  fi
-done
-
-echo "🧹 Cleaning up website directory..."
-cd "$ROOT_DIR/website"
-rm -rf node_modules package-lock.json
-
-echo "------------------------------------------"
-echo "Please choose the installation option (Use arrow keys):"
-
 # Function for interactive menu
 select_option() {
   local options=("$@")
@@ -82,12 +52,66 @@ select_option() {
   echo "$cursor"
 }
 
+echo "------------------------------------------"
+echo "Please choose the installation option (Use arrow keys):"
+
 OPTIONS=("Install Core, React only" "Install All")
 choice_index=$(select_option "${OPTIONS[@]}")
 choice=$(( choice_index + 1 ))
 
 echo "Selected choice: $choice"
 echo "------------------------------------------"
+
+BUILD_FILTER=""
+PACK_DIRS=()
+
+case $choice in
+  1)
+    echo "Selected: Core, React only"
+    BUILD_FILTER="--filter @dayflow/core --filter @dayflow/react"
+    PACK_DIRS=(
+      "packages/core"
+      "packages/react"
+    )
+    ;;
+  2)
+    echo "Selected: Install All"
+    BUILD_FILTER="-r"
+    PACK_DIRS=(
+      "packages/core"
+      "packages/react"
+      "packages/angular"
+      "packages/svelte"
+      "packages/vue"
+      "packages/plugins/drag"
+      "packages/plugins/keyboard-shortcuts"
+      "packages/plugins/localization"
+      "packages/plugins/sidebar"
+    )
+    ;;
+  *)
+    echo "Invalid choice. Exiting."
+    exit 1
+    ;;
+esac
+
+echo "🚀 Starting build process for selected packages..."
+pnpm $BUILD_FILTER build
+
+echo "📦 Packing selected packages..."
+for dir in "${PACK_DIRS[@]}"; do
+  if [ -d "$dir" ]; then
+    echo "Packing $dir..."
+    (cd "$dir" && pnpm pack)
+  else
+    echo "⚠️ Warning: Directory $dir not found"
+  fi
+done
+
+echo "🧹 Cleaning up website directory..."
+cd "$ROOT_DIR/website"
+rm -rf node_modules package-lock.json
+
 # Function to find the exact .tgz path (resolving wildcards, picking the latest version)
 find_tgz() {
   local pattern=$1
@@ -111,12 +135,10 @@ add_to_install_list() {
 INSTALL_LIST=()
 case $choice in
   1)
-    echo "Selected: Core, React only"
     add_to_install_list "$ROOT_DIR/packages/core/dayflow-core-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/react/dayflow-react-*.tgz"
     ;;
   2)
-    echo "Selected: Install All"
     # Core and Frameworks
     add_to_install_list "$ROOT_DIR/packages/core/dayflow-core-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/react/dayflow-react-*.tgz"
@@ -129,10 +151,6 @@ case $choice in
     add_to_install_list "$ROOT_DIR/packages/plugins/keyboard-shortcuts/dayflow-plugin-keyboard-shortcuts-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/plugins/localization/dayflow-plugin-localization-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/plugins/sidebar/dayflow-plugin-sidebar-*.tgz"
-    ;;
-  *)
-    echo "Invalid choice. Exiting."
-    exit 1
     ;;
 esac
 
@@ -151,7 +169,11 @@ echo "📥 Installing website dependencies (using npm)..."
 npm install
 
 # Install the local .tgz packages on top
-echo "📥 Installing local packages: ${CLEAN_INSTALL_LIST[*]}"
-npm install "${CLEAN_INSTALL_LIST[@]}"
+if [ ${#CLEAN_INSTALL_LIST[@]} -gt 0 ]; then
+  echo "📥 Installing local packages: ${CLEAN_INSTALL_LIST[*]}"
+  npm install "${CLEAN_INSTALL_LIST[@]}"
+else
+  echo "⚠️ Warning: No local packages to install"
+fi
 
 echo "✅ Setup complete! You can now run 'npm run dev' inside the website directory."

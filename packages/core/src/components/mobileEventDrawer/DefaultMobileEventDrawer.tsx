@@ -29,16 +29,30 @@ export const MobileEventDrawer = ({
   timeFormat = '24h',
 }: MobileEventProps) => {
   const { locale, t } = useLocale();
-  const readOnlyConfig = app.getReadOnlyConfig();
-  const isEditable = app.canMutateFromUI();
+  const readOnlyConfig = app.getReadOnlyConfig(draftEvent?.id) as {
+    draggable: boolean;
+    viewable: boolean;
+  };
+  const isEditable = app.canMutateFromUI(draftEvent?.id);
   const isViewable = readOnlyConfig.viewable !== false;
+
+  const [notes, setNotes] = useState('');
+
+  // Check if it's a subscribed calendar
+  const isSubscribed = useMemo(() => {
+    if (!draftEvent?.calendarId) return false;
+    const calendar = app.getCalendarRegistry().get(draftEvent.calendarId);
+    return !!calendar?.subscription;
+  }, [app, draftEvent?.calendarId]);
+
+  // If subscribed calendar and no notes, hide notes field
+  const shouldShowNotes = !isSubscribed || notes.trim() !== '';
 
   const [title, setTitle] = useState('');
   const [calendarId, setCalendarId] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [notes, setNotes] = useState('');
 
   // Independent visible month states for date pickers
   const [startVisibleMonth, setStartVisibleMonth] = useState(new Date());
@@ -504,17 +518,19 @@ export const MobileEventDrawer = ({
           </div>
 
           {/* Notes */}
-          <div className='rounded-lg bg-white px-4 py-3 dark:bg-gray-900'>
-            <textarea
-              placeholder={t('notesPlaceholder')}
-              value={notes}
-              onChange={(
-                e: JSX.TargetedEvent<HTMLTextAreaElement, globalThis.Event>
-              ) => isEditable && setNotes(e.currentTarget.value)}
-              readOnly={!isEditable}
-              className='min-h-20 w-full bg-transparent text-base placeholder-gray-400 focus:outline-none'
-            />
-          </div>
+          {shouldShowNotes && (
+            <div className='rounded-lg bg-white px-4 py-3 dark:bg-gray-900'>
+              <textarea
+                placeholder={t('notesPlaceholder')}
+                value={notes}
+                onChange={(
+                  e: JSX.TargetedEvent<HTMLTextAreaElement, globalThis.Event>
+                ) => isEditable && setNotes(e.currentTarget.value)}
+                readOnly={!isEditable}
+                className='min-h-20 w-full bg-transparent text-base placeholder-gray-400 focus:outline-none'
+              />
+            </div>
+          )}
 
           {/* Delete button — only for existing events that can be edited */}
           {isEditable && isEditing && onEventDelete && draftEvent && (
