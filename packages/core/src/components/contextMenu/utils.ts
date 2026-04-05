@@ -1,5 +1,3 @@
-import { Temporal } from 'temporal-polyfill';
-
 import { Event, ViewType, ICalendarApp } from '@/types';
 import {
   generateUniKey,
@@ -77,10 +75,10 @@ export const handlePasteEvent = async (
         // Use Temporal objects consistently
         start: typedEvent.allDay
           ? dateToPlainDate(targetStartDate)
-          : dateToZonedDateTime(targetStartDate, Temporal.Now.timeZoneId()),
+          : dateToZonedDateTime(targetStartDate, app.timeZone),
         end: typedEvent.allDay
           ? dateToPlainDate(targetEndDate)
-          : dateToZonedDateTime(targetEndDate, Temporal.Now.timeZoneId()),
+          : dateToZonedDateTime(targetEndDate, app.timeZone),
         // Ensure it belongs to a valid calendar
         calendarId:
           typedEvent.calendarId &&

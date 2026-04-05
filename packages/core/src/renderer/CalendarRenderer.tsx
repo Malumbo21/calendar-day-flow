@@ -43,10 +43,12 @@ export class CalendarRenderer {
 
   /**
    * Mount the calendar to a DOM container.
+   * Renders synchronously so the content is in the DOM before the first paint.
+   * Subsequent updates (triggered by app state changes) still use requestAnimationFrame.
    */
   mount(container: HTMLElement): void {
     this.container = container;
-    this.requestRender();
+    this.render();
   }
 
   /**

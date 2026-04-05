@@ -3,6 +3,7 @@ import {
   useState,
   useMemo,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
 } from 'preact/hooks';
@@ -72,6 +73,7 @@ const MonthView = ({
   const currentDate = app.getCurrentDate();
   const rawEvents = app.getEvents();
   const startOfWeek = config.startOfWeek ?? 1;
+  const appTimeZone = app.timeZone;
 
   const scrollDisabled = config.scroll?.disabled === true;
   const isFadeMode = scrollDisabled && config.scroll?.transition === 'fade';
@@ -174,12 +176,9 @@ const MonthView = ({
     events.forEach(event => {
       if (!event.start) return;
 
-      const startFull = temporalToVisualDate(
-        event.start,
-        config.secondaryTimeZone
-      );
+      const startFull = temporalToVisualDate(event.start, appTimeZone);
       const endFull = event.end
-        ? temporalToVisualDate(event.end, config.secondaryTimeZone)
+        ? temporalToVisualDate(event.end, appTimeZone)
         : startFull;
 
       // Normalize to day boundaries
@@ -224,7 +223,7 @@ const MonthView = ({
     });
 
     return map;
-  }, [events, startOfWeek, config.secondaryTimeZone]);
+  }, [events, startOfWeek, appTimeZone]);
 
   // Responsive configuration
   const { screenSize } = useResponsiveMonthConfig();
@@ -239,8 +238,15 @@ const MonthView = ({
 
   // Fixed weekHeight to prevent fluctuations during scrolling
   // Initialize with estimated value based on window height to minimize initial adjustment
-  const [weekHeight, setWeekHeight] = useState(DEFAULT_WEEK_HEIGHT);
-  const [isWeekHeightInitialized, setIsWeekHeightInitialized] = useState(false);
+  const [weekHeight, setWeekHeight] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_WEEK_HEIGHT;
+    const estimatedHeaderHeight = 150;
+    const estimatedContainerHeight = window.innerHeight - estimatedHeaderHeight;
+    return Math.max(80, Math.ceil(estimatedContainerHeight / 6));
+  });
+  const [isWeekHeightInitialized, setIsWeekHeightInitialized] = useState(
+    () => typeof window !== 'undefined'
+  );
   const previousWeekHeightRef = useRef(weekHeight);
 
   const previousVisibleWeeksRef = useRef<typeof virtualData.visibleItems>([]);
@@ -572,7 +578,7 @@ const MonthView = ({
   // Synchronously estimate weekHeight from window size and mark as initialized immediately
   // to avoid blank flash while waiting for ResizeObserver. ResizeObserver will correct
   // if the estimate is inaccurate.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const estimatedHeaderHeight = 150;
     const estimatedContainerHeight = window.innerHeight - estimatedHeaderHeight;
     const height = Math.max(80, Math.ceil(estimatedContainerHeight / 6));
@@ -746,7 +752,7 @@ const MonthView = ({
                   calendarSignature={calendarSignature}
                   app={app}
                   enableTouch={isTouch}
-                  secondaryTimeZone={config.secondaryTimeZone as string}
+                  appTimeZone={appTimeZone}
                 />
               );
             })}
@@ -817,7 +823,7 @@ const MonthView = ({
                 calendarSignature={calendarSignature}
                 app={app}
                 enableTouch={isTouch}
-                secondaryTimeZone={config.secondaryTimeZone as string}
+                appTimeZone={appTimeZone}
               />
             );
           })}

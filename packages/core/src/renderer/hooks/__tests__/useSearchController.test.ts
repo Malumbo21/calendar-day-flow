@@ -123,4 +123,30 @@ describe('useSearchController', () => {
     });
     expect(result.current.isMobileSearchOpen).toBe(false);
   });
+
+  it('does not clear highlight when config identity changes while search is empty', () => {
+    mockApp.state.highlightedEventId = 'event-1';
+
+    const { rerender } = renderHook(
+      ({ config }: { config: { onResultClick: jest.Mock } }) =>
+        useSearchController(mockApp, config),
+      {
+        initialProps: {
+          config: {
+            onResultClick: jest.fn(),
+          },
+        },
+      }
+    );
+
+    expect(mockApp.highlightEvent).not.toHaveBeenCalledWith(null);
+
+    rerender({
+      config: {
+        onResultClick: jest.fn(),
+      },
+    });
+
+    expect(mockApp.highlightEvent).not.toHaveBeenCalledWith(null);
+  });
 });

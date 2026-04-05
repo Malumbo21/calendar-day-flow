@@ -1,4 +1,11 @@
-import { Event, CalendarType, EventChange, getLineColor } from '@dayflow/core';
+import {
+  Event,
+  CalendarType,
+  EventChange,
+  ReadOnlyConfig,
+  TimeZone,
+  ViewType,
+} from '@dayflow/core';
 import { createDragPlugin } from '@dayflow/plugin-drag';
 import { createLocalizationPlugin, zh } from '@dayflow/plugin-localization';
 import {
@@ -8,46 +15,28 @@ import {
   createWeekView,
   createDayView,
   createYearView,
-  ViewType,
   UseCalendarAppReturn,
 } from '@dayflow/react';
 import { getWebsiteCalendars } from '@examples/utils/palette';
 import { generateSampleEvents } from '@examples/utils/sampleData';
+import { createKeyboardShortcutsPlugin } from '@keyboard-shortcuts/plugin';
 import { createSidebarPlugin } from '@sidebar/plugin';
-import { Sun, Moon } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import { Sun, Moon, Globe, Clock } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-const EventIcon = ({
-  calendarId,
-  defaultIcon,
-}: {
-  calendarId?: string;
-  defaultIcon: string;
-}) => {
-  if (calendarId === 'team') {
-    return (
-      <img
-        src='/website/public/images/avatar/avatar1.png'
-        className='h-4 w-4 shrink-0 rounded-full object-cover'
-        alt='Product Team'
-      />
-    );
-  }
-  if (calendarId === 'personal') {
-    return (
-      <img
-        src='/website/public/images/avatar/avatar2.png'
-        className='h-4 w-4 shrink-0 rounded-full object-cover'
-        alt='Personal'
-      />
-    );
-  }
-  return <span className='shrink-0 text-[10px]'>{defaultIcon}</span>;
-};
+const TZ_OPTIONS = Object.entries(TimeZone).map(([key, value]) => ({
+  label: `${key.replaceAll('_', ' ')} (${value})`,
+  value,
+}));
 
 const DefaultCalendarExample: React.FC = () => {
   const [events] = useState<Event[]>(generateSampleEvents());
   const calendarRef = useRef<UseCalendarAppReturn | null>(null);
+  const [readOnly] = useState<boolean | ReadOnlyConfig>(false);
+  // Global calendar timezone — affects all views' event bucketing and editing
+  const [appTz, setAppTz] = useState<string>('');
+  // Secondary timezone — only adds a second timeline label column in Day/Week
+  const [secondaryTz, setSecondaryTz] = useState<string>('');
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -69,33 +58,58 @@ const DefaultCalendarExample: React.FC = () => {
     }),
     createSidebarPlugin({
       createCalendarMode: 'modal',
-      colorPickerMode: 'default',
+      // colorPickerMode: 'default',
+      showEventDots: true,
     }),
     createLocalizationPlugin({
       locales: [zh],
     }),
+    createKeyboardShortcutsPlugin({}),
   ].filter(plugin => !(isMobile && plugin.name === 'sidebar'));
 
+  const searchConfig = useMemo(
+    () => ({
+      onResultClick: ({
+        event,
+        defaultAction,
+      }: {
+        event: Event;
+        defaultAction: () => void;
+      }) => {
+        console.log('Search result clicked:', event);
+        defaultAction();
+      },
+    }),
+    []
+  );
+
   const calendar = useCalendarApp({
+    timeZone: appTz || undefined,
     views: [
       createDayView({
         // timeFormat: '12h',
-        // secondaryTimeZone: TimeZone.SYDNEY,
+        secondaryTimeZone: secondaryTz || undefined,
+        showEventDots: true,
+        scrollToCurrentTime: true,
       }),
       createWeekView({
         // timeFormat: '12h',
-        // secondaryTimeZone: TimeZone.SHANGHAI,
+        secondaryTimeZone: secondaryTz || undefined,
         // startOfWeek: 2,
         // showAllDay: false,
+        showEventDots: true,
+        scrollToCurrentTime: true,
       }),
       createMonthView({
         showWeekNumbers: true,
         // showMonthIndicator: false,
+        showEventDots: true,
       }),
       createYearView({
-        // mode: 'fixed-week',
+        mode: 'fixed-week',
         showTimedEventsInYearView: true,
         startOfWeek: 7,
+        showEventDots: true,
       }),
     ],
     theme: { mode: 'light' as const },
@@ -109,9 +123,7 @@ const DefaultCalendarExample: React.FC = () => {
     defaultView: ViewType.MONTH,
     // useEventDetailDialog: true,
     // switcherMode: 'select' as const,
-    // readOnly: {
-    //   viewable: true,
-    // },
+    readOnly,
     callbacks: {
       onEventCreate: async (event: Event) => {
         await new Promise(resolve => {
@@ -122,10 +134,16 @@ const DefaultCalendarExample: React.FC = () => {
       onEventClick: (event: Event) => {
         console.log('click event:', event);
       },
-      onEventUpdate: (event: Event) => {
+      onEventUpdate: async (event: Event) => {
+        await new Promise(resolve => {
+          setTimeout(resolve, 1500);
+        });
         console.log('update event:', event);
       },
-      onEventDelete: (eventId: string) => {
+      onEventDelete: async (eventId: string) => {
+        await new Promise(resolve => {
+          setTimeout(resolve, 1500);
+        });
         console.log('delete event:', eventId);
       },
       onMoreEventsClick: (date: Date) => {
@@ -133,16 +151,28 @@ const DefaultCalendarExample: React.FC = () => {
         calendarRef.current?.selectDate(date);
         calendarRef.current?.changeView(ViewType.DAY);
       },
-      onCalendarUpdate: (cal: CalendarType) => {
+      onCalendarUpdate: async (cal: CalendarType) => {
+        await new Promise(resolve => {
+          setTimeout(resolve, 1500);
+        });
         console.log('update calendar:', cal);
       },
-      onCalendarDelete: (calendarId: string) => {
+      onCalendarDelete: async (calendarId: string) => {
+        await new Promise(resolve => {
+          setTimeout(resolve, 1500);
+        });
         console.log('delete calendar:', calendarId);
       },
-      onCalendarCreate: (cal: CalendarType) => {
-        console.log('create calendar:', cal);
+      onCalendarCreate: async (cal: CalendarType) => {
+        await new Promise(resolve => {
+          setTimeout(resolve, 1500);
+        });
+        console.log('create calendar: w', cal);
       },
-      onCalendarMerge: (sourceId: string, targetId: string) => {
+      onCalendarMerge: async (sourceId: string, targetId: string) => {
+        await new Promise(resolve => {
+          setTimeout(resolve, 1500);
+        });
         console.log('merge calendar:', sourceId, targetId);
       },
       onEventBatchChange: (event: EventChange[]) => {
@@ -155,106 +185,152 @@ const DefaultCalendarExample: React.FC = () => {
 
   return (
     <div>
+      <div className='mb-4 flex flex-wrap items-center gap-3 px-4'>
+        {/* Global calendar timezone */}
+        <div className='flex min-w-[18rem] items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-700 shadow-sm md:min-w-[22rem] dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200'>
+          <Globe size={16} className='text-gray-400' />
+          <div className='flex min-w-0 flex-1 flex-col'>
+            <span className='text-[10px] leading-none text-gray-400 dark:text-gray-500'>
+              Calendar Timezone
+            </span>
+            <select
+              value={appTz}
+              onChange={e => setAppTz(e.target.value)}
+              className='w-full bg-transparent pr-6 text-sm font-medium outline-none'
+            >
+              <option value=''>Device local</option>
+              {TZ_OPTIONS.map(({ label, value }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Secondary timeline for Day/Week */}
+        <div className='flex min-w-[18rem] items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-700 shadow-sm md:min-w-[22rem] dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200'>
+          <Clock size={16} className='text-gray-400' />
+          <div className='flex min-w-0 flex-1 flex-col'>
+            <span className='text-[10px] leading-none text-gray-400 dark:text-gray-500'>
+              Secondary Timeline (Day/Week)
+            </span>
+            <select
+              value={secondaryTz}
+              onChange={e => setSecondaryTz(e.target.value)}
+              className='w-full bg-transparent pr-6 text-sm font-medium outline-none'
+            >
+              <option value=''>None</option>
+              {TZ_OPTIONS.map(({ label, value }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
       <DayFlowCalendar
         calendar={calendar}
-        eventContentDay={({ event, isSelected }) => (
-          <div
-            className='flex h-full flex-col justify-start overflow-hidden border-l-4'
-            style={{
-              borderTopLeftRadius: '4px',
-              borderBottomLeftRadius: '4px',
-              borderColor: getLineColor(event.calendarId || 'blue'),
-            }}
-          >
-            <div className='flex items-center gap-1 px-0.5'>
-              <span className='shrink-0 text-[10px]'>📅</span>
-              <span
-                className={`truncate text-xs font-semibold ${isSelected ? 'text-white' : ''}`}
-              >
-                {event.title}
-              </span>
-            </div>
-            <div className='flex flex-col px-1'>
-              <span
-                className={`truncate text-[10px] opacity-70 ${isSelected ? 'text-white' : ''}`}
-              >
-                📍 {`${event.meta?.location || 'No location'}`}
-              </span>
-              <span
-                className={`text-[10px] opacity-60 ${isSelected ? 'text-white' : ''}`}
-              >
-                {event.description}
-              </span>
-            </div>
-          </div>
-        )}
-        eventContentWeek={({ event, isSelected }) => (
-          <div
-            className='flex h-full flex-col justify-start overflow-hidden border-l-4 border-black/20 pr-0.5 pl-1'
-            style={{
-              borderTopLeftRadius: '4px',
-              borderBottomLeftRadius: '4px',
-              borderColor: getLineColor(event.calendarId || 'blue'),
-            }}
-          >
-            <div className='flex items-center gap-1 px-0.5'>
-              <EventIcon calendarId={event.calendarId} defaultIcon='🗓' />
-              <span
-                className={`text-xs font-semibold ${isSelected ? 'text-white' : ''}`}
-              >
-                {event.title}
-              </span>
-            </div>
-            <div className='flex flex-col'>
-              <span
-                className={`text-[9px] opacity-70 ${isSelected ? 'text-white' : ''}`}
-              >
-                📍 {`${event.meta?.location || 'No location'}`}
-              </span>
-              <span
-                className={`text-[9px] opacity-60 ${isSelected ? 'text-white' : ''}`}
-              >
-                {event.description}
-              </span>
-            </div>
-          </div>
-        )}
-        eventContentMonth={({ event }) => (
-          <div className='flex items-center gap-1 overflow-hidden px-0.5'>
-            <EventIcon calendarId={event.calendarId} defaultIcon='🗃' />
-            <span className='truncate text-xs font-medium'>{event.title}</span>
-          </div>
-        )}
-        eventContentYear={({ event }) => (
-          <div className='flex items-center gap-1 overflow-hidden px-0.5'>
-            <EventIcon calendarId={event.calendarId} defaultIcon='🗃' />
-            <span className='truncate text-xs font-medium'>{event.title}</span>
-          </div>
-        )}
-        eventContentAllDayDay={({ event }) => (
-          <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
-            <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
-            <span className='truncate text-xs font-medium'>{event.title}</span>
-          </div>
-        )}
-        eventContentAllDayWeek={({ event }) => (
-          <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
-            <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
-            <span className='truncate text-xs font-medium'>{event.title}</span>
-          </div>
-        )}
-        eventContentAllDayMonth={({ event }) => (
-          <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
-            <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
-            <span className='truncate text-xs font-medium'>{event.title}</span>
-          </div>
-        )}
-        eventContentAllDayYear={({ event }) => (
-          <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
-            <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
-            <span className='truncate text-xs font-medium'>{event.title}</span>
-          </div>
-        )}
+        search={searchConfig}
+        // eventContentDay={({ event, isSelected }) => (
+        //   <div
+        //     className='flex h-full flex-col justify-start overflow-hidden border-l-4'
+        //     style={{
+        //       borderTopLeftRadius: '4px',
+        //       borderBottomLeftRadius: '4px',
+        //       borderColor: getLineColor(event.calendarId || 'blue'),
+        //     }}
+        //   >
+        //     <div className='flex items-center gap-1 px-0.5'>
+        //       <span className='shrink-0 text-[10px]'>📅</span>
+        //       <span
+        //         className={`truncate text-xs font-semibold ${isSelected ? 'text-white' : ''}`}
+        //       >
+        //         {event.title}
+        //       </span>
+        //     </div>
+        //     <div className='flex flex-col px-1'>
+        //       <span
+        //         className={`truncate text-[10px] opacity-70 ${isSelected ? 'text-white' : ''}`}
+        //       >
+        //         📍 {`${event.meta?.location || 'No location'}`}
+        //       </span>
+        //       <span
+        //         className={`text-[10px] opacity-60 ${isSelected ? 'text-white' : ''}`}
+        //       >
+        //         {event.description}
+        //       </span>
+        //     </div>
+        //   </div>
+        // )}
+        // eventContentWeek={({ event, isSelected }) => (
+        //   <div
+        //     className='flex h-full flex-col justify-start overflow-hidden border-l-4 border-black/20 pr-0.5 pl-1'
+        //     style={{
+        //       borderTopLeftRadius: '4px',
+        //       borderBottomLeftRadius: '4px',
+        //       borderColor: getLineColor(event.calendarId || 'blue'),
+        //     }}
+        //   >
+        //     <div className='flex items-center gap-1 px-0.5'>
+        //       <EventIcon calendarId={event.calendarId} defaultIcon='🗓' />
+        //       <span
+        //         className={`text-xs font-semibold ${isSelected ? 'text-white' : ''}`}
+        //       >
+        //         {event.title}
+        //       </span>
+        //     </div>
+        //     <div className='flex flex-col'>
+        //       <span
+        //         className={`text-[9px] opacity-70 ${isSelected ? 'text-white' : ''}`}
+        //       >
+        //         📍 {`${event.meta?.location || 'No location'}`}
+        //       </span>
+        //       <span
+        //         className={`text-[9px] opacity-60 ${isSelected ? 'text-white' : ''}`}
+        //       >
+        //         {event.description}
+        //       </span>
+        //     </div>
+        //   </div>
+        // )}
+        // eventContentMonth={({ event }) => (
+        //   <div className='flex items-center gap-1 overflow-hidden px-0.5'>
+        //     <EventIcon calendarId={event.calendarId} defaultIcon='🗃' />
+        //     <span className='truncate text-xs font-medium'>{event.title}</span>
+        //   </div>
+        // )}
+        // eventContentYear={({ event }) => (
+        //   <div className='flex items-center gap-1 overflow-hidden px-0.5'>
+        //     <EventIcon calendarId={event.calendarId} defaultIcon='🗃' />
+        //     <span className='truncate text-xs font-medium'>{event.title}</span>
+        //   </div>
+        // )}
+        // eventContentAllDayDay={({ event }) => (
+        //   <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
+        //     <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
+        //     <span className='truncate text-xs font-medium'>{event.title}</span>
+        //   </div>
+        // )}
+        // eventContentAllDayWeek={({ event }) => (
+        //   <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
+        //     <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
+        //     <span className='truncate text-xs font-medium'>{event.title}</span>
+        //   </div>
+        // )}
+        // eventContentAllDayMonth={({ event }) => (
+        //   <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
+        //     <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
+        //     <span className='truncate text-xs font-medium'>{event.title}</span>
+        //   </div>
+        // )}
+        // eventContentAllDayYear={({ event }) => (
+        //   <div className='flex h-full items-center gap-1 overflow-hidden px-0.5'>
+        //     <EventIcon calendarId={event.calendarId} defaultIcon='☀️' />
+        //     <span className='truncate text-xs font-medium'>{event.title}</span>
+        //   </div>
+        // )}
       />
     </div>
   );

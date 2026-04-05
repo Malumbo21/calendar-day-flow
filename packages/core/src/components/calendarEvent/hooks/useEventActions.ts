@@ -7,6 +7,7 @@ import { extractHourFromDate, getEventEndHour } from '@/utils';
 
 interface UseEventActionsProps {
   event: Event;
+  timingEvent?: Event;
   viewType: ViewType;
   isAllDay: boolean;
   isMultiDay: boolean;
@@ -38,6 +39,7 @@ interface UseEventActionsProps {
 
 export const useEventActions = ({
   event,
+  timingEvent,
   viewType,
   isAllDay,
   isMultiDay,
@@ -62,6 +64,7 @@ export const useEventActions = ({
 }: UseEventActionsProps) => {
   const isMonthView = viewType === ViewType.MONTH;
   const isYearView = viewType === ViewType.YEAR;
+  const eventForTiming = timingEvent ?? event;
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hasPendingSelection, setHasPendingSelection] = useState(false);
 
@@ -91,10 +94,10 @@ export const useEventActions = ({
 
         const segmentStartHour = multiDaySegmentInfo
           ? multiDaySegmentInfo.startHour
-          : extractHourFromDate(event.start);
+          : extractHourFromDate(eventForTiming.start);
         const segmentEndHour = multiDaySegmentInfo
           ? multiDaySegmentInfo.endHour
-          : getEventEndHour(event);
+          : getEventEndHour(eventForTiming);
 
         const eventTop = (segmentStartHour - firstHour) * hourHeight;
         const eventHeight = Math.max(
@@ -130,8 +133,8 @@ export const useEventActions = ({
       isMonthView,
       isYearView,
       multiDaySegmentInfo,
-      event.start,
-      event.end,
+      eventForTiming.start,
+      eventForTiming.end,
       firstHour,
       hourHeight,
     ]
@@ -226,9 +229,7 @@ export const useEventActions = ({
 
       scrollEventToCenter().then(() => {
         setIsSelected(true);
-        if (isYearView) {
-          onEventSelect?.(event.id);
-        }
+        onEventSelect?.(event.id);
         if (!isMobile) {
           onDetailPanelToggle?.(detailPanelKey);
           setDetailPanelPosition({

@@ -2,6 +2,7 @@ import { JSX } from 'preact';
 import {
   useState,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useCallback,
@@ -738,19 +739,14 @@ export const useVirtualMonthScroll = ({
     return () => resizeObserver.disconnect();
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = scrollElementRef.current;
     if (!element || isInitialized || !isEnabled) return;
 
-    requestAnimationFrame(() => {
-      if (element && initialScrollTop > 0) {
-        element.scrollTop = initialScrollTop;
-        setScrollTop(initialScrollTop);
-        setIsInitialized(true);
-      } else if (element) {
-        setIsInitialized(true);
-      }
-    });
+    if (initialScrollTop > 0) {
+      element.scrollTop = initialScrollTop;
+    }
+    setIsInitialized(true);
   }, [isInitialized, initialScrollTop, isEnabled]);
 
   // Snap-to-month: when scrolling stops, smooth-scroll to the start of the

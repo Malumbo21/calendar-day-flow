@@ -66,11 +66,8 @@ const RegularEventContent = ({
     : true;
   const isLastSegment = multiDaySegmentInfo ? multiDaySegmentInfo.isLast : true;
   const calendarId = event.calendarId || 'blue';
-
-  const getDynamicPadding = () => {
-    const d = getEventEndHour(event) - extractHourFromDate(event.start);
-    return d <= 0.25 ? 'px-1 py-0' : 'p-1';
-  };
+  const contentPaddingClass =
+    !multiDaySegmentInfo && duration <= 0.25 ? 'px-1 py-0' : 'p-1';
 
   const visualContent = (
     <>
@@ -84,7 +81,7 @@ const RegularEventContent = ({
         }}
       />
       <div
-        className={`flex h-full flex-col overflow-hidden pl-3 ${getDynamicPadding()}`}
+        className={`flex h-full flex-col overflow-hidden pl-3 ${contentPaddingClass}`}
       >
         <div
           className={`${eventTitleSmall} pr-1`}

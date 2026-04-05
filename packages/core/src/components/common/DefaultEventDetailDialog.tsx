@@ -101,13 +101,14 @@ const DefaultEventDetailDialog = ({
     const plainDate = isPlainDate(editedEvent.start)
       ? editedEvent.start
       : editedEvent.start.toPlainDate();
+    const tz = app?.timeZone ?? Temporal.Now.timeZoneId();
     const start = Temporal.ZonedDateTime.from({
       year: plainDate.year,
       month: plainDate.month,
       day: plainDate.day,
       hour: 9,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
     const end = Temporal.ZonedDateTime.from({
       year: plainDate.year,
@@ -115,7 +116,7 @@ const DefaultEventDetailDialog = ({
       day: plainDate.day,
       hour: 10,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
     setEditedEvent({
       ...editedEvent,
@@ -125,23 +126,10 @@ const DefaultEventDetailDialog = ({
     });
   };
 
-  const eventTimeZone = useMemo(() => {
-    if (!isPlainDate(editedEvent.start)) {
-      return (
-        (editedEvent.start as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    if (editedEvent.end && !isPlainDate(editedEvent.end)) {
-      return (
-        (editedEvent.end as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    return Temporal.Now.timeZoneId();
-  }, [editedEvent.end, editedEvent.start]);
+  const eventTimeZone = useMemo(
+    () => app?.timeZone ?? Temporal.Now.timeZoneId(),
+    [app]
+  );
 
   const handleAllDayRangeChange = (
     nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]

@@ -1,15 +1,36 @@
 # 时区列表
 
-DayFlow 提供了一个 `TimeZone` 枚举，使您可以更轻松地指定辅助时区，而无需记住确切的 IANA 时区字符串。
+DayFlow 提供了一个 `TimeZone` 枚举，方便您同时配置全局 `timeZone` 和仅用于 Day/Week 的 `secondaryTimeZone`，无需记忆原始 IANA 时区字符串。
+
+## 时区模型
+
+- `timeZone`：整个日历的主显示/编辑时区
+- `secondaryTimeZone`：仅在 Day / Week 视图中显示的辅助参考时间轴
+
+切换 `timeZone` 会影响所有视图；切换 `secondaryTimeZone` 只会影响 Day / Week 中的第二条时间轴。
 
 ## 使用方法
 
 ```tsx
 import { TimeZone } from '@dayflow/core';
+import {
+  useCalendarApp,
+  createDayView,
+  createWeekView,
+  createMonthView,
+} from '@dayflow/react';
 
-// 在视图配置中
-createDayView({
-  secondaryTimeZone: TimeZone.SHANGHAI,
+const calendar = useCalendarApp({
+  timeZone: TimeZone.SHANGHAI,
+  views: [
+    createDayView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createWeekView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createMonthView(),
+  ],
 });
 ```
 

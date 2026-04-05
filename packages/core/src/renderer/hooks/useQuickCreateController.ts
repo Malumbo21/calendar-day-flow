@@ -3,7 +3,8 @@ import { useState, useCallback, useRef } from 'preact/hooks';
 
 import { ICalendarApp, Event } from '@/types';
 import { generateUniKey } from '@/utils/helpers';
-import { dateToZonedDateTime } from '@/utils/temporal';
+import { dateToZonedDateTime } from '@/utils/temporalTypeGuards';
+import { getNextHourRangeInTimeZone } from '@/utils/timeUtils';
 
 export interface QuickCreateController {
   isQuickCreateOpen: boolean;
@@ -49,18 +50,13 @@ export function useQuickCreateController(
       if (!isEditable) return;
 
       if (isMobile) {
-        const now = new Date();
-        now.setMinutes(0, 0, 0);
-        now.setHours(now.getHours() + 1);
-
-        const end = new Date(now);
-        end.setHours(end.getHours() + 1);
+        const { start, end } = getNextHourRangeInTimeZone(app.timeZone);
 
         const draft: Event = {
           id: generateUniKey(),
           title: '',
-          start: dateToZonedDateTime(now),
-          end: dateToZonedDateTime(end),
+          start: dateToZonedDateTime(start, app.timeZone),
+          end: dateToZonedDateTime(end, app.timeZone),
           calendarId:
             app.getCalendars().find(c => c.isVisible !== false)?.id ||
             app.getCalendars()[0]?.id,

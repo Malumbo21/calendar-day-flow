@@ -128,7 +128,6 @@ export interface MonthViewConfig extends ViewFactoryConfig {
   snapToMonth?: boolean;
   /** Scroll / navigation behavior for the month view */
   scroll?: MonthScrollConfig;
-  secondaryTimeZone?: TimeZoneValue;
   showEventDots?: boolean;
 }
 
@@ -141,7 +140,6 @@ export interface YearViewConfig extends ViewFactoryConfig {
   startOfWeek?: number;
   /** Scroll / navigation behavior for the month view */
   scroll?: MonthScrollConfig;
-  secondaryTimeZone?: TimeZoneValue;
   showEventDots?: boolean;
   /**
    * Grid mode: action when a date cell is clicked.

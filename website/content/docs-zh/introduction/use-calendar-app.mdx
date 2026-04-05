@@ -36,6 +36,7 @@ export function TeamCalendar() {
 | `callbacks`                 | `CalendarCallbacks`         | 可选 | `{}`                           | 在视图、日期或事件更改时触发的生命周期钩子——非常适合与 API 同步                                       |
 | `defaultView`               | `ViewType`                  | 可选 | `ViewType.WEEK`                | 首先加载的视图；必须存在于 `views` 中                                                                 |
 | `initialDate`               | `Date`                      | 可选 | `new Date()`                   | 起始焦点日期（也初始化可见月份计算）                                                                  |
+| `timeZone`                  | `string`                    | 可选 | 用户系统时区                   | 所有视图共享的全局显示/编辑时区                                                                       |
 | `switcherMode`              | `'buttons' \| 'select'`     | 可选 | `'buttons'`                    | 控制内置视图切换器在标题中的渲染方式                                                                  |
 | `calendars`                 | `CalendarType[]`            | 可选 | `[]`                           | 注册日历类别（工作、个人等）及其颜色和可见性                                                          |
 | `defaultCalendar`           | `string`                    | 可选 | 第一个可见日历                 | 创建新事件时使用的 ID                                                                                 |
@@ -105,6 +106,13 @@ const calendar = useCalendarApp({
 
 - 单视图日历务必显式设置 `defaultView`
 - `initialDate` 可从路由、用户偏好或服务器数据中读取，以保持多端一致
+
+### timeZone
+
+- `timeZone` 用来定义 Day、Week、Month、Year 共用的主显示/编辑时区。
+- 不传时，DayFlow 会默认使用当前用户设备的系统时区。
+- 切换 `timeZone` 只会重新投影视图，不会因为切换时区本身触发事件数据写回。
+- Day / Week 的 `secondaryTimeZone` 仍然只是辅助显示时间轴，不会替代全局主时区。
 
 ### switcherMode
 

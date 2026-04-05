@@ -11,7 +11,12 @@ import type {
   ColorPickerProps,
   CreateCalendarDialogColorPickerProps,
 } from '@dayflow/core';
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useMemo } from 'react';
+
+// useLayoutEffect on the client fires before paint; fall back to useEffect on
+// the server to avoid SSR hydration warnings (the calendar is client-only anyway).
+const useIsomorphicLayoutEffect =
+  typeof window === 'undefined' ? useEffect : useLayoutEffect;
 import type { ReactNode, FC } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -107,7 +112,7 @@ export const DayFlowCalendar: FC<DayFlowCalendarProps> = ({
       : (calendar as ICalendarApp);
   const renderPropsKeysRef = useRef<string[]>([]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     setIsMounted(true);
     if (!containerRef.current || !app) {
       return;

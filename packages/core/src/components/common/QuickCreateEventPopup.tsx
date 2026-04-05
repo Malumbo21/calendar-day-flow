@@ -11,7 +11,8 @@ import {
 import { useLocale } from '@/locale';
 import { ICalendarApp, Event } from '@/types';
 import { generateUniKey } from '@/utils/helpers';
-import { dateToZonedDateTime } from '@/utils/temporal';
+import { dateToZonedDateTime } from '@/utils/temporalTypeGuards';
+import { getNextHourRangeInTimeZone } from '@/utils/timeUtils';
 
 interface QuickCreateEventPopupProps {
   app: ICalendarApp;
@@ -94,14 +95,10 @@ export const QuickCreateEventPopup = ({
   const [arrowLeft, setArrowLeft] = useState(0);
 
   // Time Calculation
-  const nextHourRange = useMemo(() => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setHours(start.getHours() + 1, 0, 0, 0);
-    const end = new Date(start);
-    end.setHours(end.getHours() + 1);
-    return { start, end };
-  }, [isOpen]); // Recalculate on open
+  const nextHourRange = useMemo(
+    () => getNextHourRangeInTimeZone(app.timeZone),
+    [app.timeZone, isOpen]
+  ); // Recalculate on open/timezone change
 
   // Generate Suggestions
   const suggestions: SuggestionItem[] = useMemo(() => {
@@ -223,8 +220,8 @@ export const QuickCreateEventPopup = ({
     const newEvent: Event = {
       id: newId,
       title: item.title,
-      start: dateToZonedDateTime(item.start),
-      end: dateToZonedDateTime(item.end),
+      start: dateToZonedDateTime(item.start, app.timeZone),
+      end: dateToZonedDateTime(item.end, app.timeZone),
       calendarId: item.calendarId,
       allDay: false,
     };

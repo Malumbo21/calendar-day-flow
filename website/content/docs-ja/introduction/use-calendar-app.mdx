@@ -36,6 +36,7 @@ export function TeamCalendar() {
 | `callbacks`                 | `CalendarCallbacks`         | 任意 | `{}`                                     | ビュー変更やイベント CRUD をフックするライフサイクルコールバック。                                                           |
 | `defaultView`               | `ViewType`                  | 任意 | `ViewType.WEEK`                          | 最初に表示するビュー。`views` に含まれている必要あり。                                                                       |
 | `initialDate`               | `Date`                      | 任意 | `new Date()`                             | フォーカスする基準日。ルーティングの状態などから差し替え可能。                                                               |
+| `timeZone`                  | `string`                    | 任意 | ユーザーのシステムタイムゾーン           | 全ビュー共通の表示 / 編集タイムゾーン。                                                                                      |
 | `switcherMode`              | `'buttons' \| 'select'`     | 任意 | `'buttons'`                              | ビルトインビュースイッチャーの表示方法。                                                                                     |
 | `calendars`                 | `CalendarType[]`            | 任意 | `[]`                                     | カテゴリや色の定義。`calendarId` と連携。                                                                                    |
 | `defaultCalendar`           | `string`                    | 任意 | 最初の可視カレンダー                     | 新規イベント作成時の既定カレンダー ID。                                                                                      |
@@ -105,6 +106,13 @@ const calendar = useCalendarApp({
 
 - 単一ビューのカレンダーでは必ず `defaultView` を明示的に設定してください。
 - `initialDate` はルーティング、ユーザー設定、またはサーバーデータから取得してマルチデバイス間の一貫性を保つことができます。
+
+### timeZone
+
+- `timeZone` は Day / Week / Month / Year 全体の主表示 / 編集タイムゾーンを定義します。
+- 未指定の場合、DayFlow はユーザーのシステムタイムゾーンを使います。
+- `timeZone` の変更は UI の再投影だけを行い、タイムゾーン変更そのものではイベントデータを書き換えません。
+- Day / Week の `secondaryTimeZone` は補助タイムライン専用で、アプリ全体の主タイムゾーンを置き換えるものではありません。
 
 ### switcherMode
 

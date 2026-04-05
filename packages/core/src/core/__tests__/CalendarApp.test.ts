@@ -4,6 +4,7 @@ import { CalendarApp } from '@/core/CalendarApp';
 import { createDayView } from '@/factories/createDayView';
 import { createMonthView } from '@/factories/createMonthView';
 import { createWeekView } from '@/factories/createWeekView';
+import { createYearView } from '@/factories/createYearView';
 import { ViewType } from '@/types';
 
 describe('CalendarApp', () => {
@@ -341,6 +342,91 @@ describe('CalendarApp', () => {
   });
 
   describe('Config Updates', () => {
+    it('updates day/week secondaryTimeZone and month/year visualTimeZone independently', () => {
+      const app = new CalendarApp({
+        views: [
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        plugins: [],
+        events: [],
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createWeekView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createMonthView({}),
+          createYearView({}),
+        ],
+      });
+
+      expect(app.getViewConfig(ViewType.DAY)).toMatchObject({
+        secondaryTimeZone: 'Asia/Tokyo',
+      });
+      expect(app.getViewConfig(ViewType.WEEK)).toMatchObject({
+        secondaryTimeZone: 'Asia/Tokyo',
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'America/New_York' }),
+          createWeekView({ secondaryTimeZone: 'America/New_York' }),
+          createMonthView({}),
+          createYearView({}),
+        ],
+      });
+
+      expect(app.getViewConfig(ViewType.DAY)).toMatchObject({
+        secondaryTimeZone: 'America/New_York',
+      });
+      expect(app.getViewConfig(ViewType.WEEK)).toMatchObject({
+        secondaryTimeZone: 'America/New_York',
+      });
+    });
+
+    it('keeps navigation and app.state in sync after repeated view config updates', () => {
+      const app = new CalendarApp({
+        views: [
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        plugins: [],
+        events: [],
+        defaultView: ViewType.MONTH,
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createWeekView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createMonthView(),
+          createYearView(),
+        ],
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'America/New_York' }),
+          createWeekView({ secondaryTimeZone: 'America/New_York' }),
+          createMonthView(),
+          createYearView(),
+        ],
+      });
+
+      app.changeView(ViewType.WEEK);
+
+      expect(app.state.currentView).toBe(ViewType.WEEK);
+      expect(app.getCurrentView().type).toBe(ViewType.WEEK);
+      expect(app.getViewConfig(ViewType.WEEK)).toMatchObject({
+        secondaryTimeZone: 'America/New_York',
+      });
+    });
+
     it('does not trigger a render when allDaySortComparator is unchanged', () => {
       const onRender = jest.fn();
       const comparator = jest.fn(() => 0);

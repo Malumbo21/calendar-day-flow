@@ -42,7 +42,7 @@ const CalendarHeader = ({
 
   return (
     <div
-      className={`df-header flex shrink-0 items-center justify-between border-b pt-1 pr-2 transition-colors duration-200 ${
+      className={`df-header flex shrink-0 items-center justify-between border-b py-1 pr-2 transition-colors duration-200 ${
         isDayView || isSearchOpen
           ? 'border-gray-200 dark:border-gray-700'
           : 'border-transparent'
@@ -54,7 +54,7 @@ const CalendarHeader = ({
       onContextMenu={e => e.preventDefault()}
     >
       {/* Left Section: Add Calendar Button Only */}
-      <div className='df-header-left mb-1 flex items-center'>
+      <div className='df-header-left flex items-center'>
         {onAddCalendar && isEditable && (
           <button
             type='button'
@@ -73,16 +73,14 @@ const CalendarHeader = ({
       </div>
 
       {/* Middle Section: ViewSwitcher (if mode is buttons) */}
-      <div className='df-header-mid flex flex-1 justify-center'>
+      <div className='df-header-mid flex flex-1 items-center justify-center'>
         {isSwitcherCentered && (
           <ViewSwitcher mode={switcherMode} calendar={calendar} />
         )}
       </div>
 
       {/* Right Section: Search, ViewSwitcher (if select) */}
-      <div
-        className={`df-header-right mb-1 flex items-center justify-end gap-3 pb-1`}
-      >
+      <div className='df-header-right flex items-center justify-end gap-3'>
         {!isSwitcherCentered && (
           <ViewSwitcher mode={switcherMode} calendar={calendar} />
         )}

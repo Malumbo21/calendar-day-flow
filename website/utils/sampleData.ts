@@ -118,7 +118,7 @@ const createRandom = (seed: number) => {
 const createRandomInt = (random: () => number) => (min: number, max: number) =>
   Math.floor(random() * (max - min + 1)) + min;
 
-const DEFAULT_TIME_ZONE = 'UTC'; // Use UTC for consistency
+const DEFAULT_TIME_ZONE = Temporal.Now.timeZoneId();
 
 const createTimedEvent = (
   baseDate: Temporal.PlainDate,
@@ -131,8 +131,10 @@ const createTimedEvent = (
     location: locations[index % locations.length],
   };
 
-  const startHour = randomInt(8, 18);
-  const duration = Math.max(1, randomInt(1, 3));
+  // Keep sample events concentrated in local working hours for easier testing.
+  const startHour = randomInt(8, 15);
+  const maxDuration = Math.max(1, 17 - startHour);
+  const duration = Math.max(1, randomInt(1, Math.min(3, maxDuration)));
 
   const startPlain = baseDate.toPlainDateTime({
     hour: startHour,

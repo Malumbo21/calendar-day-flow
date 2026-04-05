@@ -47,12 +47,98 @@ const createTimedEvent = (
   }),
 });
 
+const createZonedTimedEvent = (
+  id: string,
+  title: string,
+  start: string,
+  end: string
+) => ({
+  id,
+  title,
+  allDay: false,
+  calendarId: 'work',
+  start: Temporal.ZonedDateTime.from(start),
+  end: Temporal.ZonedDateTime.from(end),
+});
+
 const sortByCalendarId = (
   a: { calendarId?: string },
   b: { calendarId?: string }
 ) => a.calendarId!.localeCompare(b.calendarId!);
 
 describe('WeekComponent', () => {
+  it('renders month multi-day timed event times in app timezone', () => {
+    const event = createZonedTimedEvent(
+      'brainstorm',
+      'Brainstorm',
+      '2026-05-04T12:30:00+00:00[UTC]',
+      '2026-05-04T15:30:00+00:00[UTC]'
+    );
+
+    const app = new CalendarApp({
+      views: [],
+      plugins: [],
+      events: [event],
+      defaultView: ViewType.MONTH,
+      timeZone: 'Australia/Sydney',
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            lineColor: '#2563eb',
+            eventColor: '#dbeafe',
+            eventSelectedColor: '#bfdbfe',
+            textColor: '#1e3a8a',
+          },
+        },
+      ],
+    });
+
+    const calendarRef = { current: document.createElement('div') } as {
+      current: HTMLDivElement;
+    };
+
+    const { container } = render(
+      <WeekComponent
+        currentMonth='May'
+        currentYear={2026}
+        newlyCreatedEventId={null}
+        screenSize='desktop'
+        isScrolling={false}
+        isDragging={false}
+        showWeekNumbers={false}
+        item={{
+          index: 0,
+          weekData: generateWeekData(new Date(2026, 4, 4)),
+          top: 0,
+          height: 113,
+        }}
+        weekHeight={113}
+        events={[event]}
+        dragState={{
+          active: false,
+          mode: null,
+          eventId: null,
+          targetDate: null,
+          startDate: null,
+          endDate: null,
+        }}
+        calendarRef={calendarRef}
+        onEventUpdate={jest.fn()}
+        onEventDelete={jest.fn()}
+        onDetailPanelOpen={jest.fn()}
+        app={app}
+        appTimeZone='Australia/Sydney'
+      />
+    );
+
+    expect(container.textContent).toContain('22:30');
+    expect(container.textContent).toContain('ends 01:30');
+    expect(container.textContent).not.toContain('12:30');
+    expect(container.textContent).not.toContain('ends 15:30');
+  });
+
   it('lets each month cell decide independently whether to show 3 rows plus more or 4 rows', () => {
     const onEventUpdate = jest.fn();
     const onEventDelete = jest.fn();

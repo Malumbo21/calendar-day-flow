@@ -39,11 +39,12 @@ interface MultiDayEventProps {
   isPopping?: boolean;
   /** Optional slot renderer — receives the default visual content and wraps it in a ContentSlot */
   renderSlot?: (defaultContent: ComponentChildren) => ComponentChildren;
-  secondaryTimeZone?: string;
+  appTimeZone?: string;
 }
 
 const ROW_HEIGHT = 16;
 const ROW_SPACING = 17;
+const POP_TRANSITION = 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
 
 const getBorderRadius = (
   segmentType: MultiDayEventSegment['segmentType']
@@ -76,25 +77,25 @@ export const MultiDayEvent = memo(
     viewable = true,
     isPopping,
     renderSlot,
-    secondaryTimeZone,
+    appTimeZone,
   }: MultiDayEventProps) => {
     const [isPressed, setIsPressed] = useState(false);
     const HORIZONTAL_MARGIN = 2; // 2px spacing on left and right
 
     const visualEvent = useMemo(() => {
-      if (!secondaryTimeZone || segment.event.allDay) return segment.event;
+      if (!appTimeZone || segment.event.allDay) return segment.event;
       const start = temporalToVisualTemporal(
         segment.event.start as Temporal.PlainDate,
-        secondaryTimeZone
+        appTimeZone
       );
       const end = segment.event.end
         ? temporalToVisualTemporal(
             segment.event.end as Temporal.PlainDate,
-            secondaryTimeZone
+            appTimeZone
           )
         : undefined;
       return { ...segment.event, start, end } as Event;
-    }, [segment.event, secondaryTimeZone]);
+    }, [segment.event, appTimeZone]);
 
     const startPercent = (segment.startDayIndex / 7) * 100;
     const widthPercent =
@@ -332,7 +333,7 @@ export const MultiDayEvent = memo(
           pointerEvents: 'auto',
           zIndex: 10,
           transform: isPopping ? 'scale(1.02)' : 'scale(1)',
-          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: POP_TRANSITION,
           willChange: 'transform',
           ...(isSelected || isDragging || isPressed
             ? {
@@ -352,7 +353,7 @@ export const MultiDayEvent = memo(
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        title={`${segment.event.title} (${formatDateConsistent(segment.event.start)} - ${formatDateConsistent(segment.event.end)})`}
+        title={`${visualEvent.title} (${formatDateConsistent(visualEvent.start)} - ${formatDateConsistent(visualEvent.end)})`}
       >
         {isMobile && isSelected && isEditable && (
           <>

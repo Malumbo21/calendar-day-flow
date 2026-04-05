@@ -4,14 +4,15 @@ interface PaletteCalendar extends Pick<CalendarType, 'id' | 'name' | 'icon'> {
   color: string;
   colors: CalendarColors;
   darkColors: CalendarColors;
+  source?: string;
 }
 
 export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'team',
     name: 'Product Team',
+    source: 'Google',
     color: '#2563eb',
-    // icon: '👩‍💻',
     colors: {
       eventColor: 'rgba(37, 99, 235, 0.12)',
       eventSelectedColor: '#2563eb',
@@ -28,8 +29,8 @@ export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'personal',
     name: 'Personal',
+    source: 'iCloud',
     color: '#0ea5e9',
-    // icon: '❤️',
     colors: {
       eventColor: 'rgba(14, 165, 233, 0.12)',
       eventSelectedColor: '#0ea5e9',
@@ -46,8 +47,8 @@ export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'learning',
     name: 'Learning',
+    source: 'iCloud',
     color: '#8b5cf6',
-    // icon: '📚',
     colors: {
       eventColor: 'rgba(139, 92, 246, 0.15)',
       eventSelectedColor: '#8b5cf6',
@@ -64,8 +65,8 @@ export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'travel',
     name: 'Travel',
+    source: 'iCloud',
     color: '#f97316',
-    // icon: '✈️',
     colors: {
       eventColor: 'rgba(249, 115, 22, 0.15)',
       eventSelectedColor: '#f97316',
@@ -82,8 +83,8 @@ export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'wellness',
     name: 'Wellness',
+    source: 'Google',
     color: '#10b981',
-    // icon: '🧘',
     colors: {
       eventColor: 'rgba(16, 185, 129, 0.15)',
       eventSelectedColor: '#10b981',
@@ -100,8 +101,8 @@ export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'marketing',
     name: 'Marketing',
+    source: 'Google',
     color: '#ec4899',
-    // icon: '📣',
     colors: {
       eventColor: 'rgba(236, 72, 153, 0.15)',
       eventSelectedColor: '#ec4899',
@@ -118,8 +119,8 @@ export const CALENDAR_SIDE_PANEL: PaletteCalendar[] = [
   {
     id: 'support',
     name: 'Support',
+    source: 'Google',
     color: '#14b8a6',
-    // icon: '🎧',
     colors: {
       eventColor: 'rgba(20, 184, 166, 0.15)',
       eventSelectedColor: '#14b8a6',
@@ -140,6 +141,7 @@ export const getWebsiteCalendars = (): CalendarType[] =>
     id: item.id,
     name: item.name,
     icon: item.icon,
+    source: item.source,
     colors: {
       eventColor: `${item.color}30`,
       eventSelectedColor: `${item.color}`,

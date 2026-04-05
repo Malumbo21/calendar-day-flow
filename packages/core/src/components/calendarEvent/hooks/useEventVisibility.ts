@@ -6,6 +6,7 @@ import { extractHourFromDate, getEventEndHour } from '@/utils';
 
 interface UseEventVisibilityProps {
   event: Event;
+  timingEvent?: Event;
   isEventSelected: boolean;
   showDetailPanel: boolean;
   eventRef: RefObject<HTMLElement>;
@@ -30,6 +31,7 @@ interface UseEventVisibilityProps {
 
 export const useEventVisibility = ({
   event,
+  timingEvent,
   isEventSelected,
   showDetailPanel,
   eventRef,
@@ -45,6 +47,7 @@ export const useEventVisibility = ({
 }: UseEventVisibilityProps) => {
   const isMonthView = viewType === ViewType.MONTH;
   const isYearView = viewType === ViewType.YEAR;
+  const eventForTiming = timingEvent ?? event;
 
   const checkEventVisibility = useCallback(() => {
     if (
@@ -65,10 +68,10 @@ export const useEventVisibility = ({
 
     const segmentStartHour = multiDaySegmentInfo
       ? multiDaySegmentInfo.startHour
-      : extractHourFromDate(event.start);
+      : extractHourFromDate(eventForTiming.start);
     const segmentEndHour = multiDaySegmentInfo
       ? multiDaySegmentInfo.endHour
-      : getEventEndHour(event);
+      : getEventEndHour(eventForTiming);
 
     const originalTop = (segmentStartHour - firstHour) * hourHeight;
     const originalHeight = Math.max(
@@ -123,8 +126,8 @@ export const useEventVisibility = ({
     calendarRef,
     isAllDay,
     isMonthView,
-    event.start,
-    event.end,
+    eventForTiming.start,
+    eventForTiming.end,
     firstHour,
     hourHeight,
     updatePanelPosition,

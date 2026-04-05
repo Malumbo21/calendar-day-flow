@@ -70,7 +70,8 @@ END:VCALENDAR`;
 
       const result = parseICS(allDayICS);
       expect(result.events[0].allDay).toBe(true);
-      expect((result.events[0].start as Temporal.ZonedDateTime).hour).toBe(0);
+      expect(result.events[0].start instanceof Temporal.PlainDate).toBe(true);
+      expect((result.events[0].start as Temporal.PlainDate).day).toBe(15);
     });
   });
 

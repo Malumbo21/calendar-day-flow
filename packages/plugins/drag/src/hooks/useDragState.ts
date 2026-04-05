@@ -82,20 +82,57 @@ export const useDragState = (options: useDragProps): UseDragStateReturn => {
     initialDragState
   );
 
-  const throttledSetEvents = useMemo(
-    () =>
+  const throttledSetEventsByMode = useMemo(() => {
+    const createThrottledUpdater = (wait: number) =>
       throttle(
         ((
           updateFunc: (events: CalendarEvent[]) => CalendarEvent[],
           interactionType?: string
         ) => onEventsUpdate(updateFunc, interactionType === 'resize')) as any,
-        isMonthView ? 16 : 8
-      ),
-    [isMonthView, onEventsUpdate]
+        wait
+      );
+
+    if (isMonthView) {
+      const shared = createThrottledUpdater(16);
+      return {
+        default: shared,
+        move: shared,
+        resize: shared,
+        create: shared,
+      };
+    }
+
+    return {
+      default: createThrottledUpdater(16),
+      move: createThrottledUpdater(16),
+      create: createThrottledUpdater(16),
+      // Resize previews are the heaviest path in week/day view. A slightly
+      // lower update frequency keeps DevTools-open interactions responsive.
+      resize: createThrottledUpdater(24),
+    };
+  }, [isMonthView, onEventsUpdate]);
+
+  const throttledSetEvents = useCallback(
+    (
+      updateFunc: (events: CalendarEvent[]) => CalendarEvent[],
+      interactionType?: string
+    ) => {
+      const throttledUpdater =
+        throttledSetEventsByMode[
+          interactionType as keyof typeof throttledSetEventsByMode
+        ] ?? throttledSetEventsByMode.default;
+      throttledUpdater(updateFunc, interactionType);
+    },
+    [throttledSetEventsByMode]
   );
 
   // Reset state
   const resetDragState = useCallback(() => {
+    throttledSetEventsByMode.default.cancel();
+    throttledSetEventsByMode.move.cancel();
+    throttledSetEventsByMode.resize.cancel();
+    throttledSetEventsByMode.create.cancel();
+
     if (isMonthView) {
       setDragState({
         active: false,
@@ -155,7 +192,7 @@ export const useDragState = (options: useDragProps): UseDragStateReturn => {
       initialIndicatorHeight: undefined,
       indicatorContainer: null,
     };
-  }, [isMonthView]);
+  }, [isMonthView, throttledSetEventsByMode]);
 
   return {
     dragRef,

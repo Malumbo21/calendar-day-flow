@@ -40,6 +40,7 @@ export function TeamCalendar() {
 | `callbacks`                 | `CalendarCallbacks`         | Optional | `{}`                                                     | Lifecycle hooks that fire when views, dates, or events change—perfect for syncing with APIs.                                          |
 | `defaultView`               | `ViewType`                  | Optional | `ViewType.WEEK`                                          | View that loads first; must exist in `views`.                                                                                         |
 | `initialDate`               | `Date`                      | Optional | `new Date()`                                             | Starting focus date (also seeds visible month calculations).                                                                          |
+| `timeZone`                  | `string`                    | Optional | User's system timezone                                   | Global display and editing timezone for all views.                                                                                    |
 | `switcherMode`              | `'buttons' \| 'select'`     | Optional | `'buttons'`                                              | Controls how the built-in view switcher renders in headers.                                                                           |
 | `calendars`                 | `CalendarType[]`            | Optional | `[]`                                                     | Registers calendar categories (Work, Personal, etc.) with colors and visibility.                                                      |
 | `defaultCalendar`           | `string`                    | Optional | First visible calendar                                   | ID used when new events are created.                                                                                                  |
@@ -88,6 +89,13 @@ export function TeamCalendar() {
 
 - `defaultView` sets the initial `state.currentView`. If omitted, DayFlow falls back to `ViewType.WEEK`, so explicitly set it for single-view calendars.
 - `initialDate` seeds both `state.currentDate` and the internal `visibleMonth`. Override it if you pull the date from routing or user settings.
+
+### timeZone
+
+- `timeZone` defines the primary display and editing timezone for Day, Week, Month, and Year views.
+- If omitted, DayFlow resolves it from the user's system timezone.
+- Changing `timeZone` reprojects the UI, but does not itself mutate event data.
+- Day/Week `secondaryTimeZone` remains a display-only reference axis and does not replace the primary app timezone.
 
 ### switcherMode
 

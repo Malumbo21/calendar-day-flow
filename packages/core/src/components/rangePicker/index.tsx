@@ -92,8 +92,11 @@ const RangePicker = ({
           : getZoneId(value[1] as Temporal.ZonedDateTime)
         : getZoneId(value[0] as Temporal.ZonedDateTime));
 
-    const start = normalizeToZoned(value[0], zone);
-    const end = normalizeToZoned(value[1], zone, start);
+    // withTimeZone converts a ZonedDateTime from its original timezone to `zone`
+    // while preserving the instant. For PlainDate/PlainDateTime inputs,
+    // normalizeToZoned already constructs the ZDT in `zone`, so withTimeZone is a no-op.
+    const start = normalizeToZoned(value[0], zone).withTimeZone(zone);
+    const end = normalizeToZoned(value[1], zone, start).withTimeZone(zone);
     return [start, end];
   }, [value, timeZone]);
 
@@ -142,9 +145,11 @@ const RangePicker = ({
   useEffect(() => {
     const previous = lastNormalizedRef.current;
     const startChanged =
-      Temporal.ZonedDateTime.compare(previous[0], normalizedValue[0]) !== 0;
+      Temporal.ZonedDateTime.compare(previous[0], normalizedValue[0]) !== 0 ||
+      previous[0].timeZoneId !== normalizedValue[0].timeZoneId;
     const endChanged =
-      Temporal.ZonedDateTime.compare(previous[1], normalizedValue[1]) !== 0;
+      Temporal.ZonedDateTime.compare(previous[1], normalizedValue[1]) !== 0 ||
+      previous[1].timeZoneId !== normalizedValue[1].timeZoneId;
 
     if (startChanged || endChanged) {
       setDraftRange(normalizedValue);
@@ -795,7 +800,7 @@ const RangePicker = ({
       <div
         className={`flex items-center gap-2 rounded-lg border text-sm shadow-sm transition ${
           disabled
-            ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
+            ? 'cursor-not-allowed border-slate-200 bg-white text-slate-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500'
             : isOpen
               ? 'df-border-primary bg-white shadow-md dark:bg-gray-700'
               : 'border-slate-200 bg-white dark:border-gray-600 dark:bg-gray-700'

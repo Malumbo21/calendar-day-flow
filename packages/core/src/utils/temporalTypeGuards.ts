@@ -9,6 +9,8 @@ import { Temporal } from 'temporal-polyfill';
 
 import { logger } from '@/utils/logger';
 
+import { normalizeTimeZoneValue } from './timeZoneUtils';
+
 // ============================================================================
 // Type Guards
 // ============================================================================
@@ -161,6 +163,11 @@ export function temporalToVisualDate(
     return temporalToDate(temporal);
   }
 
+  const normalizedTargetTz = normalizeTimeZoneValue(targetTz);
+  if (!normalizedTargetTz) {
+    return temporalToDate(temporal);
+  }
+
   try {
     // 1. Handle ZonedDateTime (either instance or plain object)
     if (isZonedDateTime(temporal)) {
@@ -169,7 +176,7 @@ export function temporalToVisualDate(
         'function'
           ? (temporal as Temporal.ZonedDateTime)
           : Temporal.ZonedDateTime.from(temporal as Temporal.ZonedDateTimeLike);
-      const shifted = zdt.withTimeZone(targetTz);
+      const shifted = zdt.withTimeZone(normalizedTargetTz);
       return new Date(
         shifted.year,
         shifted.month - 1,
@@ -190,7 +197,7 @@ export function temporalToVisualDate(
           : Temporal.PlainDateTime.from(temporal as Temporal.PlainDateTimeLike);
       // Assume PlainDateTime is in local wall time, convert to ZDT using local TZ then shift
       const zdt = pdt.toZonedDateTime(Temporal.Now.timeZoneId());
-      const shifted = zdt.withTimeZone(targetTz);
+      const shifted = zdt.withTimeZone(normalizedTargetTz);
       return new Date(
         shifted.year,
         shifted.month - 1,
@@ -224,6 +231,11 @@ export function temporalToVisualTemporal(
     return temporal;
   }
 
+  const normalizedTargetTz = normalizeTimeZoneValue(targetTz);
+  if (!normalizedTargetTz) {
+    return temporal;
+  }
+
   try {
     if (isZonedDateTime(temporal)) {
       const zdt =
@@ -231,7 +243,7 @@ export function temporalToVisualTemporal(
         'function'
           ? (temporal as Temporal.ZonedDateTime)
           : Temporal.ZonedDateTime.from(temporal as Temporal.ZonedDateTimeLike);
-      return zdt.withTimeZone(targetTz);
+      return zdt.withTimeZone(normalizedTargetTz);
     }
 
     if (isPlainDateTime(temporal)) {
@@ -242,7 +254,7 @@ export function temporalToVisualTemporal(
           : Temporal.PlainDateTime.from(temporal as Temporal.PlainDateTimeLike);
       return pdt
         .toZonedDateTime(Temporal.Now.timeZoneId())
-        .withTimeZone(targetTz);
+        .withTimeZone(normalizedTargetTz);
     }
   } catch (e) {
     logger.error('Failed to shift visual temporal:', e);

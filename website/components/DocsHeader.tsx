@@ -6,6 +6,8 @@ import { Sidebar } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { cn } from '@/lib/utils';
+
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
@@ -76,6 +78,17 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
 
             {/* Desktop right: language + discord + github */}
             <div className='flex flex-row items-center gap-1.5 max-lg:hidden'>
+              <a
+                href='https://blossom.dayflow.studio'
+                target='_blank'
+                rel='noopener noreferrer'
+                className={cn(
+                  buttonVariants({ color: 'ghost' }),
+                  'text-sm font-medium text-slate-600 dark:text-slate-400'
+                )}
+              >
+                Blossom Picker
+              </a>
               <LanguageSwitcher />
               <a
                 href={DISCORD_URL}
@@ -101,6 +114,17 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
 
             {/* Mobile right: language + sidebar trigger */}
             <div className='ms-auto flex flex-row items-center gap-1 lg:hidden'>
+              <a
+                href='https://blossom.dayflow.studio'
+                target='_blank'
+                rel='noopener noreferrer'
+                className={cn(
+                  buttonVariants({ color: 'ghost', size: 'sm' }),
+                  'text-xs font-medium text-slate-600 max-sm:hidden dark:text-slate-400'
+                )}
+              >
+                Blossom
+              </a>
               <LanguageSwitcher />
               <a
                 href={DISCORD_URL}

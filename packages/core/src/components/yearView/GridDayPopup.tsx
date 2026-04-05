@@ -16,7 +16,7 @@ interface GridDayPopupProps {
   locale: string;
   app: ICalendarApp;
   customContent?: (date: Date, events: Event[]) => ComponentChildren;
-  secondaryTimeZone?: string;
+  appTimeZone?: string;
 }
 
 export const GridDayPopup = ({
@@ -28,7 +28,7 @@ export const GridDayPopup = ({
   locale,
   app,
   customContent,
-  secondaryTimeZone,
+  appTimeZone,
 }: GridDayPopupProps) => {
   const { t } = useLocale();
   const popupRef = useRef<HTMLDivElement>(null);
@@ -85,20 +85,14 @@ export const GridDayPopup = ({
 
             let timeStr = '';
             if (!event.allDay && event.start) {
-              const startDate = temporalToVisualDate(
-                event.start,
-                secondaryTimeZone
-              );
+              const startDate = temporalToVisualDate(event.start, appTimeZone);
               timeStr = startDate.toLocaleTimeString(locale, {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false,
               });
               if (event.end) {
-                const endDate = temporalToVisualDate(
-                  event.end,
-                  secondaryTimeZone
-                );
+                const endDate = temporalToVisualDate(event.end, appTimeZone);
                 timeStr += ` – ${endDate.toLocaleTimeString(locale, {
                   hour: '2-digit',
                   minute: '2-digit',

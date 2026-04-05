@@ -36,6 +36,8 @@ import {
   extractHourFromDate,
   generateSecondaryTimeSlots,
   getTimezoneDisplayLabel,
+  getNowInTimeZone,
+  getTodayInTimeZone,
   hasEventChanged,
 } from '@/utils';
 
@@ -208,16 +210,18 @@ const DayView = ({
     [currentDate]
   );
 
+  const appTimeZone = app.timeZone;
+
   // Events for the current date
   const currentDayEvents = useMemo(
-    () => filterDayEvents(events, currentDate, currentWeekStart),
-    [events, currentDate, currentWeekStart]
+    () => filterDayEvents(events, currentDate, currentWeekStart, appTimeZone),
+    [events, currentDate, currentWeekStart, appTimeZone]
   );
 
   // Prepare events for layout calculation
   const layoutEvents = useMemo(
-    () => normalizeLayoutEvents(currentDayEvents, currentDate),
-    [currentDayEvents, currentDate]
+    () => normalizeLayoutEvents(currentDayEvents, currentDate, appTimeZone),
+    [currentDayEvents, currentDate, appTimeZone]
   );
 
   // Calculate event layouts
@@ -311,7 +315,8 @@ const DayView = ({
         startHour,
         endHour,
         currentDate,
-        layoutEvents
+        layoutEvents,
+        appTimeZone
       ),
     calculateDragLayout: (
       draggedEvent,
@@ -325,7 +330,8 @@ const DayView = ({
         targetStartHour,
         targetEndHour,
         currentDate,
-        layoutEvents
+        layoutEvents,
+        appTimeZone
       ),
     TIME_COLUMN_WIDTH: secondaryTimeZone && !isMobile ? 88 : isMobile ? 48 : 80,
     isMobile,
@@ -405,28 +411,32 @@ const DayView = ({
   const secondaryTimeSlots = useMemo(
     () =>
       secondaryTimeZone
-        ? generateSecondaryTimeSlots(timeSlots, secondaryTimeZone, timeFormat)
+        ? generateSecondaryTimeSlots(
+            timeSlots,
+            secondaryTimeZone,
+            timeFormat,
+            currentDate,
+            appTimeZone
+          )
         : undefined,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [secondaryTimeZone, timeFormat, FIRST_HOUR]
+    [secondaryTimeZone, timeFormat, FIRST_HOUR, currentDate, appTimeZone]
   );
 
   const primaryTzLabel = useMemo(
     () =>
       secondaryTimeZone
-        ? getTimezoneDisplayLabel(
-            Intl.DateTimeFormat().resolvedOptions().timeZone
-          )
+        ? getTimezoneDisplayLabel(appTimeZone, currentDate)
         : undefined,
-    [secondaryTimeZone]
+    [secondaryTimeZone, appTimeZone, currentDate]
   );
 
   const secondaryTzLabel = useMemo(
     () =>
       secondaryTimeZone
-        ? getTimezoneDisplayLabel(secondaryTimeZone)
+        ? getTimezoneDisplayLabel(secondaryTimeZone, currentDate)
         : undefined,
-    [secondaryTimeZone]
+    [secondaryTimeZone, currentDate]
   );
 
   // Date selection handling
@@ -442,11 +452,11 @@ const DayView = ({
     },
     [app]
   );
-  // Check if it is today
-  const isToday = useMemo(
-    () => currentDate.toDateString() === new Date().toDateString(),
-    [currentDate]
-  );
+  // Check if it is today in app timezone
+  const isToday = useMemo(() => {
+    const todayLocal = getTodayInTimeZone(appTimeZone);
+    return currentDate.toDateString() === todayLocal.toDateString();
+  }, [currentDate, appTimeZone]);
 
   // Sync scroll on mount
   useLayoutEffect(() => {
@@ -455,7 +465,7 @@ const DayView = ({
         '.df-calendar-content'
       );
       if (scrollContainer) {
-        const now = new Date();
+        const now = getNowInTimeZone(appTimeZone);
         const hour = now.getHours() + now.getMinutes() / 60;
         const containerHeight = (scrollContainer as HTMLElement).clientHeight;
 
@@ -465,14 +475,17 @@ const DayView = ({
         );
       }
     }
-  }, []); // Run once on mount
+  }, [appTimeZone, config.scrollToCurrentTime, FIRST_HOUR, HOUR_HEIGHT]); // Run on mount and timezone changes
 
   // Timer
   useEffect(() => {
-    setCurrentTime(new Date());
-    const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
+    setCurrentTime(getNowInTimeZone(appTimeZone));
+    const timer = setInterval(
+      () => setCurrentTime(getNowInTimeZone(appTimeZone)),
+      60_000
+    );
     return () => clearInterval(timer);
-  }, []);
+  }, [appTimeZone]);
 
   return (
     <div className={`df-day-view flex h-full ${bgGray50}`}>
@@ -547,6 +560,7 @@ const DayView = ({
         secondaryTimeSlots={secondaryTimeSlots}
         primaryTzLabel={primaryTzLabel}
         secondaryTzLabel={secondaryTzLabel}
+        appTimeZone={appTimeZone}
       />
       <RightPanel
         app={app}
@@ -560,6 +574,7 @@ const DayView = ({
         switcherMode={switcherMode}
         timeFormat={timeFormat}
         showEventDots={showEventDots}
+        appTimeZone={appTimeZone}
       />
       <MobileEventDrawerComponent
         isOpen={isDrawerOpen}

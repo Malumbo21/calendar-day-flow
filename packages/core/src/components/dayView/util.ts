@@ -1,13 +1,18 @@
 import { EventLayoutCalculator } from '@/components/eventLayout';
 import { Event, EventLayout } from '@/types';
 import { createAllDayDisplayComparator } from '@/utils/allDaySort';
-import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
+import {
+  dateToZonedDateTime,
+  temporalToDate,
+  temporalToVisualDate,
+} from '@/utils/temporalTypeGuards';
 
 // Filter events for the current day
 export const filterDayEvents = (
   events: Event[],
   currentDate: Date,
-  currentWeekStart: Date
+  currentWeekStart: Date,
+  appTimeZone?: string
 ): Event[] => {
   const dayStart = new Date(currentDate);
   dayStart.setHours(0, 0, 0, 0);
@@ -15,9 +20,14 @@ export const filterDayEvents = (
   const dayEnd = new Date(currentDate);
   dayEnd.setHours(23, 59, 59, 999);
 
+  const toDate = (temporal: Event['start']) =>
+    appTimeZone
+      ? temporalToVisualDate(temporal, appTimeZone)
+      : temporalToDate(temporal);
+
   const filtered = events.filter(event => {
-    const eventStart = temporalToDate(event.start);
-    const eventEnd = temporalToDate(event.end);
+    const eventStart = toDate(event.start);
+    const eventEnd = toDate(event.end ?? event.start);
 
     if (event.allDay) {
       const s = new Date(eventStart);
@@ -31,7 +41,7 @@ export const filterDayEvents = (
   });
 
   return filtered.map(event => {
-    const eventDate = temporalToDate(event.start);
+    const eventDate = toDate(event.start);
     const dayDiff = Math.floor(
       (eventDate.getTime() - currentWeekStart.getTime()) / (24 * 60 * 60 * 1000)
     );
@@ -47,36 +57,37 @@ export const filterDayEvents = (
 // Normalize events for layout calculation (clamping to current day)
 export const normalizeLayoutEvents = (
   currentDayEvents: Event[],
-  currentDate: Date
+  currentDate: Date,
+  appTimeZone?: string
 ): Event[] => {
   const dayStart = new Date(currentDate);
   dayStart.setHours(0, 0, 0, 0);
   const nextDay = new Date(dayStart);
   nextDay.setDate(nextDay.getDate() + 1);
 
+  const toVisual = (t: Event['start']) =>
+    appTimeZone ? temporalToVisualDate(t, appTimeZone) : temporalToDate(t);
+
   return currentDayEvents
     .filter(e => !e.allDay)
     .map(event => {
-      const eventStart = temporalToDate(event.start);
-      const eventEnd = temporalToDate(event.end);
-      let newStart = event.start;
-      let newEnd = event.end;
-      let modified = false;
+      const eventStart = toVisual(event.start);
+      const eventEnd = toVisual(event.end ?? event.start);
+      let newStart = dateToZonedDateTime(eventStart, appTimeZone);
+      let newEnd = dateToZonedDateTime(eventEnd, appTimeZone);
 
       if (eventStart < dayStart) {
-        newStart = dateToZonedDateTime(dayStart);
-        modified = true;
+        newStart = dateToZonedDateTime(dayStart, appTimeZone);
       }
 
       if (eventEnd > nextDay) {
-        newEnd = dateToZonedDateTime(nextDay);
-        modified = true;
+        newEnd = dateToZonedDateTime(nextDay, appTimeZone);
       }
 
       return {
         ...event,
-        start: modified ? newStart : event.start,
-        end: modified ? newEnd : event.end,
+        start: newStart,
+        end: newEnd,
         day: 0, // Force all events to same day index for collision detection
       };
     });
@@ -149,7 +160,8 @@ export const calculateNewEventLayout = (
   startHour: number,
   endHour: number,
   currentDate: Date,
-  layoutEvents: Event[]
+  layoutEvents: Event[],
+  appTimeZone?: string
 ): EventLayout | null => {
   const startDate = new Date(currentDate);
   const endDate = new Date(currentDate);
@@ -160,8 +172,8 @@ export const calculateNewEventLayout = (
     id: '-1',
     title: 'Temp',
     day: 0,
-    start: dateToZonedDateTime(startDate),
-    end: dateToZonedDateTime(endDate),
+    start: dateToZonedDateTime(startDate, appTimeZone),
+    end: dateToZonedDateTime(endDate, appTimeZone),
     calendarId: 'blue',
     allDay: false,
   };
@@ -181,7 +193,8 @@ export const calculateDragLayout = (
   targetStartHour: number,
   targetEndHour: number,
   currentDate: Date,
-  layoutEvents: Event[]
+  layoutEvents: Event[],
+  appTimeZone?: string
 ): EventLayout | null => {
   const otherEvents = layoutEvents.filter(e => e.id !== draggedEvent.id);
 
@@ -198,8 +211,8 @@ export const calculateDragLayout = (
 
   const modifiedDraggedEvent = {
     ...draggedEvent,
-    start: dateToZonedDateTime(startD),
-    end: dateToZonedDateTime(endD),
+    start: dateToZonedDateTime(startD, appTimeZone),
+    end: dateToZonedDateTime(endD, appTimeZone),
     day: 0,
   };
 

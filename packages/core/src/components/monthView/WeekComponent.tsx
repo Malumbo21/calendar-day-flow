@@ -99,7 +99,7 @@ interface WeekComponentProps {
   calendarSignature?: string;
   app: ICalendarApp;
   enableTouch?: boolean;
-  secondaryTimeZone?: string;
+  appTimeZone?: string;
 }
 
 // Constants
@@ -220,7 +220,7 @@ const organizeMultiDaySegments = (
 const constructRenderEvents = (
   events: Event[],
   weekStart: Date,
-  secondaryTimeZone?: string
+  appTimeZone?: string
 ): Event[] => {
   const renderEvents: Event[] = [];
 
@@ -236,9 +236,9 @@ const constructRenderEvents = (
       return; // Skip invalid events
     }
 
-    const start = temporalToVisualDate(event.start, secondaryTimeZone);
+    const start = temporalToVisualDate(event.start, appTimeZone);
     const end = event.end
-      ? temporalToVisualDate(event.end, secondaryTimeZone)
+      ? temporalToVisualDate(event.end, appTimeZone)
       : start;
     const startDate = new Date(start);
     startDate.setHours(0, 0, 0, 0);
@@ -379,7 +379,7 @@ const WeekComponent = memo(
     onCalendarDragOver,
     app,
     enableTouch,
-    secondaryTimeZone,
+    appTimeZone,
   }: WeekComponentProps) => {
     const { t, locale } = useLocale();
     const [shouldShowMonthTitle, setShouldShowMonthTitle] = useState(false);
@@ -480,16 +480,15 @@ const WeekComponent = memo(
           events,
           weekData.startDate,
           7,
-          secondaryTimeZone
+          appTimeZone
         ),
-      [events, weekData.startDate, secondaryTimeZone]
+      [events, weekData.startDate, appTimeZone]
     );
 
     // Build render events
     const constructedRenderEvents = useMemo(
-      () =>
-        constructRenderEvents(events, weekData.startDate, secondaryTimeZone),
-      [events, weekData.startDate, secondaryTimeZone]
+      () => constructRenderEvents(events, weekData.startDate, appTimeZone),
+      [events, weekData.startDate, appTimeZone]
     );
 
     // Pre-compute events grouped by day to replace 7× O(n) filter calls on every render
@@ -504,15 +503,12 @@ const WeekComponent = memo(
               return (
                 temporalToVisualDate(
                   event.start,
-                  secondaryTimeZone
+                  appTimeZone
                 ).toDateString() === dayDateStr
               );
             }
-            const startDate = temporalToVisualDate(
-              event.start,
-              secondaryTimeZone
-            );
-            const endDate = temporalToVisualDate(event.end, secondaryTimeZone);
+            const startDate = temporalToVisualDate(event.start, appTimeZone);
+            const endDate = temporalToVisualDate(event.end, appTimeZone);
             if (!event.allDay) {
               const endHasTime =
                 endDate.getHours() !== 0 ||
@@ -534,7 +530,7 @@ const WeekComponent = memo(
         );
       });
       return map;
-    }, [constructedRenderEvents, weekData.days, secondaryTimeZone]);
+    }, [constructedRenderEvents, weekData.days, appTimeZone]);
 
     // Organize multi-day event segments
     const organizedMultiDaySegments = useMemo(
@@ -854,7 +850,7 @@ const WeekComponent = memo(
               app={app}
               isMobile={screenSize !== 'desktop'}
               enableTouch={enableTouch}
-              secondaryTimeZone={secondaryTimeZone}
+              appTimeZone={appTimeZone}
             />
           );
           timedEventIndex++;
@@ -1076,7 +1072,7 @@ const WeekComponent = memo(
                             app={app}
                             isMobile={screenSize !== 'desktop'}
                             enableTouch={enableTouch}
-                            secondaryTimeZone={secondaryTimeZone}
+                            appTimeZone={appTimeZone}
                           />
                         ))}
                     </div>

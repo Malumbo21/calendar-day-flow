@@ -36,6 +36,8 @@ import {
   getEventClasses,
 } from './utils';
 
+const HIGHLIGHT_POP_DURATION_MS = 650;
+
 const CalendarEvent = ({
   event,
   layout,
@@ -77,7 +79,7 @@ const CalendarEvent = ({
   disableDefaultStyle = false,
   renderVisualContent,
   resizeHandleOrientation,
-  secondaryTimeZone,
+  appTimeZone,
 }: CalendarEventProps) => {
   const customRenderingStore = useContext(CustomRenderingContext);
   const isTouchEnabled = enableTouch ?? isMobile;
@@ -85,19 +87,16 @@ const CalendarEvent = ({
 
   // Visual event for display (shifted walls)
   const visualEvent = useMemo(() => {
-    if (!secondaryTimeZone || event.allDay) return event;
+    if (!appTimeZone || event.allDay) return event;
     const start = temporalToVisualTemporal(
       event.start as Temporal.PlainDate,
-      secondaryTimeZone
+      appTimeZone
     );
     const end = event.end
-      ? temporalToVisualTemporal(
-          event.end as Temporal.PlainDate,
-          secondaryTimeZone
-        )
+      ? temporalToVisualTemporal(event.end as Temporal.PlainDate, appTimeZone)
       : undefined;
     return { ...event, start, end } as Event;
-  }, [event, secondaryTimeZone]);
+  }, [event, appTimeZone]);
   const [contextMenuPosition, setContextMenuPosition] = useState<{
     x: number;
     y: number;
@@ -218,6 +217,7 @@ const CalendarEvent = ({
     hasPendingSelection,
   } = useEventActions({
     event,
+    timingEvent: visualEvent,
     viewType,
     isAllDay,
     isMultiDay,
@@ -252,6 +252,7 @@ const CalendarEvent = ({
   // Styles Hook
   const { calculateEventStyle } = useEventStyles({
     event,
+    timingEvent: visualEvent,
     layout,
     isAllDay,
     allDayHeight,
@@ -280,6 +281,7 @@ const CalendarEvent = ({
   // Visibility Hook
   useEventVisibility({
     event,
+    timingEvent: visualEvent,
     isEventSelected,
     showDetailPanel,
     eventRef,
@@ -372,7 +374,7 @@ const CalendarEvent = ({
       setIsPopping(true);
       const timer = setTimeout(() => {
         setIsPopping(false);
-      }, 300);
+      }, HIGHLIGHT_POP_DURATION_MS);
       return () => {
         clearTimeout(timer);
         setIsPopping(false);
@@ -497,6 +499,7 @@ const CalendarEvent = ({
           customRenderingStore={customRenderingStore}
           eventContentSlotArgs={eventContentSlotArgs}
           timeFormat={timeFormat}
+          appTimeZone={appTimeZone}
           renderVisualContent={renderVisualContent}
           resizeHandleOrientation={resizeHandleOrientation}
         />

@@ -11,6 +11,18 @@ import { Event, TimeZoneValue } from '@/types';
 
 import { extractHourFromDate } from './dateTimeUtils';
 import { temporalToDate } from './temporal';
+import { normalizeTimeZoneValue } from './timeZoneUtils';
+
+const zonedDateTimeToWallClockDate = (zdt: Temporal.ZonedDateTime): Date =>
+  new Date(
+    zdt.year,
+    zdt.month - 1,
+    zdt.day,
+    zdt.hour,
+    zdt.minute,
+    zdt.second,
+    Math.floor(zdt.millisecond)
+  );
 
 // ============================================================================
 // Time Tools
@@ -137,9 +149,15 @@ export const generateSecondaryTimeSlots = (
   timeSlots: Array<{ hour: number; label: string }>,
   secondaryTimeZone: TimeZoneValue,
   timeFormat: '12h' | '24h' = '24h',
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
+  baseTimeZone?: string
 ): string[] => {
-  const primaryTimeZone = Temporal.Now.timeZoneId();
+  const normalizedSecondaryTimeZone = normalizeTimeZoneValue(secondaryTimeZone);
+  if (!normalizedSecondaryTimeZone) {
+    return timeSlots.map(() => '');
+  }
+
+  const primaryTimeZone = baseTimeZone ?? Temporal.Now.timeZoneId();
   const year = referenceDate.getFullYear();
   const month = referenceDate.getMonth() + 1;
   const day = referenceDate.getDate();
@@ -156,7 +174,7 @@ export const generateSecondaryTimeSlots = (
         second: 0,
         timeZone: primaryTimeZone,
       });
-      const secondaryZDT = primaryZDT.withTimeZone(secondaryTimeZone);
+      const secondaryZDT = primaryZDT.withTimeZone(normalizedSecondaryTimeZone);
       return formatTime(secondaryZDT.hour, secondaryZDT.minute, timeFormat);
     } catch {
       return '';
@@ -175,13 +193,60 @@ export const getTimezoneDisplayLabel = (
   timeZone: TimeZoneValue,
   date: Date = new Date()
 ): string => {
+  const normalizedTimeZone = normalizeTimeZoneValue(timeZone);
+  if (!normalizedTimeZone) {
+    return '';
+  }
+
   try {
     const parts = new Intl.DateTimeFormat('en', {
-      timeZone,
+      timeZone: normalizedTimeZone,
       timeZoneName: 'short',
     }).formatToParts(date);
-    return parts.find(p => p.type === 'timeZoneName')?.value ?? timeZone;
+    return (
+      parts.find(p => p.type === 'timeZoneName')?.value ?? normalizedTimeZone
+    );
   } catch {
-    return timeZone as string;
+    return normalizedTimeZone;
   }
+};
+
+export const getNowInTimeZone = (timeZone?: TimeZoneValue): Date => {
+  const normalizedTimeZone =
+    (timeZone ? normalizeTimeZoneValue(timeZone) : undefined) ??
+    Temporal.Now.timeZoneId();
+
+  return zonedDateTimeToWallClockDate(
+    Temporal.Now.zonedDateTimeISO(normalizedTimeZone)
+  );
+};
+
+export const getTodayInTimeZone = (timeZone?: TimeZoneValue): Date => {
+  const normalizedTimeZone =
+    (timeZone ? normalizeTimeZoneValue(timeZone) : undefined) ??
+    Temporal.Now.timeZoneId();
+  const today = Temporal.Now.plainDateISO(normalizedTimeZone);
+  return new Date(today.year, today.month - 1, today.day);
+};
+
+export const getNextHourRangeInTimeZone = (
+  timeZone?: TimeZoneValue
+): { start: Date; end: Date } => {
+  const normalizedTimeZone =
+    (timeZone ? normalizeTimeZoneValue(timeZone) : undefined) ??
+    Temporal.Now.timeZoneId();
+  const nextHourStart = Temporal.Now.zonedDateTimeISO(normalizedTimeZone)
+    .add({ hours: 1 })
+    .with({
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0,
+      nanosecond: 0,
+    });
+
+  return {
+    start: zonedDateTimeToWallClockDate(nextHourStart),
+    end: zonedDateTimeToWallClockDate(nextHourStart.add({ hours: 1 })),
+  };
 };

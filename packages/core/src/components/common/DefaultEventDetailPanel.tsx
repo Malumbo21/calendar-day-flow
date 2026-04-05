@@ -130,23 +130,10 @@ const DefaultEventDetailPanel = ({
     [commitDraftChanges]
   );
 
-  const eventTimeZone = useMemo(() => {
-    if (!isPlainDate(draftEvent.start)) {
-      return (
-        (draftEvent.start as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    if (draftEvent.end && !isPlainDate(draftEvent.end)) {
-      return (
-        (draftEvent.end as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    return Temporal.Now.timeZoneId();
-  }, [draftEvent.end, draftEvent.start]);
+  const eventTimeZone = useMemo(
+    () => app?.timeZone ?? Temporal.Now.timeZoneId(),
+    [app]
+  );
 
   // Get visible calendar type options
   const colorOptions: CalendarOption[] = useMemo(() => {
@@ -210,13 +197,14 @@ const DefaultEventDetailPanel = ({
     const plainDate = isPlainDate(draftEvent.start)
       ? draftEvent.start
       : draftEvent.start.toPlainDate();
+    const tz = app?.timeZone ?? Temporal.Now.timeZoneId();
     const start = Temporal.ZonedDateTime.from({
       year: plainDate.year,
       month: plainDate.month,
       day: plainDate.day,
       hour: 9,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
     const end = Temporal.ZonedDateTime.from({
       year: plainDate.year,
@@ -224,7 +212,7 @@ const DefaultEventDetailPanel = ({
       day: plainDate.day,
       hour: 10,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
 
     applyDraftEventUpdate({

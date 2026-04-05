@@ -35,7 +35,7 @@ export function analyzeMultiDayEventsForRow(
   rowDays: Date[],
   columnsPerRow: number,
   comparator?: (a: Event, b: Event) => number,
-  secondaryTimeZone?: string
+  appTimeZone?: string
 ): YearMultiDaySegment[] {
   if (rowDays.length === 0) return [];
 
@@ -62,9 +62,9 @@ export function analyzeMultiDayEventsForRow(
   // 1. Filter and normalize events that overlap with this row
   const eventsWithDates = events
     .map(event => {
-      const start = temporalToVisualDate(event.start, secondaryTimeZone);
+      const start = temporalToVisualDate(event.start, appTimeZone);
       const end = event.end
-        ? temporalToVisualDate(event.end, secondaryTimeZone)
+        ? temporalToVisualDate(event.end, appTimeZone)
         : start;
 
       const startMs = new Date(

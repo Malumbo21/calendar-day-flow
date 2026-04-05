@@ -119,4 +119,56 @@ describe('useEventActions', () => {
     expect(onDetailPanelToggle).toHaveBeenCalledWith('event-1::year-segment');
     expect(onDetailPanelToggle).not.toHaveBeenCalledWith(null);
   });
+
+  it('selects non-year events on double click before opening the detail panel', async () => {
+    const onEventSelect = jest.fn();
+    const onDetailPanelToggle = jest.fn();
+    const selectedEventElementRef = { current: null as HTMLElement | null };
+    const setIsSelected = jest.fn();
+
+    const DayHarness = () => {
+      const handlers = useEventActions({
+        event: baseEvent,
+        viewType: ViewType.DAY,
+        isAllDay: true,
+        isMultiDay: false,
+        calendarRef: { current: document.createElement('div') },
+        firstHour: 0,
+        hourHeight: 56,
+        isMobile: false,
+        canOpenDetail: true,
+        detailPanelKey: 'event-1',
+        onEventSelect,
+        onDetailPanelToggle,
+        setIsSelected,
+        setDetailPanelPosition: jest.fn(),
+        setContextMenuPosition: jest.fn(),
+        setActiveDayIndex: jest.fn(),
+        getClickedDayIdx: jest.fn(),
+        updatePanelPosition: jest.fn(),
+        selectedEventElementRef,
+      });
+
+      return (
+        <button
+          type='button'
+          data-testid='day-event'
+          onDblClick={handlers.handleDoubleClick}
+        >
+          Event
+        </button>
+      );
+    };
+
+    const { getByTestId } = render(<DayHarness />);
+
+    await act(async () => {
+      fireEvent.dblClick(getByTestId('day-event'), { clientX: 24 });
+      await Promise.resolve();
+    });
+
+    expect(onEventSelect).toHaveBeenCalledWith('event-1');
+    expect(onDetailPanelToggle).toHaveBeenCalledWith('event-1');
+    expect(setIsSelected).toHaveBeenCalledWith(true);
+  });
 });

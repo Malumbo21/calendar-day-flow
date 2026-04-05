@@ -15,6 +15,7 @@ import {
 } from '@/types';
 import { formatTime, isEventDeepEqual } from '@/utils';
 import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
+import { dateToPlainDate } from '@/utils/temporalTypeGuards';
 
 import { Switch } from './components/Switch';
 import { TimePickerWheel } from './components/TimePickerWheel';
@@ -180,13 +181,8 @@ export const MobileEventDrawer = ({
   const hasChanges = useMemo(() => {
     if (!isOpen || !draftEvent) return false;
 
-    let finalStart = new Date(startDate);
-    let finalEnd = new Date(endDate);
-
-    if (isAllDay) {
-      finalStart.setHours(0, 0, 0, 0);
-      finalEnd.setHours(0, 0, 0, 0);
-    }
+    const finalStart = new Date(startDate);
+    const finalEnd = new Date(endDate);
 
     const currentEvent: CalendarEvent = {
       ...draftEvent,
@@ -194,8 +190,12 @@ export const MobileEventDrawer = ({
       calendarId,
       allDay: isAllDay,
       description: notes,
-      start: dateToZonedDateTime(finalStart),
-      end: dateToZonedDateTime(finalEnd),
+      start: isAllDay
+        ? dateToPlainDate(finalStart)
+        : dateToZonedDateTime(finalStart, app.timeZone),
+      end: isAllDay
+        ? dateToPlainDate(finalEnd)
+        : dateToZonedDateTime(finalEnd, app.timeZone),
     };
 
     return !isEventDeepEqual(draftEvent, currentEvent);
@@ -215,21 +215,20 @@ export const MobileEventDrawer = ({
   const handleSave = () => {
     if (!draftEvent) return;
 
-    let finalStart = new Date(startDate);
-    let finalEnd = new Date(endDate);
-
-    if (isAllDay) {
-      finalStart.setHours(0, 0, 0, 0);
-      finalEnd.setHours(0, 0, 0, 0);
-    }
+    const finalStart = new Date(startDate);
+    const finalEnd = new Date(endDate);
 
     const updated = {
       ...draftEvent,
       title,
       calendarId,
       allDay: isAllDay,
-      start: dateToZonedDateTime(finalStart),
-      end: dateToZonedDateTime(finalEnd),
+      start: isAllDay
+        ? dateToPlainDate(finalStart)
+        : dateToZonedDateTime(finalStart, app.timeZone),
+      end: isAllDay
+        ? dateToPlainDate(finalEnd)
+        : dateToZonedDateTime(finalEnd, app.timeZone),
     };
     onSave(updated as CalendarEvent);
   };
@@ -446,10 +445,7 @@ export const MobileEventDrawer = ({
                   showHeader
                   events={app.getEvents()}
                   calendarRegistry={app.getCalendarRegistry()}
-                  timeZone={
-                    (app.getViewConfig(app.state.currentView)
-                      ?.secondaryTimeZone as string) || undefined
-                  }
+                  timeZone={app.timeZone}
                 />
               </div>
             </div>
@@ -509,10 +505,7 @@ export const MobileEventDrawer = ({
                   showHeader
                   events={app.getEvents()}
                   calendarRegistry={app.getCalendarRegistry()}
-                  timeZone={
-                    (app.getViewConfig(app.state.currentView)
-                      ?.secondaryTimeZone as string) || undefined
-                  }
+                  timeZone={app.timeZone}
                 />
               </div>
             </div>

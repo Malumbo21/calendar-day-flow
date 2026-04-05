@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
 import { ICalendarApp } from '@/types';
@@ -36,6 +36,8 @@ export function useSearchController(
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<CalendarSearchEvent[]>([]);
+  const prevSearchKeywordRef = useRef('');
+  const prevIsSearchOpenRef = useRef(false);
 
   // Sync highlighted event → selected event whenever the app highlights one
   // (e.g. after navigating to a search result).
@@ -47,9 +49,14 @@ export function useSearchController(
 
   // Clear highlight when search drawer closes.
   useEffect(() => {
-    if (!isSearchOpen && app.state.highlightedEventId !== null) {
+    if (
+      prevIsSearchOpenRef.current &&
+      !isSearchOpen &&
+      app.state.highlightedEventId !== null
+    ) {
       app.highlightEvent(null);
     }
+    prevIsSearchOpenRef.current = isSearchOpen;
   }, [isSearchOpen, app]);
 
   // Debounced search execution.
@@ -57,9 +64,13 @@ export function useSearchController(
     if (!searchKeyword.trim()) {
       setIsSearchOpen(false);
       setSearchResults([]);
-      if (app.state.highlightedEventId !== null) {
+      if (
+        prevSearchKeywordRef.current.trim() &&
+        app.state.highlightedEventId !== null
+      ) {
         app.highlightEvent(null);
       }
+      prevSearchKeywordRef.current = searchKeyword;
       return;
     }
 
@@ -120,6 +131,7 @@ export function useSearchController(
     };
 
     const timer = setTimeout(performSearch, debounceDelay);
+    prevSearchKeywordRef.current = searchKeyword;
     return () => clearTimeout(timer);
   }, [searchKeyword, searchConfig, app]);
 

@@ -68,6 +68,7 @@ interface EventContentProps {
   eventContentSlotArgs: any;
   layout?: EventLayout;
   timeFormat?: '12h' | '24h';
+  appTimeZone?: string;
   renderVisualContent?: (
     defaultContent: ComponentChildren
   ) => ComponentChildren;
@@ -100,6 +101,7 @@ export const EventContent = ({
   customRenderingStore,
   eventContentSlotArgs,
   timeFormat = '24h',
+  appTimeZone,
   renderVisualContent,
   resizeHandleOrientation,
 }: EventContentProps) => {
@@ -134,6 +136,7 @@ export const EventContent = ({
         isEditable={isEditable}
         viewable={canOpenDetail}
         isPopping={isPopping}
+        appTimeZone={appTimeZone}
         renderSlot={defaultContent => (
           <ContentSlot
             store={customRenderingStore}

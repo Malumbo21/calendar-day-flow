@@ -1,3 +1,5 @@
+import { Temporal } from 'temporal-polyfill';
+
 import { Locale } from '@/locale/types';
 import { isValidLocale } from '@/locale/utils';
 import {
@@ -18,6 +20,7 @@ import {
 } from '@/types';
 import { ThemeMode } from '@/types/calendarTypes';
 import { isDeepEqual } from '@/utils/helpers';
+import { normalizeTimeZoneValue } from '@/utils/timeZoneUtils';
 
 import {
   CalendarRegistry,
@@ -45,9 +48,16 @@ export class CalendarApp implements ICalendarApp {
   private customMobileEventRenderer?: MobileEventRenderer;
 
   constructor(config: CalendarAppConfig) {
+    const resolvedTimeZone =
+      normalizeTimeZoneValue(config.timeZone) ??
+      Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const defaultCurrentDate = (() => {
+      const d = Temporal.Now.plainDateISO(resolvedTimeZone);
+      return new Date(d.year, d.month - 1, d.day);
+    })();
     this.state = {
       currentView: config.defaultView || ViewType.WEEK,
-      currentDate: config.initialDate || new Date(),
+      currentDate: config.initialDate || defaultCurrentDate,
       events: config.events || [],
       switcherMode: config.switcherMode || 'buttons',
       plugins: new Map(),
@@ -58,6 +68,7 @@ export class CalendarApp implements ICalendarApp {
       readOnly: config.readOnly || false,
       overrides: [],
       allDaySortComparator: config.allDaySortComparator,
+      timeZone: resolvedTimeZone,
     };
 
     this.callbacks = config.callbacks || {};
@@ -344,6 +355,10 @@ export class CalendarApp implements ICalendarApp {
     | boolean
     | ((props: CalendarHeaderProps) => TNode) => this.useCalendarHeader;
 
+  get timeZone(): string {
+    return this.state.timeZone;
+  }
+
   setOverrides = (overrides: string[]): void => {
     this.state.overrides = overrides;
     this.triggerRender();
@@ -411,6 +426,15 @@ export class CalendarApp implements ICalendarApp {
       this.state.allDaySortComparator = config.allDaySortComparator;
       hasChanged = true;
     }
+    if (config.timeZone !== undefined) {
+      const newTz =
+        normalizeTimeZoneValue(config.timeZone) ??
+        Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (newTz !== this.state.timeZone) {
+        this.state.timeZone = newTz;
+        hasChanged = true;
+      }
+    }
     if (config.views !== undefined) {
       const newViews = new Map(this.state.views);
       let viewsChanged = false;
@@ -423,9 +447,20 @@ export class CalendarApp implements ICalendarApp {
       });
       if (viewsChanged) {
         this.state.views = newViews;
-        this.state = { ...this.state };
         hasChanged = true;
       }
+    }
+
+    if (config.calendars !== undefined) {
+      let calendarsChanged = false;
+      for (const cal of config.calendars) {
+        const existing = this.calendarRegistry.get(cal.id);
+        if (existing && existing.source !== cal.source) {
+          this.calendarRegistry.updateCalendar(cal.id, { source: cal.source });
+          calendarsChanged = true;
+        }
+      }
+      if (calendarsChanged) hasChanged = true;
     }
 
     if (hasChanged) {

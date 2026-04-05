@@ -9,6 +9,7 @@ import {
   dateToZonedDateTime,
   dateToPlainDate,
   getWeekRange,
+  temporalToVisualDate,
 } from '@dayflow/core';
 import { Temporal } from 'temporal-polyfill';
 
@@ -36,26 +37,55 @@ export interface KeyboardShortcutsConfig {
 }
 
 function handleTabNavigation(app: ICalendarApp, reverse: boolean) {
+  const navigationState = (
+    app as ICalendarApp & {
+      __dayflowKeyboardState?: { lastNavigatedEventId: string | null };
+    }
+  ).__dayflowKeyboardState;
   const events = app.getEvents();
   const currentView = app.state.currentView;
   const currentDate = app.getCurrentDate();
+  const appTimeZone = app.timeZone;
 
   let visibleEvents: Event[] = [];
+
+  const getVisualRange = (event: Event) => {
+    const start = temporalToVisualDate(event.start, appTimeZone);
+    const end = event.end
+      ? temporalToVisualDate(event.end, appTimeZone)
+      : new Date(start);
+    return { start, end };
+  };
+
+  const overlapsRange = (
+    event: Event,
+    rangeStart: Date,
+    rangeEnd: Date
+  ): boolean => {
+    const { start, end } = getVisualRange(event);
+    return start < rangeEnd && end >= rangeStart;
+  };
 
   switch (currentView) {
     case ViewType.DAY: {
       visibleEvents = events.filter(e => {
-        const s = temporalToDate(e.start);
-        return s.toDateString() === currentDate.toDateString();
+        const dayStart = new Date(currentDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        return overlapsRange(e, dayStart, dayEnd);
       });
       break;
     }
     case ViewType.WEEK: {
-      const { monday: start, sunday: end } = getWeekRange(currentDate);
-      visibleEvents = events.filter(e => {
-        const s = temporalToDate(e.start);
-        return s >= start && s <= end;
-      });
+      const weekConfig = app.getViewConfig(ViewType.WEEK) as
+        | { startOfWeek?: number }
+        | undefined;
+      const startOfWeek = weekConfig?.startOfWeek ?? 1;
+      const { monday: start } = getWeekRange(currentDate, startOfWeek);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      visibleEvents = events.filter(e => overlapsRange(e, start, end));
       break;
     }
     case ViewType.MONTH: {
@@ -68,12 +98,9 @@ function handleTabNavigation(app: ICalendarApp, reverse: boolean) {
       const end = new Date(
         visibleMonth.getFullYear(),
         visibleMonth.getMonth() + 1,
-        0
+        1
       );
-      visibleEvents = events.filter(e => {
-        const s = temporalToDate(e.start);
-        return s >= start && s <= end;
-      });
+      visibleEvents = events.filter(e => overlapsRange(e, start, end));
       break;
     }
     case ViewType.YEAR: {
@@ -84,7 +111,10 @@ function handleTabNavigation(app: ICalendarApp, reverse: boolean) {
           .showTimedEventsInYearView ?? false;
       visibleEvents = events.filter(e => {
         if (!showTimedEvents && !e.allDay) return false;
-        return temporalToDate(e.start).getFullYear() === year;
+        const rangeStart = new Date(year, 0, 1);
+        rangeStart.setHours(0, 0, 0, 0);
+        const rangeEnd = new Date(year + 1, 0, 1);
+        return overlapsRange(e, rangeStart, rangeEnd);
       });
       break;
     }
@@ -93,8 +123,8 @@ function handleTabNavigation(app: ICalendarApp, reverse: boolean) {
   }
 
   visibleEvents.sort((a, b) => {
-    const dateA = temporalToDate(a.start);
-    const dateB = temporalToDate(b.start);
+    const dateA = temporalToVisualDate(a.start, appTimeZone);
+    const dateB = temporalToVisualDate(b.start, appTimeZone);
     const timeDiff = dateA.getTime() - dateB.getTime();
     if (timeDiff !== 0) return timeDiff;
     if (a.allDay && !b.allDay) return -1;
@@ -105,7 +135,11 @@ function handleTabNavigation(app: ICalendarApp, reverse: boolean) {
   if (visibleEvents.length === 0) return;
 
   let nextIndex = 0;
-  const selectedId = app.state.selectedEventId;
+  const selectedId =
+    app.state.selectedEventId ??
+    app.state.highlightedEventId ??
+    navigationState?.lastNavigatedEventId ??
+    null;
   if (selectedId) {
     const currentIndex = visibleEvents.findIndex(e => e.id === selectedId);
     if (currentIndex !== -1) {
@@ -121,6 +155,9 @@ function handleTabNavigation(app: ICalendarApp, reverse: boolean) {
 
   const nextEvent = visibleEvents[nextIndex];
   if (nextEvent) {
+    if (navigationState) {
+      navigationState.lastNavigatedEventId = nextEvent.id;
+    }
     app.selectEvent(nextEvent.id);
     app.highlightEvent(nextEvent.id);
   }
@@ -209,6 +246,11 @@ export function createKeyboardShortcutsPlugin(
     name: 'keyboard-shortcuts',
     install(app: ICalendarApp) {
       if (!enabled) return;
+
+      const keyboardApp = app as ICalendarApp & {
+        __dayflowKeyboardState?: { lastNavigatedEventId: string | null };
+      };
+      keyboardApp.__dayflowKeyboardState ??= { lastNavigatedEventId: null };
 
       const handleKeyDown = async (e: KeyboardEvent) => {
         const activeElement = document.activeElement;

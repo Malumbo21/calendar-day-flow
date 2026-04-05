@@ -7,7 +7,11 @@ import { MultiDayEventSegment } from '@/components/monthView/WeekComponent';
 import { Event, EventLayout } from '@/types';
 import { createDateWithHour, getDateByDayIndex } from '@/utils';
 import { createAllDayDisplayComparator } from '@/utils/allDaySort';
-import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
+import {
+  dateToZonedDateTime,
+  temporalToDate,
+  temporalToVisualDate,
+} from '@/utils/temporalTypeGuards';
 
 // ... existing code ...
 
@@ -15,7 +19,8 @@ import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
 export const calculateEventLayouts = (
   currentWeekEvents: Event[],
   currentWeekStart: Date,
-  daysToShow: number = 7
+  daysToShow: number = 7,
+  appTimeZone?: string
 ): Map<number, Map<string, EventLayout>> => {
   const allLayouts = new Map<number, Map<string, EventLayout>>();
 
@@ -28,7 +33,8 @@ export const calculateEventLayouts = (
       const segments = analyzeMultiDayRegularEvent(
         event,
         currentWeekStart,
-        daysToShow
+        daysToShow,
+        appTimeZone
       );
 
       if (segments.length > 0) {
@@ -56,7 +62,19 @@ export const calculateEventLayouts = (
           dayEventsForLayout.push(virtualEvent);
         }
       } else if (event.day === day) {
-        dayEventsForLayout.push(event);
+        const toVisual = (t: Event['start']) =>
+          appTimeZone
+            ? temporalToVisualDate(t, appTimeZone)
+            : temporalToDate(t);
+        dayEventsForLayout.push({
+          ...event,
+          start: dateToZonedDateTime(toVisual(event.start), appTimeZone),
+          end: dateToZonedDateTime(
+            toVisual(event.end ?? event.start),
+            appTimeZone
+          ),
+          day,
+        });
       }
     });
 
@@ -83,23 +101,29 @@ export const getWeekStart = (date: Date, startOfWeek: number = 1): Date => {
 export const filterWeekEvents = (
   events: Event[],
   currentWeekStart: Date,
-  daysToShow: number = 7
+  daysToShow: number = 7,
+  appTimeZone?: string
 ): Event[] => {
   const weekEnd = new Date(currentWeekStart);
   weekEnd.setDate(currentWeekStart.getDate() + (daysToShow - 1));
   weekEnd.setHours(23, 59, 59, 999);
 
+  const toDate = (temporal: Event['start']) =>
+    appTimeZone
+      ? temporalToVisualDate(temporal, appTimeZone)
+      : temporalToDate(temporal);
+
   const filtered = events.filter(event => {
-    const eventStart = temporalToDate(event.start);
+    const eventStart = toDate(event.start);
     eventStart.setHours(0, 0, 0, 0);
-    const eventEnd = temporalToDate(event.end);
+    const eventEnd = toDate(event.end ?? event.start);
     eventEnd.setHours(23, 59, 59, 999);
 
     return eventEnd >= currentWeekStart && eventStart <= weekEnd;
   });
 
   return filtered.map(event => {
-    const eventDate = temporalToDate(event.start);
+    const eventDate = toDate(event.start);
     const dayDiff = Math.floor(
       (eventDate.getTime() - currentWeekStart.getTime()) / (24 * 60 * 60 * 1000)
     );
@@ -189,10 +213,13 @@ export const calculateNewEventLayout = (
   targetDay: number,
   startHour: number,
   endHour: number,
-  currentWeekEvents: Event[]
+  currentWeekEvents: Event[],
+  currentWeekStart: Date,
+  daysToShow: number = 7,
+  appTimeZone?: string
 ): EventLayout | null => {
-  const startDate = new Date();
-  const endDate = new Date();
+  const startDate = getDateByDayIndex(currentWeekStart, targetDay);
+  const endDate = getDateByDayIndex(currentWeekStart, targetDay);
   startDate.setHours(Math.floor(startHour), (startHour % 1) * 60, 0, 0);
   endDate.setHours(Math.floor(endHour), (endHour % 1) * 60, 0, 0);
 
@@ -200,21 +227,19 @@ export const calculateNewEventLayout = (
     id: '-1',
     title: 'Temp',
     day: targetDay,
-    start: dateToZonedDateTime(startDate),
-    end: dateToZonedDateTime(endDate),
+    start: dateToZonedDateTime(startDate, appTimeZone),
+    end: dateToZonedDateTime(endDate, appTimeZone),
     calendarId: 'blue',
     allDay: false,
   };
 
-  const dayEvents = [
-    ...currentWeekEvents.filter(e => e.day === targetDay && !e.allDay),
-    tempEvent,
-  ];
-  const tempLayouts = EventLayoutCalculator.calculateDayEventLayouts(
-    dayEvents,
-    { viewType: 'week' }
+  const allLayouts = calculateEventLayouts(
+    [...currentWeekEvents, tempEvent],
+    currentWeekStart,
+    daysToShow,
+    appTimeZone
   );
-  return tempLayouts.get('-1') || null;
+  return allLayouts.get(targetDay)?.get('-1') || null;
 };
 
 // Calculate drag layout
@@ -223,12 +248,15 @@ export const calculateDragLayout = (
   targetDay: number,
   targetStartHour: number,
   targetEndHour: number,
-  currentWeekEvents: Event[]
+  currentWeekEvents: Event[],
+  currentWeekStart: Date,
+  daysToShow: number = 7,
+  appTimeZone?: string
 ): EventLayout | null => {
   const tempEvents = currentWeekEvents.map(e => {
     if (e.id !== draggedEvent.id) return e;
 
-    const eventDateForCalc = temporalToDate(e.start);
+    const eventDateForCalc = getDateByDayIndex(currentWeekStart, targetDay);
     const newStartDate = createDateWithHour(
       eventDateForCalc,
       targetStartHour
@@ -237,19 +265,17 @@ export const calculateDragLayout = (
       eventDateForCalc,
       targetEndHour
     ) as Date;
-    const newStart = dateToZonedDateTime(newStartDate);
-    const newEnd = dateToZonedDateTime(newEndDate);
+    const newStart = dateToZonedDateTime(newStartDate, appTimeZone);
+    const newEnd = dateToZonedDateTime(newEndDate, appTimeZone);
 
     return { ...e, day: targetDay, start: newStart, end: newEnd };
   });
 
-  const dayEvents = tempEvents.filter(e => e.day === targetDay && !e.allDay);
-
-  if (dayEvents.length === 0) return null;
-
-  const tempLayouts = EventLayoutCalculator.calculateDayEventLayouts(
-    dayEvents,
-    { viewType: 'week' }
+  const dayLayouts = calculateEventLayouts(
+    tempEvents,
+    currentWeekStart,
+    daysToShow,
+    appTimeZone
   );
-  return tempLayouts.get(draggedEvent.id) || null;
+  return dayLayouts.get(targetDay)?.get(draggedEvent.id) || null;
 };

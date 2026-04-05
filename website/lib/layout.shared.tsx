@@ -62,6 +62,11 @@ export function baseOptions(): BaseLayoutProps {
     },
     links: [
       {
+        text: 'Blossom Picker',
+        url: 'https://blossom.dayflow.studio',
+        external: true,
+      },
+      {
         type: 'icon',
         text: 'Discord',
         label: 'Discord',

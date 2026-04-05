@@ -7,7 +7,8 @@ import { CalendarApp, isDeepEqual } from '@dayflow/core';
 import { useState, useEffect, useMemo, useRef } from 'react';
 
 export function useCalendarApp(
-  config: CalendarAppConfig
+  config: CalendarAppConfig,
+  version?: string | number
 ): UseCalendarAppReturn {
   const comparatorRef = useRef<AllDaySortComparator | undefined>(
     config.allDaySortComparator
@@ -29,8 +30,12 @@ export function useCalendarApp(
     [config, stableAllDaySortComparator]
   );
 
-  // Use useMemo to ensure app is only created once
-  const app = useMemo(() => new CalendarApp(normalizedConfig), []);
+  // `version` lets callers recreate the app (e.g. when plugins change) without
+  // unmounting the React component. Changing `version` creates a new CalendarApp
+  // with the current normalizedConfig; subsequent config-only diffs are synced
+  // via app.updateConfig() in the effect below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const app = useMemo(() => new CalendarApp(normalizedConfig), [version]);
   const [, setTick] = useState(0);
   const configRef = useRef(normalizedConfig);
 

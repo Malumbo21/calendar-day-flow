@@ -4,7 +4,7 @@ import ViewHeader from '@/components/common/ViewHeader';
 import { useLocale } from '@/locale';
 import { monthViewContainer } from '@/styles/classNames';
 import { Event, ICalendarApp, ViewType, YearViewConfig } from '@/types';
-import { temporalToVisualDate } from '@/utils';
+import { getTodayInTimeZone, temporalToVisualDate } from '@/utils';
 
 import { GridDayPopup } from './GridDayPopup';
 
@@ -28,7 +28,7 @@ function buildDayEventMap(
   events: Event[],
   year: number,
   showTimedEvents: boolean,
-  secondaryTimeZone?: string
+  appTimeZone?: string
 ): Map<string, Event[]> {
   const map = new Map<string, Event[]>();
 
@@ -40,9 +40,9 @@ function buildDayEventMap(
     if (!event.start) continue;
     if (!showTimedEvents && !event.allDay) continue;
 
-    const start = temporalToVisualDate(event.start, secondaryTimeZone);
+    const start = temporalToVisualDate(event.start, appTimeZone);
     const end = event.end
-      ? temporalToVisualDate(event.end, secondaryTimeZone)
+      ? temporalToVisualDate(event.end, appTimeZone)
       : new Date(start);
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
@@ -104,12 +104,13 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
   const startOfWeek = config?.startOfWeek ?? 1;
   const showTimedEvents = config?.showTimedEventsInYearView ?? false;
   const heatmapLevels = config?.gridHeatmapLevels ?? 5;
+  const appTimeZone = app.timeZone;
 
   const today = useMemo(() => {
-    const t = new Date();
+    const t = getTodayInTimeZone(appTimeZone);
     t.setHours(0, 0, 0, 0);
     return t;
-  }, []);
+  }, [appTimeZone]);
 
   // Popup state — position is pre-calculated on click so the popup renders
   // at the correct coordinates on its very first frame (no flash).
@@ -136,20 +137,14 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
   // Heatmap event map (respects showTimedEvents filter)
   const heatmapEventMap = useMemo(
     () =>
-      buildDayEventMap(
-        rawEvents,
-        currentYear,
-        showTimedEvents,
-        config?.secondaryTimeZone
-      ),
-    [rawEvents, currentYear, showTimedEvents, config?.secondaryTimeZone]
+      buildDayEventMap(rawEvents, currentYear, showTimedEvents, appTimeZone),
+    [rawEvents, currentYear, showTimedEvents, appTimeZone]
   );
 
   // Full event map for popup (shows all events regardless of filter)
   const fullEventMap = useMemo(
-    () =>
-      buildDayEventMap(rawEvents, currentYear, true, config?.secondaryTimeZone),
-    [rawEvents, currentYear, config?.secondaryTimeZone]
+    () => buildDayEventMap(rawEvents, currentYear, true, appTimeZone),
+    [rawEvents, currentYear, appTimeZone]
   );
 
   // Week day header labels (narrow: M T W T F S S)
@@ -389,7 +384,7 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
           locale={locale}
           app={app}
           customContent={config?.gridPopupContent}
-          secondaryTimeZone={config?.secondaryTimeZone as string}
+          appTimeZone={appTimeZone}
         />
       )}
     </div>

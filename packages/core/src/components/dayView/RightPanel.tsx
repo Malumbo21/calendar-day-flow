@@ -22,6 +22,7 @@ import {
   getLineColor,
   getEventEndHour,
 } from '@/utils';
+import { temporalToVisualDate } from '@/utils/temporalTypeGuards';
 
 interface RightPanelProps {
   app: ICalendarApp;
@@ -35,6 +36,7 @@ interface RightPanelProps {
   switcherMode: string;
   timeFormat?: '12h' | '24h';
   showEventDots?: boolean;
+  appTimeZone?: string;
 }
 
 export const RightPanel = ({
@@ -49,6 +51,7 @@ export const RightPanel = ({
   switcherMode,
   timeFormat = '24h',
   showEventDots = true,
+  appTimeZone,
 }: RightPanelProps) => {
   const { t, locale } = useLocale();
 
@@ -88,10 +91,7 @@ export const RightPanel = ({
               events={app.getEvents()}
               showEventDots={showEventDots}
               calendarRegistry={app.getCalendarRegistry()}
-              timeZone={
-                (app.getViewConfig(app.state.currentView)
-                  ?.secondaryTimeZone as string) || undefined
-              }
+              timeZone={app.timeZone}
             />
           </div>
         </div>
@@ -129,11 +129,27 @@ export const RightPanel = ({
                     {!event.allDay && (
                       <div className={`${textXs} ${textGray600}`}>
                         {formatTime(
-                          extractHourFromDate(event.start),
+                          appTimeZone
+                            ? extractHourFromDate(
+                                temporalToVisualDate(event.start, appTimeZone)
+                              )
+                            : extractHourFromDate(event.start),
                           0,
                           timeFormat
                         )}{' '}
-                        - {formatTime(getEventEndHour(event), 0, timeFormat)}
+                        -{' '}
+                        {formatTime(
+                          appTimeZone
+                            ? extractHourFromDate(
+                                temporalToVisualDate(
+                                  event.end ?? event.start,
+                                  appTimeZone
+                                )
+                              )
+                            : getEventEndHour(event),
+                          0,
+                          timeFormat
+                        )}
                       </div>
                     )}
                     {event.allDay && (

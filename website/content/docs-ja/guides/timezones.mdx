@@ -1,15 +1,36 @@
 # タイムゾーン一覧
 
-DayFlow は、正確な IANA タイムゾーン文字列を覚えなくてもセカンダリタイムゾーンを簡単に指定できるように、`TimeZone` 列挙型を提供しています。
+DayFlow は、素の IANA 文字列を覚えなくても、アプリ全体の `timeZone` と Day / Week 専用の `secondaryTimeZone` を設定しやすいように `TimeZone` 列挙型を提供しています。
+
+## タイムゾーンモデル
+
+- `timeZone`: カレンダー全体の主表示 / 編集タイムゾーン
+- `secondaryTimeZone`: Day / Week ビューだけに表示される補助タイムライン
+
+`timeZone` を変更すると全ビューの表示が切り替わります。`secondaryTimeZone` を変更しても、Day / Week の追加タイムラインだけが変わります。
 
 ## 使用方法
 
 ```tsx
 import { TimeZone } from '@dayflow/core';
+import {
+  useCalendarApp,
+  createDayView,
+  createWeekView,
+  createMonthView,
+} from '@dayflow/react';
 
-// ビューの設定内
-createDayView({
-  secondaryTimeZone: TimeZone.TOKYO,
+const calendar = useCalendarApp({
+  timeZone: TimeZone.SHANGHAI,
+  views: [
+    createDayView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createWeekView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createMonthView(),
+  ],
 });
 ```
 

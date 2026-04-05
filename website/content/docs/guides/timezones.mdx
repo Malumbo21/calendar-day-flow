@@ -1,15 +1,36 @@
 # Time Zones
 
-DayFlow provides a `TimeZone` enum to make it easier to specify secondary time zones without having to remember the exact IANA time zone strings.
+DayFlow provides a `TimeZone` enum so you can configure both the app-level `timeZone` and the Day/Week-only `secondaryTimeZone` without memorizing raw IANA strings.
+
+## Timezone Model
+
+- `timeZone`: the primary display and editing timezone for the whole calendar
+- `secondaryTimeZone`: an additional reference timeline shown only in Day and Week views
+
+Changing `timeZone` reprojects all views. Changing `secondaryTimeZone` only changes the extra timeline axis in Day/Week.
 
 ## Usage
 
 ```tsx
 import { TimeZone } from '@dayflow/core';
+import {
+  useCalendarApp,
+  createDayView,
+  createWeekView,
+  createMonthView,
+} from '@dayflow/react';
 
-// In your view configuration
-createDayView({
-  secondaryTimeZone: TimeZone.NEW_YORK,
+const calendar = useCalendarApp({
+  timeZone: TimeZone.SHANGHAI,
+  views: [
+    createDayView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createWeekView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createMonthView(),
+  ],
 });
 ```
 

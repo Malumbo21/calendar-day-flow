@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useCallback,
 } from 'preact/hooks';
+import { Temporal } from 'temporal-polyfill';
 
 import ViewHeader from '@/components/common/ViewHeader';
 import { MobileEventDrawer } from '@/components/mobileEventDrawer';
@@ -39,6 +40,8 @@ import {
   getTimezoneDisplayLabel,
   hasEventChanged,
   formatTime,
+  getNowInTimeZone,
+  getTodayInTimeZone,
 } from '@/utils';
 
 const WeekView = ({
@@ -353,10 +356,12 @@ const WeekView = ({
     displayDays,
   ]);
 
+  const appTimeZone = app.timeZone;
+
   // Events for the current week (or custom range)
   const currentWeekEvents = useMemo(
-    () => filterWeekEvents(events, displayStart, displayDays),
-    [events, displayStart, displayDays]
+    () => filterWeekEvents(events, displayStart, displayDays, appTimeZone),
+    [events, displayStart, displayDays, appTimeZone]
   );
 
   // Sync highlighted event from app state
@@ -434,8 +439,14 @@ const WeekView = ({
 
   // Calculate event layouts
   const eventLayouts = useMemo(
-    () => calculateEventLayouts(currentWeekEvents, displayStart, displayDays),
-    [currentWeekEvents, displayStart, displayDays]
+    () =>
+      calculateEventLayouts(
+        currentWeekEvents,
+        displayStart,
+        displayDays,
+        appTimeZone
+      ),
+    [currentWeekEvents, displayStart, displayDays, appTimeZone]
   );
 
   const handleEventsUpdate = useCallback(
@@ -496,8 +507,16 @@ const WeekView = ({
 
   const handleCalculateNewEventLayout = useCallback(
     (targetDay: number, startHour: number, endHour: number) =>
-      calculateNewEventLayout(targetDay, startHour, endHour, currentWeekEvents),
-    [currentWeekEvents]
+      calculateNewEventLayout(
+        targetDay,
+        startHour,
+        endHour,
+        currentWeekEvents,
+        displayStart,
+        displayDays,
+        appTimeZone
+      ),
+    [currentWeekEvents, displayStart, displayDays, appTimeZone]
   );
 
   const handleCalculateDragLayout = useCallback(
@@ -512,9 +531,12 @@ const WeekView = ({
         targetDay,
         targetStartHour,
         targetEndHour,
-        currentWeekEvents
+        currentWeekEvents,
+        displayStart,
+        displayDays,
+        appTimeZone
       ),
-    [currentWeekEvents]
+    [currentWeekEvents, displayStart, displayDays, appTimeZone]
   );
 
   const dragOptions = useMemo(
@@ -655,33 +677,43 @@ const WeekView = ({
   const secondaryTimeSlots = useMemo(
     () =>
       secondaryTimeZone
-        ? generateSecondaryTimeSlots(timeSlots, secondaryTimeZone, timeFormat)
+        ? generateSecondaryTimeSlots(
+            timeSlots,
+            secondaryTimeZone,
+            timeFormat,
+            currentDate,
+            appTimeZone
+          )
         : undefined,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [secondaryTimeZone, timeFormat, FIRST_HOUR]
+    [secondaryTimeZone, timeFormat, FIRST_HOUR, currentDate, appTimeZone]
   );
 
   const primaryTzLabel = useMemo(
     () =>
       secondaryTimeZone
-        ? getTimezoneDisplayLabel(
-            Intl.DateTimeFormat().resolvedOptions().timeZone
-          )
+        ? getTimezoneDisplayLabel(appTimeZone, currentDate)
         : undefined,
-    [secondaryTimeZone]
+    [secondaryTimeZone, appTimeZone, currentDate]
   );
 
   const secondaryTzLabel = useMemo(
     () =>
       secondaryTimeZone
-        ? getTimezoneDisplayLabel(secondaryTimeZone)
+        ? getTimezoneDisplayLabel(secondaryTimeZone, currentDate)
         : undefined,
-    [secondaryTimeZone]
+    [secondaryTimeZone, currentDate]
   );
 
   // Generate week date data
   const weekDates = useMemo(() => {
-    const todayKey = new Date().toDateString();
+    const todayInTz = Temporal.Now.plainDateISO(appTimeZone);
+    const todayLocal = new Date(
+      todayInTz.year,
+      todayInTz.month - 1,
+      todayInTz.day
+    );
+    const todayKey = todayLocal.toDateString();
     return weekDaysLabels.map((_, index) => {
       const date = new Date(displayStart);
       date.setDate(displayStart.getDate() + index);
@@ -692,28 +724,41 @@ const WeekView = ({
         isToday: date.toDateString() === todayKey,
       };
     });
-  }, [displayStart, weekDaysLabels, locale]);
+  }, [displayStart, weekDaysLabels, locale, appTimeZone]);
 
   // Generate full 7-day week data for mobile header
   const fullWeekDates = useMemo(() => {
-    const todayKey = new Date().toDateString();
+    const todayInTz = Temporal.Now.plainDateISO(appTimeZone);
+    const todayLocal = new Date(
+      todayInTz.year,
+      todayInTz.month - 1,
+      todayInTz.day
+    );
+    const todayKey = todayLocal.toDateString();
+    const currentDateMidnight = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      currentDate.getDate()
+    ).getTime();
     const start = standardWeekStart;
     return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
-      const dateOnly = new Date(date);
-      dateOnly.setHours(0, 0, 0, 0);
+      const dateOnly = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      );
       return {
         date: date.getDate(),
         month: date.toLocaleString(locale, { month: 'short' }),
         fullDate: new Date(date),
         isToday: date.toDateString() === todayKey,
-        isCurrent:
-          dateOnly.getTime() === new Date(currentDate).setHours(0, 0, 0, 0),
+        isCurrent: dateOnly.getTime() === currentDateMidnight,
         dayName: date.toLocaleDateString(locale, { weekday: 'short' }),
       };
     });
-  }, [standardWeekStart, locale, currentDate]);
+  }, [standardWeekStart, locale, currentDate, appTimeZone]);
 
   // Sync horizontal transform for swipe
   useEffect(() => {
@@ -752,7 +797,7 @@ const WeekView = ({
 
   // Check if it is the current week
   const isCurrentWeek = useMemo(() => {
-    const today = new Date();
+    const today = getTodayInTimeZone(appTimeZone);
     today.setHours(0, 0, 0, 0);
     const start = new Date(displayStart);
     start.setHours(0, 0, 0, 0);
@@ -760,13 +805,13 @@ const WeekView = ({
     end.setDate(start.getDate() + displayDays);
 
     return today >= start && today < end;
-  }, [displayStart, displayDays]);
+  }, [displayStart, displayDays, appTimeZone]);
 
   // Initial scroll to current time
   useLayoutEffect(() => {
     if (config.scrollToCurrentTime && scrollerRef.current) {
       const scrollContainer = scrollerRef.current;
-      const now = new Date();
+      const now = getNowInTimeZone(appTimeZone);
       const hour = now.getHours() + now.getMinutes() / 60;
       const containerHeight = scrollContainer.clientHeight;
 
@@ -776,14 +821,17 @@ const WeekView = ({
       );
       // leftFrozenContentRef is now inside the scroller, so it scrolls natively — no sync needed.
     }
-  }, []); // Run once on mount
+  }, [appTimeZone, config.scrollToCurrentTime, FIRST_HOUR, HOUR_HEIGHT]); // Run on mount and timezone changes
 
   // Timer
   useEffect(() => {
-    setCurrentTime(new Date());
-    const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
+    setCurrentTime(getNowInTimeZone(appTimeZone));
+    const timer = setInterval(
+      () => setCurrentTime(getNowInTimeZone(appTimeZone)),
+      60_000
+    );
     return () => clearInterval(timer);
-  }, []);
+  }, [appTimeZone]);
 
   return (
     <div className={`${calendarContainer} df-week-view`}>
@@ -930,6 +978,7 @@ const WeekView = ({
         showStartOfDayLabel={showStartOfDayLabel}
         timeFormat={timeFormat}
         secondaryTimeSlots={secondaryTimeSlots}
+        appTimeZone={appTimeZone}
       />
 
       <MobileEventDrawerComponent

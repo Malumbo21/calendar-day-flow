@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useEffect,
+  useLayoutEffect,
   useState,
   useCallback,
 } from 'preact/hooks';
@@ -57,6 +58,7 @@ export const DefaultYearView = ({
   const currentDate = app.getCurrentDate();
   const currentYear = currentDate.getFullYear();
   const rawEvents = app.getEvents();
+  const appTimeZone = app.timeZone;
   const scrollElementRef = useRef<HTMLDivElement>(null);
 
   const [columnsPerRow, setColumnsPerRow] = useState(() => {
@@ -65,7 +67,9 @@ export const DefaultYearView = ({
     }
     return 7;
   });
-  const [isLayoutReady, setIsLayoutReady] = useState(false);
+  const [isLayoutReady, setIsLayoutReady] = useState(
+    () => typeof window !== 'undefined'
+  );
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
@@ -166,7 +170,7 @@ export const DefaultYearView = ({
 
   const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = scrollElementRef.current;
     if (!container) return;
 
@@ -196,6 +200,21 @@ export const DefaultYearView = ({
   useEffect(() => {
     if (app.state.highlightedEventId) {
       setSelectedEventId(app.state.highlightedEventId);
+
+      requestAnimationFrame(() => {
+        const container = scrollElementRef.current;
+        if (!container) return;
+
+        const highlightedElement = container.querySelector(
+          `[data-event-id="${app.state.highlightedEventId}"]`
+        ) as HTMLElement | null;
+
+        highlightedElement?.scrollIntoView({
+          block: 'center',
+          inline: 'nearest',
+          behavior: 'smooth',
+        });
+      });
     } else if (prevHighlightedEventId.current) {
       setSelectedEventId(null);
     }
@@ -306,24 +325,19 @@ export const DefaultYearView = ({
       if (!event.start) return false;
       // If showTimedEvents is false, only show all-day events
       if (!showTimedEvents && !event.allDay) return false;
-      const s = temporalToVisualDate(event.start, config?.secondaryTimeZone);
-      const e = event.end
-        ? temporalToVisualDate(event.end, config?.secondaryTimeZone)
-        : s;
+      const s = temporalToVisualDate(event.start, appTimeZone);
+      const e = event.end ? temporalToVisualDate(event.end, appTimeZone) : s;
       return s <= yearEnd && e >= yearStart;
     });
-  }, [rawEvents, currentYear, showTimedEvents, config?.secondaryTimeZone]);
+  }, [rawEvents, currentYear, showTimedEvents, appTimeZone]);
 
   // Group events by row for better performance
   const eventsByRow = useMemo(() => {
     // 1. Pre-normalize event dates for the year once
     const yearEventsWithDates = yearEvents.map(event => {
-      const start = temporalToVisualDate(
-        event.start,
-        config?.secondaryTimeZone
-      );
+      const start = temporalToVisualDate(event.start, appTimeZone);
       const end = event.end
-        ? temporalToVisualDate(event.end, config?.secondaryTimeZone)
+        ? temporalToVisualDate(event.end, appTimeZone)
         : start;
       return {
         event,
@@ -370,7 +384,7 @@ export const DefaultYearView = ({
         .filter(item => item.startMs <= rowEndMs && item.endMs >= rowStartMs)
         .map(item => item.event);
     });
-  }, [rows, yearEvents, config?.secondaryTimeZone]);
+  }, [rows, yearEvents, appTimeZone]);
 
   const getCustomTitle = () => {
     const isAsianLocale = locale.startsWith('zh') || locale.startsWith('ja');
@@ -440,7 +454,7 @@ export const DefaultYearView = ({
                 if (!isEditable) return;
                 setContextMenu(menu);
               }}
-              secondaryTimeZone={config?.secondaryTimeZone as string}
+              appTimeZone={appTimeZone}
             />
           ))}
         </div>

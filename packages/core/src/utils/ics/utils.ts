@@ -361,13 +361,11 @@ export function convertToDayFlowEvent(
   const allDay =
     icsEvent.dtstartParams?.value === 'DATE' || isPlainDate(startTemporal);
   const tz = defaultTimeZone || Temporal.Now.timeZoneId();
-  let finalStart: Temporal.ZonedDateTime;
-  let finalEnd: Temporal.ZonedDateTime;
+  let finalStart: Temporal.ZonedDateTime | Temporal.PlainDate;
+  let finalEnd: Temporal.ZonedDateTime | Temporal.PlainDate;
   if (isPlainDate(startTemporal)) {
-    finalStart = startTemporal.toZonedDateTime({
-      timeZone: tz,
-      plainTime: '00:00:00',
-    });
+    // All-day event: keep as PlainDate to preserve the all-day invariant
+    finalStart = startTemporal;
   } else if (isPlainDateTime(startTemporal)) {
     try {
       finalStart = (startTemporal as Temporal.PlainDateTime).toZonedDateTime(
@@ -385,11 +383,8 @@ export function convertToDayFlowEvent(
   if (isPlainDate(endTemporal)) {
     // RFC 5545: DTEND for all-day events is exclusive (the day after the last
     // day). DayFlow uses inclusive end dates, so subtract 1 day.
-    const inclusiveEnd = endTemporal.subtract({ days: 1 });
-    finalEnd = inclusiveEnd.toZonedDateTime({
-      timeZone: tz,
-      plainTime: '00:00:00',
-    });
+    // Keep as PlainDate to preserve the all-day invariant.
+    finalEnd = endTemporal.subtract({ days: 1 });
   } else if (isPlainDateTime(endTemporal)) {
     try {
       finalEnd = (endTemporal as Temporal.PlainDateTime).toZonedDateTime(tz);

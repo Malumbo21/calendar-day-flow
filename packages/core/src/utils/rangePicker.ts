@@ -130,8 +130,9 @@ export const normalizeToZoned = (
 
   const asAny = input as any;
 
-  // Check if PlainDateTime
-  if ('hour' in asAny && !('timeZone' in asAny)) {
+  // Check if PlainDateTime — use timeZoneId (not timeZone) because temporal-polyfill v0.3.x
+  // does not expose `timeZone` via the `in` operator on ZonedDateTime instances.
+  if ('hour' in asAny && !('timeZoneId' in asAny)) {
     const zoneId = fallbackZone ?? Temporal.Now.timeZoneId();
     // Try to use toZonedDateTime if available (proper PlainDateTime)
     if (typeof asAny.toZonedDateTime === 'function') {

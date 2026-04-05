@@ -1,3 +1,5 @@
+import { Temporal } from 'temporal-polyfill';
+
 import {
   CalendarAppState,
   CalendarCallbacks,
@@ -138,7 +140,9 @@ export class NavigationController {
   }
 
   goToToday(): void {
-    this.setCurrentDate(new Date());
+    const todayInTz = Temporal.Now.plainDateISO(this.state.timeZone);
+    const today = new Date(todayInTz.year, todayInTz.month - 1, todayInTz.day);
+    this.setCurrentDate(today);
   }
 
   goToPrevious(): void {

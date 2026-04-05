@@ -137,7 +137,7 @@ const ViewSwitcher = ({ calendar, mode = 'buttons' }: ViewSwitcherProps) => {
   }
 
   return (
-    <div className='mb-1 inline-flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800'>
+    <div className='inline-flex h-7 items-center gap-1 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800'>
       {registeredViews.map(viewType => (
         <button
           type='button'

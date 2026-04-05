@@ -6,8 +6,11 @@ import { YearMultiDaySegment } from '@/components/yearView/utils';
 import { ViewType, Event, EventLayout } from '@/types';
 import { extractHourFromDate, getEventEndHour } from '@/utils';
 
+const POP_TRANSITION = 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+
 interface UseEventStylesProps {
   event: Event;
+  timingEvent?: Event;
   layout?: EventLayout;
   isAllDay: boolean;
   allDayHeight: number;
@@ -43,6 +46,7 @@ interface UseEventStylesProps {
 
 export const useEventStyles = ({
   event,
+  timingEvent,
   layout,
   isAllDay,
   allDayHeight,
@@ -70,6 +74,7 @@ export const useEventStyles = ({
   const isDayView = viewType === ViewType.DAY;
   const isMonthView = viewType === ViewType.MONTH;
   const isYearView = viewType === ViewType.YEAR;
+  const eventForTiming = timingEvent ?? event;
 
   const calculateEventStyle = () => {
     if (isYearView && yearSegment && columnsPerRow) {
@@ -90,7 +95,7 @@ export const useEventStyles = ({
         opacity: 1,
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
         transform: isPopping ? 'scale(1.05)' : 'scale(1)',
-        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transition: POP_TRANSITION,
         cursor: isDraggable ? 'pointer' : canOpenDetail ? 'pointer' : 'default',
       };
     }
@@ -111,7 +116,7 @@ export const useEventStyles = ({
         opacity: 1,
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
         transform: isPopping ? 'scale(1.05)' : 'scale(1)',
-        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transition: POP_TRANSITION,
         cursor: isDraggable ? 'pointer' : canOpenDetail ? 'pointer' : 'default',
       };
     }
@@ -122,7 +127,7 @@ export const useEventStyles = ({
         opacity: 1,
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
         transform: isPopping ? 'scale(1.05)' : 'scale(1)',
-        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transition: POP_TRANSITION,
         cursor: isDraggable ? 'pointer' : canOpenDetail ? 'pointer' : 'default',
       };
 
@@ -169,10 +174,10 @@ export const useEventStyles = ({
 
     const startHour = multiDaySegmentInfo
       ? multiDaySegmentInfo.startHour
-      : extractHourFromDate(event.start);
+      : extractHourFromDate(eventForTiming.start);
     const endHour = multiDaySegmentInfo
       ? multiDaySegmentInfo.endHour
-      : getEventEndHour(event);
+      : getEventEndHour(eventForTiming);
 
     const top = (startHour - firstHour) * hourHeight;
     const height = Math.max((endHour - startHour) * hourHeight, hourHeight / 4);
@@ -184,7 +189,7 @@ export const useEventStyles = ({
       opacity: 1,
       zIndex: isEventSelected || showDetailPanel ? 1000 : (layout?.zIndex ?? 1),
       transform: isPopping ? 'scale(1.05)' : 'scale(1)',
-      transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      transition: POP_TRANSITION,
       cursor: isDraggable ? 'pointer' : canOpenDetail ? 'pointer' : 'default',
     };
 

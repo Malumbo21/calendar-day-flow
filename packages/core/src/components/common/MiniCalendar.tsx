@@ -1,4 +1,5 @@
 import { useMemo } from 'preact/hooks';
+import { Temporal } from 'temporal-polyfill';
 
 import { CalendarRegistry } from '@/core/calendarRegistry';
 import { useLocale, getWeekDaysLabels } from '@/locale';
@@ -15,6 +16,8 @@ import type { Event } from '@/types/event';
 import { getLineColor, temporalToVisualDate } from '@/utils';
 
 import { ChevronLeft, ChevronRight } from './Icons';
+
+const MAX_EVENT_DOTS = 4;
 
 interface MiniCalendarProps {
   visibleMonth: Date;
@@ -41,7 +44,17 @@ export const MiniCalendar = ({
   timeZone,
 }: MiniCalendarProps) => {
   const { locale } = useLocale();
-  const todayKey = useMemo(() => new Date().toDateString(), []);
+  const todayKey = useMemo(() => {
+    const todayInTz = timeZone
+      ? Temporal.Now.plainDateISO(timeZone)
+      : Temporal.Now.plainDateISO();
+    const todayLocal = new Date(
+      todayInTz.year,
+      todayInTz.month - 1,
+      todayInTz.day
+    );
+    return todayLocal.toDateString();
+  }, [timeZone]);
   const currentDateKey = currentDate.toDateString();
 
   const weekdayLabels = useMemo(
@@ -107,8 +120,8 @@ export const MiniCalendar = ({
       ) {
         const key = current.toDateString();
         const existing = map.get(key) ?? [];
-        // Only add if this resolved color isn't already represented for this day
-        if (!existing.includes(color)) {
+        // Keep dots unique by color and cap density so the cell stays readable.
+        if (!existing.includes(color) && existing.length < MAX_EVENT_DOTS) {
           map.set(key, [...existing, color]);
         }
       }
@@ -200,10 +213,11 @@ export const MiniCalendar = ({
             >
               <span className='z-10'>{day.date}</span>
               {showEventDots && dots.length > 0 && (
-                <div className='absolute bottom-0.5 flex gap-0.5'>
-                  {dots.slice(0, 3).map((color, index) => (
+                <div className='absolute bottom-0.5 flex gap-px'>
+                  {dots.slice(0, MAX_EVENT_DOTS).map((color, index) => (
                     <div
                       key={`${color}-${index}`}
+                      data-mini-calendar-dot='true'
                       className='h-1 w-1 rounded-full'
                       style={{
                         backgroundColor: color,

@@ -526,14 +526,29 @@
   cursor: ns-resize;
 }
 
+body.df-cursor-ns-resize,
+body.df-cursor-ns-resize * {
+  cursor: ns-resize !important;
+}
+
 .df-calendar-container .df-cursor-ew-resize,
 .df-calendar-container .df-cursor-ew-resize * {
   cursor: ew-resize;
 }
 
+body.df-cursor-ew-resize,
+body.df-cursor-ew-resize * {
+  cursor: ew-resize !important;
+}
+
 .df-calendar-container .df-cursor-grabbing,
 .df-calendar-container .df-cursor-grabbing * {
   cursor: grabbing;
+}
+
+body.df-cursor-grabbing,
+body.df-cursor-grabbing * {
+  cursor: grabbing !important;
 }
 
 .df-scrollbar-hide::-webkit-scrollbar {

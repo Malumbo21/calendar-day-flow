@@ -88,6 +88,7 @@ interface TimeGridProps {
   LAST_HOUR: number;
   showStartOfDayLabel: boolean;
   timeFormat?: '12h' | '24h';
+  appTimeZone?: string;
 }
 
 export const TimeGrid = ({
@@ -136,6 +137,7 @@ export const TimeGrid = ({
   showStartOfDayLabel,
   timeFormat = '24h',
   secondaryTimeSlots,
+  appTimeZone,
 }: TimeGridProps) => {
   const hasSecondaryTz = !!secondaryTimeSlots && secondaryTimeSlots.length > 0;
   // On mobile the time column is too narrow for dual labels — hide secondary TZ display
@@ -464,7 +466,9 @@ export const TimeGrid = ({
                 dayEvents.forEach(event => {
                   const segments = analyzeMultiDayRegularEvent(
                     event,
-                    currentWeekStart
+                    currentWeekStart,
+                    weekDaysLabels.length,
+                    appTimeZone
                   );
                   if (segments.length > 0) {
                     const segment = segments.find(s => s.dayIndex === dayIndex);
@@ -483,7 +487,9 @@ export const TimeGrid = ({
                   if (event.allDay || event.day === dayIndex) return;
                   const segments = analyzeMultiDayRegularEvent(
                     event,
-                    currentWeekStart
+                    currentWeekStart,
+                    weekDaysLabels.length,
+                    appTimeZone
                   );
                   const segment = segments.find(s => s.dayIndex === dayIndex);
                   if (segment) {
@@ -557,6 +563,7 @@ export const TimeGrid = ({
                           isMobile={isMobile}
                           isSlidingView={isSlidingView}
                           enableTouch={isTouch}
+                          appTimeZone={appTimeZone}
                         />
                       );
                     })}

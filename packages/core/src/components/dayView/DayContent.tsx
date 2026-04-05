@@ -104,6 +104,7 @@ interface DayContentProps {
   secondaryTimeSlots?: string[];
   primaryTzLabel?: string;
   secondaryTzLabel?: string;
+  appTimeZone?: string;
 }
 
 export const DayContent = ({
@@ -158,6 +159,7 @@ export const DayContent = ({
   secondaryTimeSlots,
   primaryTzLabel,
   secondaryTzLabel,
+  appTimeZone,
 }: DayContentProps) => {
   const hasSecondaryTz = !!secondaryTimeSlots && secondaryTimeSlots.length > 0;
   // On mobile the time column is too narrow for dual labels — hide secondary TZ display
@@ -365,6 +367,7 @@ export const DayContent = ({
                     app={app}
                     isMobile={isMobile}
                     enableTouch={isTouch}
+                    appTimeZone={appTimeZone}
                   />
                 ))}
               </div>
@@ -630,6 +633,7 @@ export const DayContent = ({
                           app={app}
                           isMobile={isMobile}
                           enableTouch={isTouch}
+                          appTimeZone={appTimeZone}
                         />
                       );
                     })}

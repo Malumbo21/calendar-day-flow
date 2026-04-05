@@ -69,28 +69,19 @@ export function useCalendarDrop(
         const dragData: CalendarDropData = JSON.parse(dragDataStr);
 
         // Create event based on drop location
-        let start: Temporal.PlainDateTime;
-        let end: Temporal.PlainDateTime;
+        let start: Temporal.PlainDate | Temporal.PlainDateTime;
+        let end: Temporal.PlainDate | Temporal.PlainDateTime;
         let allDay = false;
 
         if (isAllDay) {
-          // For All-day area - create all-day event (same day, not spanning to next day)
-          start = Temporal.PlainDateTime.from({
+          // For All-day area - create all-day event using PlainDate (no time component)
+          const plainDate = Temporal.PlainDate.from({
             year: dropDate.getFullYear(),
             month: dropDate.getMonth() + 1,
             day: dropDate.getDate(),
-            hour: 0,
-            minute: 0,
           });
-          // Set end to the same day at end of day (23:59:59)
-          end = Temporal.PlainDateTime.from({
-            year: dropDate.getFullYear(),
-            month: dropDate.getMonth() + 1,
-            day: dropDate.getDate(),
-            hour: 23,
-            minute: 59,
-            second: 59,
-          });
+          start = plainDate;
+          end = plainDate;
           allDay = true;
         } else if (dropHour === undefined) {
           // For Month view - create timed event 9:00-10:00

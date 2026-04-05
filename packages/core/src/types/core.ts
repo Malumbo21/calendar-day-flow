@@ -9,6 +9,7 @@ import { Locale } from '@/locale/types';
 import { CalendarType, ThemeConfig, ThemeMode } from './calendarTypes';
 import { Event } from './event';
 import { EventLayout } from './layout';
+import { TimeZoneValue } from './timezone';
 
 /** Generic type for framework-specific components */
 export type TComponent = AnyComponent<any, any>;
@@ -156,6 +157,13 @@ export interface CalendarAppConfig {
   readOnly?: boolean | ReadOnlyConfig;
   /** Custom sort comparator for all-day events, applied in day/week/month/year views. */
   allDaySortComparator?: AllDaySortComparator;
+  /**
+   * Global display and editing timezone for all views.
+   * Controls how event times are projected and how drag/resize/create operations interpret wall-clock time.
+   * Defaults to the user's system timezone.
+   * Switching this field only triggers a re-render — it never calls onEventUpdate or any persistence callback.
+   */
+  timeZone?: TimeZoneValue;
 }
 
 /**
@@ -184,6 +192,8 @@ export interface CalendarAppState {
   readOnly: boolean | ReadOnlyConfig;
   overrides: string[];
   allDaySortComparator?: AllDaySortComparator;
+  /** Resolved global timezone (IANA string). See CalendarAppConfig.timeZone. */
+  timeZone: string;
 }
 
 /**
@@ -287,6 +297,9 @@ export interface ICalendarApp {
 
   // Update configuration dynamically
   updateConfig: (config: Partial<CalendarAppConfig>) => void;
+
+  /** The resolved global display/edit timezone (IANA string). */
+  readonly timeZone: string;
 
   // Overrides management
   setOverrides: (overrides: string[]) => void;
