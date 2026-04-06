@@ -11,7 +11,6 @@ import {
   getWeekRange,
   temporalToVisualDate,
 } from '@dayflow/core';
-import { Temporal } from 'temporal-polyfill';
 
 export interface KeyboardShortcutsConfig {
   /**
@@ -217,10 +216,10 @@ async function handlePaste(app: ICalendarApp) {
         id: generateUniKey(),
         start: eventData.allDay
           ? dateToPlainDate(targetStart)
-          : dateToZonedDateTime(targetStart, Temporal.Now.timeZoneId()),
+          : dateToZonedDateTime(targetStart, app.timeZone),
         end: eventData.allDay
           ? dateToPlainDate(targetEnd)
-          : dateToZonedDateTime(targetEnd, Temporal.Now.timeZoneId()),
+          : dateToZonedDateTime(targetEnd, app.timeZone),
         calendarId:
           eventData.calendarId &&
           app.getCalendarRegistry().has(eventData.calendarId)

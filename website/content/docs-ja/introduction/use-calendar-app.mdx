@@ -112,6 +112,7 @@ const calendar = useCalendarApp({
 - `timeZone` は Day / Week / Month / Year 全体の主表示 / 編集タイムゾーンを定義します。
 - 未指定の場合、DayFlow はユーザーのシステムタイムゾーンを使います。
 - `timeZone` の変更は UI の再投影だけを行い、タイムゾーン変更そのものではイベントデータを書き換えません。
+- 編集系コールバックが返すのは canonical event のままです。UI 上で一時的に投影されたタイムゾーン値を、そのまま保存用データとして返すことはありません。
 - Day / Week の `secondaryTimeZone` は補助タイムライン専用で、アプリ全体の主タイムゾーンを置き換えるものではありません。
 
 ### switcherMode

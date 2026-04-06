@@ -13,7 +13,11 @@ import {
   MobileEventProps,
   CalendarType,
 } from '@/types';
-import { formatTime, isEventDeepEqual } from '@/utils';
+import {
+  formatTime,
+  isEventDeepEqual,
+  restoreVisualEventToCanonical,
+} from '@/utils';
 import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
 import { dateToPlainDate } from '@/utils/temporalTypeGuards';
 
@@ -198,7 +202,10 @@ export const MobileEventDrawer = ({
         : dateToZonedDateTime(finalEnd, app.timeZone),
     };
 
-    return !isEventDeepEqual(draftEvent, currentEvent);
+    return !isEventDeepEqual(
+      draftEvent,
+      restoreVisualEventToCanonical(draftEvent, currentEvent, app.timeZone)
+    );
   }, [
     isOpen,
     draftEvent,
@@ -230,7 +237,13 @@ export const MobileEventDrawer = ({
         ? dateToPlainDate(finalEnd)
         : dateToZonedDateTime(finalEnd, app.timeZone),
     };
-    onSave(updated as CalendarEvent);
+    onSave(
+      restoreVisualEventToCanonical(
+        draftEvent,
+        updated as CalendarEvent,
+        app.timeZone
+      )
+    );
   };
 
   const toggleExpand = (

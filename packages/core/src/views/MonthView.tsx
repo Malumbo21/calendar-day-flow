@@ -353,7 +353,9 @@ const MonthView = ({
         return oldEvent && hasEventChanged(oldEvent, e);
       });
 
-      // Perform operations - updateEvent will automatically trigger onEventUpdate callback
+      // Apply batched changes.
+      // Non-drag updates notify onEventBatchChange; drag/resize persistence is
+      // handled separately via onEventDrop/onEventResize.
       app.applyEventsChanges(
         {
           delete: eventsToDelete.map(e => e.id),

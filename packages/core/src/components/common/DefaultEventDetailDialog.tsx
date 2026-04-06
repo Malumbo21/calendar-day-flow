@@ -10,6 +10,7 @@ import { ICalendarApp } from '@/types';
 import { EventDetailDialogProps } from '@/types/eventDetail';
 import { isEventDeepEqual } from '@/utils/eventUtils';
 import { isPlainDate } from '@/utils/temporal';
+import { restoreVisualEventToCanonical } from '@/utils/timeUtils';
 
 import { CalendarPicker, CalendarOption } from './CalendarPicker';
 import { LoadingButton } from './LoadingButton';
@@ -62,7 +63,9 @@ const DefaultEventDetailDialog = ({
     if (isSaving || isDeleting) return;
     setIsSaving(true);
     try {
-      await onEventUpdate(editedEvent);
+      await onEventUpdate(
+        restoreVisualEventToCanonical(event, editedEvent, app?.timeZone)
+      );
       onClose();
     } finally {
       setIsSaving(false);

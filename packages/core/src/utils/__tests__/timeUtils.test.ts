@@ -4,6 +4,7 @@ import {
   generateSecondaryTimeSlots,
   getNextHourRangeInTimeZone,
   getTodayInTimeZone,
+  restoreVisualEventToCanonical,
 } from '@/utils/timeUtils';
 
 describe('generateSecondaryTimeSlots', () => {
@@ -50,5 +51,44 @@ describe('timezone-aware current date helpers', () => {
       start: new Date(2026, 3, 6, 0, 0, 0, 0),
       end: new Date(2026, 3, 6, 1, 0, 0, 0),
     });
+  });
+});
+
+describe('restoreVisualEventToCanonical', () => {
+  it('converts an edited app-timezone zdt back into the original event timezone', () => {
+    const originalEvent = {
+      id: 'event-1',
+      title: 'Customer Call',
+      start: Temporal.ZonedDateTime.from(
+        '2026-04-02T15:30:00+11:00[Australia/Sydney]'
+      ),
+      end: Temporal.ZonedDateTime.from(
+        '2026-04-02T16:30:00+11:00[Australia/Sydney]'
+      ),
+      allDay: false,
+    };
+
+    const visualEvent = {
+      ...originalEvent,
+      start: Temporal.ZonedDateTime.from(
+        '2026-04-02T12:30:00+08:00[Asia/Shanghai]'
+      ),
+      end: Temporal.ZonedDateTime.from(
+        '2026-04-02T14:00:00+08:00[Asia/Shanghai]'
+      ),
+    };
+
+    const result = restoreVisualEventToCanonical(
+      originalEvent,
+      visualEvent,
+      'Asia/Shanghai'
+    );
+
+    expect(result.start.toString()).toBe(
+      '2026-04-02T15:30:00+11:00[Australia/Sydney]'
+    );
+    expect(result.end.toString()).toBe(
+      '2026-04-02T17:00:00+11:00[Australia/Sydney]'
+    );
   });
 });

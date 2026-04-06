@@ -24,6 +24,7 @@ import { isEventDeepEqual } from '@/utils/eventUtils';
 import { logger } from '@/utils/logger';
 import { isPlainDate } from '@/utils/temporal';
 import { resolveAppliedTheme } from '@/utils/themeUtils';
+import { restoreVisualEventToCanonical } from '@/utils/timeUtils';
 
 import { CalendarOption, CalendarPicker } from './CalendarPicker';
 import { LoadingButton } from './LoadingButton';
@@ -66,8 +67,15 @@ const DefaultEventDetailPanel = ({
 
     if (isEventDeepEqual(committedEvent, latestDraftEvent)) return;
 
-    committedEventRef.current = latestDraftEvent;
-    const updateResult = onEventUpdate(latestDraftEvent);
+    const canonicalDraftEvent = restoreVisualEventToCanonical(
+      committedEvent,
+      latestDraftEvent,
+      app?.timeZone
+    );
+
+    committedEventRef.current = canonicalDraftEvent;
+    draftEventRef.current = canonicalDraftEvent;
+    const updateResult = onEventUpdate(canonicalDraftEvent);
     if (updateResult) {
       Promise.resolve(updateResult).catch(error => {
         logger.error(
@@ -76,7 +84,7 @@ const DefaultEventDetailPanel = ({
         );
       });
     }
-  }, [onEventUpdate]);
+  }, [app?.timeZone, onEventUpdate]);
 
   const applyDraftEventUpdate = useCallback(
     (nextDraftEvent: Event) => {

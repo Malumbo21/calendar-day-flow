@@ -87,7 +87,7 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
                   'text-sm font-medium text-slate-600 dark:text-slate-400'
                 )}
               >
-                Blossom Picker
+                🌸 Blossom Picker
               </a>
               <LanguageSwitcher />
               <a
@@ -120,10 +120,10 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
                 rel='noopener noreferrer'
                 className={cn(
                   buttonVariants({ color: 'ghost', size: 'sm' }),
-                  'text-xs font-medium text-slate-600 max-sm:hidden dark:text-slate-400'
+                  'text-xs font-medium text-slate-600 dark:text-slate-400'
                 )}
               >
-                Blossom
+                🌸
               </a>
               <LanguageSwitcher />
               <a

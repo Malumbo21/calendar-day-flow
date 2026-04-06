@@ -9,6 +9,13 @@ DayFlow は、素の IANA 文字列を覚えなくても、アプリ全体の `t
 
 `timeZone` を変更すると全ビューの表示が切り替わります。`secondaryTimeZone` を変更しても、Day / Week の追加タイムラインだけが変わります。
 
+## コールバックの意味
+
+- `timeZone` は UI 上の表示方法と、編集時に使う壁時計ベースの時間座標を変更します。
+- `timeZone` を切り替えるだけでは `onEventUpdate`、`onEventDrop`、`onEventResize` は発火しません。
+- 更新系コールバックが返すのは、編集後の canonical event です。現在表示中の一時的な投影タイムゾーン値そのものではありません。
+- つまり、Sydney のイベントを Shanghai 表示でリサイズした場合、操作自体は Shanghai の壁時計時間で解釈されますが、保存前にコールバック payload はイベントの canonical な時間表現へ戻されます。
+
 ## 使用方法
 
 ```tsx

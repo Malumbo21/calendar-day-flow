@@ -9,6 +9,13 @@ DayFlow provides a `TimeZone` enum so you can configure both the app-level `time
 
 Changing `timeZone` reprojects all views. Changing `secondaryTimeZone` only changes the extra timeline axis in Day/Week.
 
+## Callback Semantics
+
+- `timeZone` changes how events are displayed and edited in the UI.
+- Switching `timeZone` never triggers `onEventUpdate`, `onEventDrop`, or `onEventResize` by itself.
+- Update callbacks return the canonical event after the edit is applied.
+- In other words, if a Sydney event is viewed in Shanghai and resized there, the edit is interpreted using Shanghai wall time, but the callback payload is converted back to the event's canonical time representation before you persist it.
+
 ## Usage
 
 ```tsx

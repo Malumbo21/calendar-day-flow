@@ -19,6 +19,7 @@ import {
   temporalToVisualDate,
   dateToZonedDateTime,
   dateToPlainDate,
+  restoreVisualEventToCanonical,
   restoreTimedDragFromAllDayTransition,
 } from '@dayflow/core';
 import { useCallback } from 'preact/hooks';
@@ -81,6 +82,12 @@ export const useDragHandlers = (
 
   const getEventDateForEditing = (temporal: Event['start']) =>
     temporalToVisualDate(temporal, getAppTimeZone());
+
+  const canonicalizeEditedEvent = (
+    originalEvent: Event,
+    visualEvent: Event
+  ): Event =>
+    restoreVisualEventToCanonical(originalEvent, visualEvent, getAppTimeZone());
 
   const getTimedEventHoursForEditing = (event: Event) => {
     const startDate = getEventDateForEditing(event.start);
@@ -469,13 +476,13 @@ export const useDragHandlers = (
         }
       }
 
-      const updatedEvent: Event = {
+      const updatedEvent = canonicalizeEditedEvent(targetEvent, {
         ...targetEvent,
         day: newDay,
         start: newStart,
         end: newEnd,
         allDay: drag.allDay,
-      };
+      });
 
       const dragConfig = app?.getPlugin<DragService>('drag')?.getConfig();
       dragConfig?.onEventDrop?.(
@@ -639,10 +646,10 @@ export const useDragHandlers = (
 
           const newStartTemporal = drag.originalEvent.allDay
             ? dateToPlainDate(newStartDate)
-            : dateToZonedDateTime(newStartDate);
+            : dateToZonedDateTime(newStartDate, getAppTimeZone());
           const newEndTemporal = drag.originalEvent.allDay
             ? dateToPlainDate(newEndDate)
-            : dateToZonedDateTime(newEndDate);
+            : dateToZonedDateTime(newEndDate, getAppTimeZone());
 
           throttledSetEvents(
             (prev: Event[]) =>
@@ -1217,11 +1224,14 @@ export const useDragHandlers = (
             drag.originalEvent ||
             events?.find(eventItem => eventItem.id === drag.eventId);
           if (originalEventForResize) {
-            const updatedEventForResize: Event = {
-              ...originalEventForResize,
-              start: newStartTemporal,
-              end: newEndTemporal,
-            };
+            const updatedEventForResize = canonicalizeEditedEvent(
+              originalEventForResize,
+              {
+                ...originalEventForResize,
+                start: newStartTemporal,
+                end: newEndTemporal,
+              }
+            );
             const dragConfig = app?.getPlugin<DragService>('drag')?.getConfig();
             dragConfig?.onEventResize?.(
               updatedEventForResize,
@@ -1233,12 +1243,12 @@ export const useDragHandlers = (
             prev =>
               prev.map(event =>
                 event.id === drag.eventId
-                  ? {
+                  ? canonicalizeEditedEvent(event, {
                       ...event,
                       start: newStartTemporal,
                       end: newEndTemporal,
                       title: event.title,
-                    }
+                    })
                   : event
               ),
             false,
@@ -1284,11 +1294,14 @@ export const useDragHandlers = (
                 drag.originalEvent ||
                 events?.find(eventItem => eventItem.id === drag.eventId);
               if (originalEventForMove) {
-                const updatedEventForMove: Event = {
-                  ...originalEventForMove,
-                  start: newStartTemporal,
-                  end: newEndTemporal,
-                };
+                const updatedEventForMove = canonicalizeEditedEvent(
+                  originalEventForMove,
+                  {
+                    ...originalEventForMove,
+                    start: newStartTemporal,
+                    end: newEndTemporal,
+                  }
+                );
                 const dragConfig = app
                   ?.getPlugin<DragService>('drag')
                   ?.getConfig();
@@ -1302,12 +1315,12 @@ export const useDragHandlers = (
                 prev =>
                   prev.map(event =>
                     event.id === drag.eventId
-                      ? {
+                      ? canonicalizeEditedEvent(event, {
                           ...event,
                           start: newStartTemporal,
                           end: newEndTemporal,
                           title: event.title,
-                        }
+                        })
                       : event
                   ),
                 false,
@@ -1358,16 +1371,19 @@ export const useDragHandlers = (
 
                 const newStart = originalEventForFallback.allDay
                   ? dateToPlainDate(newStartDate)
-                  : dateToZonedDateTime(newStartDate);
+                  : dateToZonedDateTime(newStartDate, getAppTimeZone());
                 const newEnd = originalEventForFallback.allDay
                   ? dateToPlainDate(newEndDate)
-                  : dateToZonedDateTime(newEndDate);
+                  : dateToZonedDateTime(newEndDate, getAppTimeZone());
 
-                const updatedEventForFallback: Event = {
-                  ...originalEventForFallback,
-                  start: newStart,
-                  end: newEnd,
-                };
+                const updatedEventForFallback = canonicalizeEditedEvent(
+                  originalEventForFallback,
+                  {
+                    ...originalEventForFallback,
+                    start: newStart,
+                    end: newEnd,
+                  }
+                );
                 const dragConfig = app
                   ?.getPlugin<DragService>('drag')
                   ?.getConfig();
@@ -1380,7 +1396,11 @@ export const useDragHandlers = (
                   prev =>
                     prev.map(event => {
                       if (event.id !== drag.eventId) return event;
-                      return { ...event, start: newStart, end: newEnd };
+                      return canonicalizeEditedEvent(event, {
+                        ...event,
+                        start: newStart,
+                        end: newEnd,
+                      });
                     }),
                   false,
                   'drag'
@@ -1519,13 +1539,16 @@ export const useDragHandlers = (
                           eventStartDate,
                           finalEndHour
                         )) as Date);
-              updatedEventWeekDay = {
-                ...originalEventWeekDay,
-                day: drag.dayIndex,
-                start: dateToZonedDateTime(startDateObj, getAppTimeZone()),
-                end: dateToZonedDateTime(endDateObj, getAppTimeZone()),
-                allDay: false,
-              };
+              updatedEventWeekDay = canonicalizeEditedEvent(
+                originalEventWeekDay,
+                {
+                  ...originalEventWeekDay,
+                  day: drag.dayIndex,
+                  start: dateToZonedDateTime(startDateObj, getAppTimeZone()),
+                  end: dateToZonedDateTime(endDateObj, getAppTimeZone()),
+                  allDay: false,
+                }
+              );
             }
 
             const dragConfig = app?.getPlugin<DragService>('drag')?.getConfig();
@@ -1614,8 +1637,8 @@ export const useDragHandlers = (
         const endTime = new Date(targetDate);
         endTime.setHours(10, 0, 0, 0);
 
-        const startTemporal = dateToZonedDateTime(startTime);
-        const endTemporal = dateToZonedDateTime(endTime);
+        const startTemporal = dateToZonedDateTime(startTime, getAppTimeZone());
+        const endTemporal = dateToZonedDateTime(endTime, getAppTimeZone());
 
         const newEvent: Event = {
           id: String(Date.now()),

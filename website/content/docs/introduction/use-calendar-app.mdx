@@ -95,6 +95,7 @@ export function TeamCalendar() {
 - `timeZone` defines the primary display and editing timezone for Day, Week, Month, and Year views.
 - If omitted, DayFlow resolves it from the user's system timezone.
 - Changing `timeZone` reprojects the UI, but does not itself mutate event data.
+- Edit callbacks still return canonical event data after the change is applied. DayFlow does not persist the temporary UI projection timezone as the stored event shape.
 - Day/Week `secondaryTimeZone` remains a display-only reference axis and does not replace the primary app timezone.
 
 ### switcherMode

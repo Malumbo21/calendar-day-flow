@@ -9,6 +9,13 @@ DayFlow 提供了一个 `TimeZone` 枚举，方便您同时配置全局 `timeZon
 
 切换 `timeZone` 会影响所有视图；切换 `secondaryTimeZone` 只会影响 Day / Week 中的第二条时间轴。
 
+## 回调语义
+
+- `timeZone` 会改变事件在 UI 中的显示方式，以及用户编辑时使用的墙上时间坐标。
+- 仅仅切换 `timeZone` 本身不会触发 `onEventUpdate`、`onEventDrop` 或 `onEventResize`。
+- 更新类回调返回的是编辑完成后的 canonical event，而不是当前界面投影时区下的临时显示值。
+- 也就是说，如果一个 Sydney 事件在 Shanghai 视图里被调整大小，编辑动作会按 Shanghai 的墙上时间解释，但回调参数会在持久化前转换回事件的 canonical 时间表达。
+
 ## 使用方法
 
 ```tsx

@@ -112,6 +112,7 @@ const calendar = useCalendarApp({
 - `timeZone` 用来定义 Day、Week、Month、Year 共用的主显示/编辑时区。
 - 不传时，DayFlow 会默认使用当前用户设备的系统时区。
 - 切换 `timeZone` 只会重新投影视图，不会因为切换时区本身触发事件数据写回。
+- 编辑类回调返回的仍然是 canonical event；DayFlow 不会把当前 UI 投影时区下的临时显示值直接当成最终持久化数据。
 - Day / Week 的 `secondaryTimeZone` 仍然只是辅助显示时间轴，不会替代全局主时区。
 
 ### switcherMode

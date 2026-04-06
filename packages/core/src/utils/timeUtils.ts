@@ -11,6 +11,14 @@ import { Event, TimeZoneValue } from '@/types';
 
 import { extractHourFromDate } from './dateTimeUtils';
 import { temporalToDate } from './temporal';
+import {
+  dateToPlainDate,
+  dateToPlainDateTime,
+  dateToZonedDateTime,
+  isPlainDate,
+  isPlainDateTime,
+  isZonedDateTime,
+} from './temporalTypeGuards';
 import { normalizeTimeZoneValue } from './timeZoneUtils';
 
 const zonedDateTimeToWallClockDate = (zdt: Temporal.ZonedDateTime): Date =>
@@ -248,5 +256,87 @@ export const getNextHourRangeInTimeZone = (
   return {
     start: zonedDateTimeToWallClockDate(nextHourStart),
     end: zonedDateTimeToWallClockDate(nextHourStart.add({ hours: 1 })),
+  };
+};
+
+const getTemporalZoneId = (temporal: Temporal.ZonedDateTime): string => {
+  const asAny = temporal as unknown as {
+    timeZoneId?: string;
+    timeZone?: string | { id?: string };
+  };
+
+  return (
+    asAny.timeZoneId ||
+    (typeof asAny.timeZone === 'string'
+      ? asAny.timeZone
+      : asAny.timeZone?.id) ||
+    Temporal.Now.timeZoneId()
+  );
+};
+
+export const restoreVisualTimedTemporalToCanonical = (
+  visualTemporal: Temporal.PlainDateTime | Temporal.ZonedDateTime | Date,
+  originalTemporal:
+    | Temporal.PlainDate
+    | Temporal.PlainDateTime
+    | Temporal.ZonedDateTime,
+  appTimeZone?: TimeZoneValue
+): Temporal.PlainDateTime | Temporal.ZonedDateTime => {
+  const visualDate = temporalToDate(visualTemporal);
+
+  if (isZonedDateTime(originalTemporal)) {
+    const editingTimeZone =
+      normalizeTimeZoneValue(appTimeZone) ?? Temporal.Now.timeZoneId();
+    const originalZone = getTemporalZoneId(originalTemporal);
+    return dateToZonedDateTime(visualDate, editingTimeZone)
+      .toInstant()
+      .toZonedDateTimeISO(originalZone);
+  }
+
+  if (isPlainDateTime(originalTemporal)) {
+    return dateToPlainDateTime(visualDate);
+  }
+
+  if (isZonedDateTime(visualTemporal)) {
+    return visualTemporal;
+  }
+
+  return dateToZonedDateTime(
+    visualDate,
+    normalizeTimeZoneValue(appTimeZone) ?? Temporal.Now.timeZoneId()
+  );
+};
+
+export const restoreVisualEventToCanonical = (
+  originalEvent: Event,
+  visualEvent: Event,
+  appTimeZone?: TimeZoneValue
+): Event => {
+  if (visualEvent.allDay) {
+    return {
+      ...visualEvent,
+      allDay: true,
+      start: isPlainDate(visualEvent.start)
+        ? visualEvent.start
+        : dateToPlainDate(temporalToDate(visualEvent.start)),
+      end: isPlainDate(visualEvent.end)
+        ? visualEvent.end
+        : dateToPlainDate(temporalToDate(visualEvent.end)),
+    };
+  }
+
+  return {
+    ...visualEvent,
+    allDay: false,
+    start: restoreVisualTimedTemporalToCanonical(
+      visualEvent.start as Temporal.PlainDateTime | Temporal.ZonedDateTime,
+      originalEvent.allDay ? visualEvent.start : originalEvent.start,
+      appTimeZone
+    ),
+    end: restoreVisualTimedTemporalToCanonical(
+      visualEvent.end as Temporal.PlainDateTime | Temporal.ZonedDateTime,
+      originalEvent.allDay ? visualEvent.end : originalEvent.end,
+      appTimeZone
+    ),
   };
 };
