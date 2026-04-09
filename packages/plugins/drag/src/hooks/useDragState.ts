@@ -11,6 +11,8 @@ import {
 import { throttle } from '@drag/utils/throttle';
 import { useRef, useCallback, useState, useMemo } from 'preact/hooks';
 
+type InternalDragRef = UnifiedDragRef & { pendingMove?: boolean };
+
 export const useDragState = (options: useDragProps): UseDragStateReturn => {
   const { viewType, onEventsUpdate } = options;
 
@@ -50,7 +52,7 @@ export const useDragState = (options: useDragProps): UseDragStateReturn => {
     originalEndTime: null,
     sourceElement: null,
     indicatorVisible: false,
-  });
+  } as InternalDragRef);
 
   const currentDragRef = useRef({ x: 0, y: 0 });
 
@@ -191,7 +193,7 @@ export const useDragState = (options: useDragProps): UseDragStateReturn => {
       initialIndicatorWidth: undefined,
       initialIndicatorHeight: undefined,
       indicatorContainer: null,
-    };
+    } as InternalDragRef;
   }, [isMonthView, throttledSetEventsByMode]);
 
   return {

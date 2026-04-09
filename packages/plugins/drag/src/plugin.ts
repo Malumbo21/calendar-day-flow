@@ -20,7 +20,6 @@ export function createDragPlugin(
     enableResize: true,
     enableCreate: true,
     enableAllDayCreate: true,
-    allDayDragCursorAtStart: true,
     supportedViews: [
       ViewType.DAY,
       ViewType.WEEK,
@@ -138,7 +137,6 @@ export function createDragConfig(
     enableResize: true,
     enableCreate: true,
     enableAllDayCreate: true,
-    allDayDragCursorAtStart: true,
     supportedViews: [
       ViewType.DAY,
       ViewType.WEEK,

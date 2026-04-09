@@ -480,4 +480,77 @@ describe('WeekComponent', () => {
       Node.DOCUMENT_POSITION_FOLLOWING
     );
   });
+
+  it('renders the dragged visible event first in the month cell during drag preview', () => {
+    const events = [
+      createTimedEvent('a', 'Event A', 12, 9),
+      createTimedEvent('b', 'Event B', 12, 10),
+      createTimedEvent('c', 'Event C', 12, 11),
+    ];
+
+    const app = new CalendarApp({
+      views: [],
+      plugins: [],
+      events,
+      defaultView: ViewType.MONTH,
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            lineColor: '#2563eb',
+            eventColor: '#dbeafe',
+            eventSelectedColor: '#bfdbfe',
+            textColor: '#1e3a8a',
+          },
+        },
+      ],
+    });
+
+    const calendarRef = {
+      current: document.createElement('div'),
+    } as { current: HTMLDivElement };
+
+    const { container } = render(
+      <WeekComponent
+        currentMonth='March'
+        currentYear={2026}
+        newlyCreatedEventId={null}
+        screenSize='desktop'
+        isScrolling={false}
+        isDragging={true}
+        showWeekNumbers={false}
+        item={{
+          index: 0,
+          weekData: generateWeekData(new Date(2026, 2, 9)),
+          top: 0,
+          height: 140,
+        }}
+        weekHeight={140}
+        events={events}
+        dragState={{
+          active: true,
+          mode: 'move',
+          eventId: 'b',
+          targetDate: new Date(2026, 2, 12),
+          startDate: new Date(2026, 2, 12),
+          endDate: new Date(2026, 2, 12, 1),
+        }}
+        calendarRef={calendarRef}
+        onEventUpdate={jest.fn()}
+        onEventDelete={jest.fn()}
+        onDetailPanelOpen={jest.fn()}
+        app={app}
+      />
+    );
+
+    const march12Cell = container.querySelector('[data-date="2026-03-12"]');
+    expect(march12Cell).not.toBeNull();
+
+    const renderedEvents = Array.from(
+      (march12Cell as HTMLElement).querySelectorAll('[data-event-id]')
+    ).map(node => (node as HTMLElement).dataset.eventId);
+
+    expect(renderedEvents.slice(0, 3)).toEqual(['b', 'a', 'c']);
+  });
 });

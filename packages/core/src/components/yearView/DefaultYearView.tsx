@@ -29,7 +29,12 @@ import {
   ICalendarApp,
   YearViewConfig,
 } from '@/types';
-import { hasEventChanged, temporalToVisualDate } from '@/utils';
+import {
+  dateToPlainDate,
+  dateToZonedDateTime,
+  hasEventChanged,
+  temporalToVisualDate,
+} from '@/utils';
 
 export interface YearViewProps {
   app: ICalendarApp;
@@ -60,16 +65,10 @@ export const DefaultYearView = ({
   const rawEvents = app.getEvents();
   const appTimeZone = app.timeZone;
   const scrollElementRef = useRef<HTMLDivElement>(null);
+  const MIN_YEAR_CELL_WIDTH = 80;
 
-  const [columnsPerRow, setColumnsPerRow] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return Math.max(1, Math.floor(window.innerWidth / 80));
-    }
-    return 7;
-  });
-  const [isLayoutReady, setIsLayoutReady] = useState(
-    () => typeof window !== 'undefined'
-  );
+  const [columnsPerRow, setColumnsPerRow] = useState(7);
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
@@ -174,16 +173,24 @@ export const DefaultYearView = ({
     const container = scrollElementRef.current;
     if (!container) return;
 
+    const applyMeasuredLayout = (width: number) => {
+      if (width <= 0) return;
+
+      const cols = Math.max(1, Math.floor(width / MIN_YEAR_CELL_WIDTH));
+      setColumnsPerRow(cols);
+      setIsMobile(width < 768);
+      setIsLayoutReady(true);
+    };
+
+    // Measure once immediately so first paint already uses the real container width.
+    applyMeasuredLayout(container.clientWidth);
+
     const observer = new ResizeObserver(entries => {
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
 
       resizeTimeoutRef.current = setTimeout(() => {
         const width = entries[0].contentRect.width;
-        const minCellWidth = 80; // Consistent with previous minmax
-        const cols = Math.floor(width / minCellWidth);
-        setColumnsPerRow(Math.max(1, cols));
-        setIsMobile(width < 768);
-        setIsLayoutReady(true);
+        applyMeasuredLayout(width);
       }, 60);
     });
 
@@ -260,6 +267,7 @@ export const DefaultYearView = ({
     },
     isMobile,
   });
+  const yearDragState = dragState as MonthEventDragState;
 
   // Get config value
   const showTimedEvents = config?.showTimedEventsInYearView ?? false;
@@ -386,6 +394,41 @@ export const DefaultYearView = ({
     });
   }, [rows, yearEvents, appTimeZone]);
 
+  const dragPreviewEvent = useMemo(() => {
+    if (
+      !isDragging ||
+      !yearDragState.eventId ||
+      !yearDragState.startDate ||
+      !yearDragState.endDate ||
+      (yearDragState.mode !== 'move' && yearDragState.mode !== 'resize')
+    ) {
+      return null;
+    }
+
+    const baseEvent = yearEvents.find(
+      event => event.id === yearDragState.eventId
+    );
+    if (!baseEvent) return null;
+
+    return {
+      ...baseEvent,
+      start: baseEvent.allDay
+        ? dateToPlainDate(yearDragState.startDate)
+        : dateToZonedDateTime(yearDragState.startDate, appTimeZone),
+      end: baseEvent.allDay
+        ? dateToPlainDate(yearDragState.endDate)
+        : dateToZonedDateTime(yearDragState.endDate, appTimeZone),
+    } as Event;
+  }, [
+    isDragging,
+    yearDragState.eventId,
+    yearDragState.startDate,
+    yearDragState.endDate,
+    yearDragState.mode,
+    yearEvents,
+    appTimeZone,
+  ]);
+
   const getCustomTitle = () => {
     const isAsianLocale = locale.startsWith('zh') || locale.startsWith('ja');
     return isAsianLocale ? `${currentYear}年` : `${currentYear}`;
@@ -437,7 +480,8 @@ export const DefaultYearView = ({
               calendarRef={calendarRef}
               locale={locale}
               isDragging={isDragging}
-              dragState={dragState as MonthEventDragState}
+              dragState={yearDragState}
+              dragPreviewEvent={dragPreviewEvent}
               onMoveStart={handleMoveStart}
               onResizeStart={handleResizeStart}
               onCreateStart={handleCellDoubleClick}

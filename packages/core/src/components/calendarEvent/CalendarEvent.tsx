@@ -254,6 +254,7 @@ const CalendarEvent = ({
     event,
     timingEvent: visualEvent,
     layout,
+    isBeingDragged,
     isAllDay,
     allDayHeight,
     viewType,

@@ -22,8 +22,13 @@ import {
   restoreVisualEventToCanonical,
   restoreTimedDragFromAllDayTransition,
 } from '@dayflow/core';
-import { useCallback } from 'preact/hooks';
+import { resolveDragSourceElement } from '@drag/hooks/utils/resolveDragSourceElement';
+import { useCallback, useRef } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
+
+type InternalDragRef = {
+  pendingMove?: boolean;
+};
 
 // Helper function to get client coordinates from Mouse or Touch events
 const getClientCoordinates = (e: MouseEvent | TouchEvent) => {
@@ -41,6 +46,9 @@ const getClientCoordinates = (e: MouseEvent | TouchEvent) => {
   }
   return { clientX, clientY };
 };
+
+const isTouchLikeEvent = (e: MouseEvent | TouchEvent) =>
+  'touches' in e || 'changedTouches' in e;
 
 export const useDragHandlers = (
   params: UseDragHandlersParams
@@ -126,6 +134,12 @@ export const useDragHandlers = (
   const isDateGridView =
     viewType === ViewType.MONTH || viewType === ViewType.YEAR;
   const isDayView = viewType === ViewType.DAY;
+  const shouldPreviewDateGridEventChanges = false;
+  const dateGridPreviewFrameRef = useRef<number | null>(null);
+  const latestDateGridPointerRef = useRef<{
+    clientX: number;
+    clientY: number;
+  } | null>(null);
 
   const DAY_IN_MS = 24 * 60 * 60 * 1000;
   const TIME_STEP_MS = TIME_STEP * 60 * 60 * 1000;
@@ -170,13 +184,198 @@ export const useDragHandlers = (
     return Math.floor((target.getTime() - start.getTime()) / DAY_IN_MS);
   };
 
+  const cancelScheduledDateGridPreview = useCallback(() => {
+    if (dateGridPreviewFrameRef.current !== null) {
+      cancelAnimationFrame(dateGridPreviewFrameRef.current);
+      dateGridPreviewFrameRef.current = null;
+    }
+    latestDateGridPointerRef.current = null;
+  }, []);
+
+  const applyDateGridPreview = useCallback(
+    (clientX: number, clientY: number) => {
+      const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
+      if (!drag || (!drag.active && !drag.pendingMove)) return;
+
+      const targetDate = getTargetDateFromPosition(clientX, clientY);
+      if (!targetDate) return;
+
+      if (
+        drag.mode === 'resize' &&
+        drag.originalEvent &&
+        drag.resizeDirection
+      ) {
+        const originalDate = temporalToDate(drag.originalEvent.start);
+        let newStartDate: Date;
+        let newEndDate: Date;
+        const applyTimeToDate = (
+          date: Date,
+          timeInfo:
+            | { hour: number; minute: number; second: number }
+            | null
+            | undefined
+        ) => {
+          if (!date) return;
+          if (drag.originalEvent?.allDay) {
+            date.setHours(0, 0, 0, 0);
+          } else if (timeInfo) {
+            date.setHours(
+              timeInfo.hour,
+              timeInfo.minute,
+              timeInfo.second ?? 0,
+              0
+            );
+          }
+        };
+        const startTimeInfo = drag.originalStartTime;
+        const endTimeInfo = drag.originalEndTime;
+
+        if (drag.resizeDirection === 'left') {
+          newStartDate = new Date(targetDate);
+          applyTimeToDate(newStartDate, startTimeInfo);
+
+          const endBase =
+            temporalToDate(drag.originalEvent.end) || originalDate;
+          newEndDate = new Date(endBase);
+          applyTimeToDate(newEndDate, endTimeInfo);
+          if (newStartDate > newEndDate) {
+            newStartDate = newEndDate;
+          }
+        } else {
+          const startBase =
+            temporalToDate(drag.originalEvent.start) || originalDate;
+          newStartDate = new Date(startBase);
+          applyTimeToDate(newStartDate, startTimeInfo);
+
+          newEndDate = new Date(targetDate);
+          applyTimeToDate(newEndDate, endTimeInfo);
+          if (newEndDate < newStartDate) {
+            newEndDate = newStartDate;
+          }
+        }
+
+        drag.originalStartDate = new Date(newStartDate.getTime());
+        drag.originalEndDate = new Date(newEndDate.getTime());
+        setDragState(prev => {
+          if ('targetDate' in prev) {
+            return {
+              ...prev,
+              targetDate:
+                drag.resizeDirection === 'left' ? newStartDate : newEndDate,
+              startDate: newStartDate,
+              endDate: newEndDate,
+            } as MonthDragState;
+          }
+          return prev;
+        });
+
+        const newStartTemporal = drag.originalEvent.allDay
+          ? dateToPlainDate(newStartDate)
+          : dateToZonedDateTime(newStartDate, getAppTimeZone());
+        const newEndTemporal = drag.originalEvent.allDay
+          ? dateToPlainDate(newEndDate)
+          : dateToZonedDateTime(newEndDate, getAppTimeZone());
+
+        if (shouldPreviewDateGridEventChanges) {
+          throttledSetEvents(
+            (prev: Event[]) =>
+              prev.map(event =>
+                event.id === drag.eventId
+                  ? {
+                      ...event,
+                      start: newStartTemporal,
+                      end: newEndTemporal,
+                      title: event.title,
+                    }
+                  : event
+              ),
+            drag.mode
+          );
+        }
+      } else if (drag.mode === 'move') {
+        if (drag.originalStartDate && drag.originalEndDate) {
+          const normalizedOriginalStart = new Date(drag.originalStartDate);
+          normalizedOriginalStart.setHours(0, 0, 0, 0);
+
+          const dragOffsetDays = daysDifference(
+            normalizedOriginalStart,
+            targetDate
+          );
+          const newStartDate = addDaysToDate(
+            drag.originalStartDate,
+            dragOffsetDays
+          );
+          const newEndDate = addDaysToDate(
+            drag.originalEndDate,
+            dragOffsetDays
+          );
+
+          const currentStartTime = drag.originalStartDate?.getTime();
+          const newStartTime = newStartDate.getTime();
+
+          if (currentStartTime !== newStartTime) {
+            drag.originalStartDate = new Date(newStartDate.getTime());
+            drag.originalEndDate = new Date(newEndDate.getTime());
+            drag.targetDate = newStartDate;
+            setDragState(prev => {
+              if ('targetDate' in prev) {
+                return {
+                  ...prev,
+                  targetDate: newStartDate,
+                  startDate: newStartDate,
+                  endDate: newEndDate,
+                } as MonthDragState;
+              }
+              return prev;
+            });
+
+            const isAllDay = drag.originalEvent?.allDay || false;
+            const newStartTemporal = isAllDay
+              ? dateToPlainDate(newStartDate)
+              : dateToZonedDateTime(newStartDate, getAppTimeZone());
+            const newEndTemporal = isAllDay
+              ? dateToPlainDate(newEndDate)
+              : dateToZonedDateTime(newEndDate, getAppTimeZone());
+            if (shouldPreviewDateGridEventChanges) {
+              throttledSetEvents(
+                (prev: Event[]) =>
+                  prev.map(event =>
+                    event.id === drag.eventId
+                      ? {
+                          ...event,
+                          start: newStartTemporal,
+                          end: newEndTemporal,
+                        }
+                      : event
+                  ),
+                drag.mode
+              );
+            }
+          }
+        } else if (drag.targetDate?.getTime() !== targetDate.getTime()) {
+          drag.targetDate = targetDate;
+        }
+      }
+    },
+    [
+      dragRef,
+      getTargetDateFromPosition,
+      setDragState,
+      throttledSetEvents,
+      shouldPreviewDateGridEventChanges,
+      daysDifference,
+      addDaysToDate,
+      getAppTimeZone,
+    ]
+  );
+
   // Cross-region drag move (Week/Day view specific) - complete version
   const handleUniversalDragMove = useCallback(
     (e: MouseEvent | TouchEvent) => {
       const readOnlyConfig = app?.getReadOnlyConfig();
       const isDraggable = readOnlyConfig?.draggable !== false;
       const isEditable = !app?.state.readOnly;
-      const drag = dragRef.current;
+      const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
       if (!drag) return;
       if (drag.mode === 'move' && !isDraggable) return;
       if ((drag.mode === 'resize' || drag.mode === 'create') && !isEditable)
@@ -366,7 +565,7 @@ export const useDragHandlers = (
 
   // Cross-region drag end (Week/Day view specific) - complete version
   const handleUniversalDragEnd = useCallback(() => {
-    const drag = dragRef.current;
+    const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
     if (!drag || !drag.active) return;
 
     const readOnlyConfig = app?.getReadOnlyConfig();
@@ -518,8 +717,8 @@ export const useDragHandlers = (
   // Drag move handler - complete version
   const handleDragMove = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      const drag = dragRef.current;
-      if (!drag || !drag.active) return;
+      const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
+      if (!drag || (!drag.active && !drag.pendingMove)) return;
 
       const readOnlyConfig = app?.getReadOnlyConfig();
       const isDraggable = readOnlyConfig?.draggable !== false;
@@ -537,7 +736,7 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      if (!drag || !drag.active) return;
+      if (!drag || (!drag.active && !drag.pendingMove)) return;
 
       // Set cursor based on drag mode and direction
       if (drag.mode === 'resize') {
@@ -566,6 +765,22 @@ export const useDragHandlers = (
               clientY - drag.startY
             );
 
+            if (drag.pendingMove) {
+              if (distance < 3) return;
+
+              drag.pendingMove = false;
+              drag.active = true;
+
+              setDragState({
+                active: true,
+                mode: 'move',
+                eventId: drag.eventId,
+                targetDate: drag.targetDate ?? null,
+                startDate: drag.originalStartDate ?? null,
+                endDate: drag.originalEndDate ?? null,
+              });
+            }
+
             if (!drag.indicatorVisible && distance >= 3) {
               createDragIndicator(
                 drag,
@@ -583,59 +798,74 @@ export const useDragHandlers = (
           }
         }
 
-        const targetDate = getTargetDateFromPosition(clientX, clientY);
-        if (!targetDate) return;
+        latestDateGridPointerRef.current = { clientX, clientY };
+        if (dateGridPreviewFrameRef.current === null) {
+          dateGridPreviewFrameRef.current = requestAnimationFrame(() => {
+            dateGridPreviewFrameRef.current = null;
+            const latestPointer = latestDateGridPointerRef.current;
+            if (!latestPointer) return;
+            applyDateGridPreview(latestPointer.clientX, latestPointer.clientY);
+          });
+        }
 
-        if (
-          drag.mode === 'resize' &&
-          drag.originalEvent &&
-          drag.resizeDirection
-        ) {
-          // Resize logic
-          const originalDate = temporalToDate(drag.originalEvent.start);
-          let newStartDate: Date;
-          let newEndDate: Date;
-          const applyTimeToDate = (
-            date: Date,
-            timeInfo:
-              | { hour: number; minute: number; second: number }
-              | null
-              | undefined
-          ) => {
-            if (!date) return;
-            if (drag.originalEvent?.allDay) {
-              date.setHours(0, 0, 0, 0);
-            } else if (timeInfo) {
-              date.setHours(
-                timeInfo.hour,
-                timeInfo.minute,
-                timeInfo.second ?? 0,
-                0
-              );
-            }
-          };
-          const startTimeInfo = drag.originalStartTime;
-          const endTimeInfo = drag.originalEndTime;
+        return;
+      }
+
+      // Week/Day view drag logic
+      if (!drag.allDay) {
+        handleDirectScroll(clientY);
+      }
+      drag.lastClientY = clientY;
+      const mouseHour = pixelYToHour(clientY);
+
+      // Handle All-Day Create Drag
+      if (drag.mode === 'create' && drag.allDay) {
+        const distance = Math.hypot(
+          clientX - drag.startX,
+          clientY - drag.startY
+        );
+
+        if (!drag.indicatorVisible) {
+          if (distance < 3) return;
+          createDragIndicator(drag, 'blue', t('newAllDayEvent'));
+          drag.indicatorVisible = true;
+        }
+
+        // Update day index based on horizontal position
+        const newDayIndex = isDayView
+          ? drag.dayIndex
+          : getColumnDayIndex(clientX);
+        drag.dayIndex = newDayIndex;
+
+        updateDragIndicator(newDayIndex, 0, 0, true);
+        return;
+      }
+
+      if (drag.mode === 'resize') {
+        if (drag.allDay) {
+          // All-day event horizontal resize (by day)
+          const targetDayIndex = isDayView
+            ? drag.dayIndex
+            : getColumnDayIndex(clientX);
+
+          let newStartDate = drag.originalStartDate || new Date();
+          let newEndDate = drag.originalEndDate || new Date();
 
           if (drag.resizeDirection === 'left') {
-            newStartDate = new Date(targetDate);
-            applyTimeToDate(newStartDate, startTimeInfo);
+            // Adjust start date
+            newStartDate = currentWeekStart
+              ? getDateByDayIndex(currentWeekStart, targetDayIndex)
+              : new Date();
 
-            const endBase =
-              temporalToDate(drag.originalEvent.end) || originalDate;
-            newEndDate = new Date(endBase);
-            applyTimeToDate(newEndDate, endTimeInfo);
             if (newStartDate > newEndDate) {
               newStartDate = newEndDate;
             }
-          } else {
-            const startBase =
-              temporalToDate(drag.originalEvent.start) || originalDate;
-            newStartDate = new Date(startBase);
-            applyTimeToDate(newStartDate, startTimeInfo);
+          } else if (drag.resizeDirection === 'right') {
+            // Adjust end date
+            newEndDate = currentWeekStart
+              ? getDateByDayIndex(currentWeekStart, targetDayIndex)
+              : new Date();
 
-            newEndDate = new Date(targetDate);
-            applyTimeToDate(newEndDate, endTimeInfo);
             if (newEndDate < newStartDate) {
               newEndDate = newStartDate;
             }
@@ -644,361 +874,131 @@ export const useDragHandlers = (
           drag.originalStartDate = new Date(newStartDate.getTime());
           drag.originalEndDate = new Date(newEndDate.getTime());
 
-          const newStartTemporal = drag.originalEvent.allDay
-            ? dateToPlainDate(newStartDate)
-            : dateToZonedDateTime(newStartDate, getAppTimeZone());
-          const newEndTemporal = drag.originalEvent.allDay
-            ? dateToPlainDate(newEndDate)
-            : dateToZonedDateTime(newEndDate, getAppTimeZone());
+          // Update event
+          const newStartTemporal = dateToPlainDate(newStartDate);
+          const newEndTemporal = dateToPlainDate(newEndDate);
 
           throttledSetEvents(
             (prev: Event[]) =>
-              prev.map(event =>
-                event.id === drag.eventId
-                  ? {
-                      ...event,
-                      start: newStartTemporal,
-                      end: newEndTemporal,
-                      title: event.title,
-                    }
-                  : event
-              ),
+              prev.map(event => {
+                if (event.id !== drag.eventId) return event;
+
+                return {
+                  ...event,
+                  start: newStartTemporal,
+                  end: newEndTemporal,
+                  allDay: true,
+                };
+              }),
             drag.mode
           );
-        } else if (drag.mode === 'move') {
-          // Move logic
-          if (drag.originalStartDate && drag.originalEndDate) {
-            // Normalize original start date to midnight to ensure consistent day difference calculation
-            const normalizedOriginalStart = new Date(drag.originalStartDate);
-            normalizedOriginalStart.setHours(0, 0, 0, 0);
-
-            const dragOffsetDays = daysDifference(
-              normalizedOriginalStart,
-              targetDate
-            );
-            const newStartDate = addDaysToDate(
-              drag.originalStartDate,
-              dragOffsetDays
-            );
-            const newEndDate = addDaysToDate(
-              drag.originalEndDate,
-              dragOffsetDays
-            );
-
-            const currentStartTime = drag.originalStartDate?.getTime();
-            const newStartTime = newStartDate.getTime();
-
-            if (currentStartTime !== newStartTime) {
-              drag.originalStartDate = new Date(newStartDate.getTime());
-              drag.originalEndDate = new Date(newEndDate.getTime());
-              drag.targetDate = newStartDate;
-              // Don't update state here, only update ref
-            }
-          } else if (drag.targetDate?.getTime() !== targetDate.getTime()) {
-            drag.targetDate = targetDate;
-            // Don't update state here, only update ref
-          }
-        }
-      } else {
-        // Week/Day view drag logic
-        if (!drag.allDay) {
-          handleDirectScroll(clientY);
-        }
-        drag.lastClientY = clientY;
-        const mouseHour = pixelYToHour(clientY);
-
-        // Handle All-Day Create Drag
-        if (drag.mode === 'create' && drag.allDay) {
-          const distance = Math.hypot(
-            clientX - drag.startX,
-            clientY - drag.startY
+        } else {
+          // Regular event resize (supports multi-day)
+          const currentEvent = events?.find(
+            target => target.id === drag.eventId
           );
+          if (!currentEvent) return;
 
-          if (!drag.indicatorVisible) {
-            if (distance < 3) return;
-            createDragIndicator(drag, 'blue', t('newAllDayEvent'));
-            drag.indicatorVisible = true;
-          }
+          if (!isDayView) {
+            const originalEvent = drag.originalEvent || currentEvent;
+            const targetDayIndex = getColumnDayIndex(clientX);
+            const proposedHour = roundToTimeStep(
+              Math.max(
+                FIRST_HOUR,
+                Math.min(LAST_HOUR, mouseHour + (drag?.hourOffset ?? 0))
+              )
+            );
+            const pointerBaseDate = currentWeekStart
+              ? getDateByDayIndex(currentWeekStart, targetDayIndex)
+              : getEventDateForEditing(originalEvent.start);
+            const pointerDate = createDateWithHour(
+              pointerBaseDate,
+              proposedHour
+            ) as Date;
 
-          // Update day index based on horizontal position
-          const newDayIndex = isDayView
-            ? drag.dayIndex
-            : getColumnDayIndex(clientX);
-          drag.dayIndex = newDayIndex;
+            const anchorStartDate = getEventDateForEditing(originalEvent.start);
+            const anchorEndDate = getEventDateForEditing(
+              originalEvent.end ?? originalEvent.start
+            );
 
-          updateDragIndicator(newDayIndex, 0, 0, true);
-          return;
-        }
+            let newStartDate = new Date(anchorStartDate);
+            let newEndDate = new Date(anchorEndDate);
 
-        if (drag.mode === 'resize') {
-          if (drag.allDay) {
-            // All-day event horizontal resize (by day)
-            const targetDayIndex = isDayView
-              ? drag.dayIndex
-              : getColumnDayIndex(clientX);
-
-            let newStartDate = drag.originalStartDate || new Date();
-            let newEndDate = drag.originalEndDate || new Date();
-
-            if (drag.resizeDirection === 'left') {
-              // Adjust start date
-              newStartDate = currentWeekStart
-                ? getDateByDayIndex(currentWeekStart, targetDayIndex)
-                : new Date();
-
-              if (newStartDate > newEndDate) {
-                newStartDate = newEndDate;
+            if (drag.resizeDirection === 'bottom') {
+              if (pointerDate.getTime() >= anchorStartDate.getTime()) {
+                newStartDate = new Date(anchorStartDate);
+                newEndDate = new Date(
+                  Math.max(
+                    pointerDate.getTime(),
+                    anchorStartDate.getTime() + TIME_STEP_MS
+                  )
+                );
+              } else {
+                newStartDate = new Date(
+                  Math.min(
+                    pointerDate.getTime(),
+                    anchorStartDate.getTime() - TIME_STEP_MS
+                  )
+                );
+                newEndDate = new Date(anchorStartDate);
               }
             } else if (drag.resizeDirection === 'right') {
-              // Adjust end date
-              newEndDate = currentWeekStart
-                ? getDateByDayIndex(currentWeekStart, targetDayIndex)
-                : new Date();
-
-              if (newEndDate < newStartDate) {
-                newEndDate = newStartDate;
+              const pointerEndDate = createDateWithHour(
+                pointerBaseDate,
+                extractHourFromDate(anchorEndDate)
+              ) as Date;
+              if (pointerEndDate.getTime() >= anchorStartDate.getTime()) {
+                newStartDate = new Date(anchorStartDate);
+                newEndDate = new Date(
+                  Math.max(
+                    pointerEndDate.getTime(),
+                    anchorStartDate.getTime() + TIME_STEP_MS
+                  )
+                );
+              } else {
+                newStartDate = new Date(
+                  Math.min(
+                    pointerEndDate.getTime(),
+                    anchorStartDate.getTime() - TIME_STEP_MS
+                  )
+                );
+                newEndDate = new Date(anchorStartDate);
+              }
+            } else if (drag.resizeDirection === 'top') {
+              if (pointerDate.getTime() <= anchorEndDate.getTime()) {
+                newStartDate = new Date(
+                  Math.min(
+                    pointerDate.getTime(),
+                    anchorEndDate.getTime() - TIME_STEP_MS
+                  )
+                );
+                newEndDate = new Date(anchorEndDate);
+              } else {
+                newStartDate = new Date(anchorEndDate);
+                newEndDate = new Date(
+                  Math.max(
+                    pointerDate.getTime(),
+                    anchorEndDate.getTime() + TIME_STEP_MS
+                  )
+                );
               }
             }
+
+            const startDayIndex = getDayIndexForDate(
+              newStartDate,
+              drag.originalDay
+            );
+            const endDayIndex = getDayIndexForDate(newEndDate, startDayIndex);
+            const indicatorStartHour = extractHourFromDate(newStartDate);
+            const indicatorEndHour =
+              startDayIndex === endDayIndex
+                ? extractHourFromDate(newEndDate)
+                : LAST_HOUR;
 
             drag.originalStartDate = new Date(newStartDate.getTime());
             drag.originalEndDate = new Date(newEndDate.getTime());
-
-            // Update event
-            const newStartTemporal = dateToPlainDate(newStartDate);
-            const newEndTemporal = dateToPlainDate(newEndDate);
-
-            throttledSetEvents(
-              (prev: Event[]) =>
-                prev.map(event => {
-                  if (event.id !== drag.eventId) return event;
-
-                  return {
-                    ...event,
-                    start: newStartTemporal,
-                    end: newEndTemporal,
-                    allDay: true,
-                  };
-                }),
-              drag.mode
-            );
-          } else {
-            // Regular event resize (supports multi-day)
-            const currentEvent = events?.find(
-              target => target.id === drag.eventId
-            );
-            if (!currentEvent) return;
-
-            if (!isDayView) {
-              const originalEvent = drag.originalEvent || currentEvent;
-              const targetDayIndex = getColumnDayIndex(clientX);
-              const proposedHour = roundToTimeStep(
-                Math.max(
-                  FIRST_HOUR,
-                  Math.min(LAST_HOUR, mouseHour + (drag?.hourOffset ?? 0))
-                )
-              );
-              const pointerBaseDate = currentWeekStart
-                ? getDateByDayIndex(currentWeekStart, targetDayIndex)
-                : getEventDateForEditing(originalEvent.start);
-              const pointerDate = createDateWithHour(
-                pointerBaseDate,
-                proposedHour
-              ) as Date;
-
-              const anchorStartDate = getEventDateForEditing(
-                originalEvent.start
-              );
-              const anchorEndDate = getEventDateForEditing(
-                originalEvent.end ?? originalEvent.start
-              );
-
-              let newStartDate = new Date(anchorStartDate);
-              let newEndDate = new Date(anchorEndDate);
-
-              if (drag.resizeDirection === 'bottom') {
-                if (pointerDate.getTime() >= anchorStartDate.getTime()) {
-                  newStartDate = new Date(anchorStartDate);
-                  newEndDate = new Date(
-                    Math.max(
-                      pointerDate.getTime(),
-                      anchorStartDate.getTime() + TIME_STEP_MS
-                    )
-                  );
-                } else {
-                  newStartDate = new Date(
-                    Math.min(
-                      pointerDate.getTime(),
-                      anchorStartDate.getTime() - TIME_STEP_MS
-                    )
-                  );
-                  newEndDate = new Date(anchorStartDate);
-                }
-              } else if (drag.resizeDirection === 'right') {
-                const pointerEndDate = createDateWithHour(
-                  pointerBaseDate,
-                  extractHourFromDate(anchorEndDate)
-                ) as Date;
-                if (pointerEndDate.getTime() >= anchorStartDate.getTime()) {
-                  newStartDate = new Date(anchorStartDate);
-                  newEndDate = new Date(
-                    Math.max(
-                      pointerEndDate.getTime(),
-                      anchorStartDate.getTime() + TIME_STEP_MS
-                    )
-                  );
-                } else {
-                  newStartDate = new Date(
-                    Math.min(
-                      pointerEndDate.getTime(),
-                      anchorStartDate.getTime() - TIME_STEP_MS
-                    )
-                  );
-                  newEndDate = new Date(anchorStartDate);
-                }
-              } else if (drag.resizeDirection === 'top') {
-                if (pointerDate.getTime() <= anchorEndDate.getTime()) {
-                  newStartDate = new Date(
-                    Math.min(
-                      pointerDate.getTime(),
-                      anchorEndDate.getTime() - TIME_STEP_MS
-                    )
-                  );
-                  newEndDate = new Date(anchorEndDate);
-                } else {
-                  newStartDate = new Date(anchorEndDate);
-                  newEndDate = new Date(
-                    Math.max(
-                      pointerDate.getTime(),
-                      anchorEndDate.getTime() + TIME_STEP_MS
-                    )
-                  );
-                }
-              }
-
-              const startDayIndex = getDayIndexForDate(
-                newStartDate,
-                drag.originalDay
-              );
-              const endDayIndex = getDayIndexForDate(newEndDate, startDayIndex);
-              const indicatorStartHour = extractHourFromDate(newStartDate);
-              const indicatorEndHour =
-                startDayIndex === endDayIndex
-                  ? extractHourFromDate(newEndDate)
-                  : LAST_HOUR;
-
-              drag.originalStartDate = new Date(newStartDate.getTime());
-              drag.originalEndDate = new Date(newEndDate.getTime());
-              drag.startHour = indicatorStartHour;
-              drag.endHour = indicatorEndHour;
-              drag.dayIndex = startDayIndex;
-
-              throttledSetEvents(
-                (prev: Event[]) =>
-                  prev.map(event => {
-                    if (event.id !== drag.eventId) return event;
-
-                    return {
-                      ...event,
-                      start: dateToZonedDateTime(
-                        newStartDate,
-                        getAppTimeZone()
-                      ),
-                      end: dateToZonedDateTime(newEndDate, getAppTimeZone()),
-                      day: startDayIndex,
-                    };
-                  }),
-                drag.mode
-              );
-
-              updateDragIndicator(
-                drag.dayIndex,
-                indicatorStartHour,
-                indicatorEndHour,
-                false
-              );
-              return;
-            }
-
-            let newStartHour = drag.startHour;
-            let newEndHour = drag.endHour;
-
-            // Calculate actual end day of event (from current event)
-            let eventEndDayIndex = drag.dayIndex;
-            {
-              const eventStart = temporalToDate(currentEvent.start);
-              const eventEnd = temporalToDate(currentEvent.end);
-              const span = getEffectiveDaySpan(
-                eventStart,
-                eventEnd,
-                currentEvent.allDay ?? false
-              );
-              eventEndDayIndex = (currentEvent.day ?? 0) + span;
-            }
-
-            let endDayIndex = eventEndDayIndex;
-            let startDayIndex = drag.originalDay;
-
-            if (drag.resizeDirection === 'top') {
-              const targetDayIndex = drag.dayIndex;
-              const proposedStartHour = mouseHour + (drag?.hourOffset ?? 0);
-
-              if (targetDayIndex < eventEndDayIndex) {
-                startDayIndex = targetDayIndex;
-                newStartHour = Math.max(
-                  FIRST_HOUR,
-                  Math.min(LAST_HOUR, proposedStartHour)
-                );
-              } else {
-                startDayIndex = eventEndDayIndex;
-
-                if (proposedStartHour > drag.originalEndHour) {
-                  newStartHour = drag.originalEndHour;
-                  newEndHour = proposedStartHour;
-                  drag.hourOffset = newEndHour - mouseHour;
-                } else {
-                  newStartHour = Math.max(FIRST_HOUR, proposedStartHour);
-                  if (drag.originalEndHour - newStartHour < TIME_STEP) {
-                    newStartHour = drag.originalEndHour - TIME_STEP;
-                  }
-                }
-              }
-            } else if (drag.resizeDirection === 'bottom') {
-              const targetDayIndex = drag.dayIndex;
-              const proposedEndHour = mouseHour + (drag?.hourOffset ?? 0);
-
-              if (targetDayIndex === drag.dayIndex) {
-                if (proposedEndHour < drag.originalStartHour) {
-                  newEndHour = drag.originalStartHour;
-                  newStartHour = proposedEndHour;
-                  drag.hourOffset = newStartHour - mouseHour;
-                } else {
-                  newEndHour = Math.min(LAST_HOUR, proposedEndHour);
-                  if (newEndHour - drag.startHour < TIME_STEP) {
-                    newEndHour = drag.startHour + TIME_STEP;
-                  }
-                }
-              } else {
-                endDayIndex = targetDayIndex;
-                newEndHour = Math.max(
-                  FIRST_HOUR,
-                  Math.min(LAST_HOUR, proposedEndHour)
-                );
-              }
-            }
-
-            if (endDayIndex === startDayIndex) {
-              [newStartHour, newEndHour] = [
-                Math.max(FIRST_HOUR, Math.min(newStartHour, newEndHour)),
-                Math.min(LAST_HOUR, Math.max(newStartHour, newEndHour)),
-              ];
-            }
-
-            const [roundedStart, roundedEnd] = [
-              roundToTimeStep(newStartHour),
-              roundToTimeStep(newEndHour),
-            ];
-            drag.startHour = newStartHour;
-            drag.endHour = newEndHour;
+            drag.startHour = indicatorStartHour;
+            drag.endHour = indicatorEndHour;
             drag.dayIndex = startDayIndex;
 
             throttledSetEvents(
@@ -1006,127 +1006,227 @@ export const useDragHandlers = (
                 prev.map(event => {
                   if (event.id !== drag.eventId) return event;
 
-                  const eventStartDate = temporalToDate(event.start);
-                  const newStartDate = createDateWithHour(
-                    currentWeekStart
-                      ? getDateByDayIndex(currentWeekStart, startDayIndex)
-                      : eventStartDate,
-                    roundedStart
-                  ) as Date;
-                  const endDate = currentWeekStart
-                    ? getDateByDayIndex(currentWeekStart, endDayIndex)
-                    : eventStartDate;
-                  const newEndDate = createDateWithHour(
-                    endDate,
-                    roundedEnd
-                  ) as Date;
-
-                  drag.originalStartDate = new Date(newStartDate.getTime());
-                  drag.originalEndDate = new Date(newEndDate.getTime());
-
-                  const newStart = dateToZonedDateTime(
-                    newStartDate,
-                    getAppTimeZone()
-                  );
-                  const newEnd = dateToZonedDateTime(
-                    newEndDate,
-                    getAppTimeZone()
-                  );
-
                   return {
                     ...event,
-                    start: newStart,
-                    end: newEnd,
+                    start: dateToZonedDateTime(newStartDate, getAppTimeZone()),
+                    end: dateToZonedDateTime(newEndDate, getAppTimeZone()),
                     day: startDayIndex,
                   };
                 }),
               drag.mode
             );
 
-            updateDragIndicator(drag.dayIndex, roundedStart, roundedEnd, false);
-          }
-        } else if (drag.mode === 'create') {
-          if (options.isMobile) {
-            // Mobile: Move the creation block instead of resizing, centering it under the finger
-            const newHour = roundToTimeStep(mouseHour + (drag.hourOffset ?? 0));
-            // Ensure within bounds
-            const safeStartHour = Math.max(
-              FIRST_HOUR,
-              Math.min(LAST_HOUR - (drag.duration || 1), newHour)
+            updateDragIndicator(
+              drag.dayIndex,
+              indicatorStartHour,
+              indicatorEndHour,
+              false
             );
-            drag.startHour = safeStartHour;
-            drag.endHour = safeStartHour + (drag.duration || 1);
-          } else {
-            // Desktop: Resize behavior
-            const newHour = roundToTimeStep(mouseHour);
-            const [newStartHour, newEndHour] =
-              clientY < drag.startY
-                ? [newHour, Math.max(newHour + TIME_STEP, drag.endHour)]
-                : [
-                    drag.startHour,
-                    Math.max(drag.startHour + TIME_STEP, newHour),
-                  ];
-
-            drag.startHour = newStartHour;
-            drag.endHour = newEndHour;
+            return;
           }
 
-          // Remove setDragState, only update at drag end
+          let newStartHour = drag.startHour;
+          let newEndHour = drag.endHour;
 
-          const newEventLayout = calculateNewEventLayout?.(
-            drag.dayIndex,
-            drag.startHour,
-            drag.endHour
-          );
-          updateDragIndicator(
-            drag.dayIndex,
-            drag.startHour,
-            drag.endHour,
-            false,
-            newEventLayout
-          );
-        } else if (drag.mode === 'move') {
-          const newDayIndex = isDayView
-            ? drag.dayIndex
-            : getColumnDayIndex(clientX);
-          let newStartHour = roundToTimeStep(
-            mouseHour + (drag.hourOffset ?? 0)
-          );
-          newStartHour = Math.max(
-            FIRST_HOUR,
-            Math.min(LAST_HOUR - drag.duration, newStartHour)
-          );
-
-          const newEndHour = newStartHour + drag.duration;
-          drag.dayIndex = newDayIndex;
-          drag.startHour = newStartHour;
-          drag.endHour = newEndHour;
-
-          // Remove setDragState, only update at drag end
-
-          // Calculate layout and update drag indicator
-          let dragLayout: EventLayout | null = null;
-          if (drag.eventId && calculateDragLayout) {
-            const draggedEvent = events?.find(
-              target => target.id === drag.eventId
+          // Calculate actual end day of event (from current event)
+          let eventEndDayIndex = drag.dayIndex;
+          {
+            const eventStart = temporalToDate(currentEvent.start);
+            const eventEnd = temporalToDate(currentEvent.end);
+            const span = getEffectiveDaySpan(
+              eventStart,
+              eventEnd,
+              currentEvent.allDay ?? false
             );
-            if (draggedEvent) {
-              dragLayout = calculateDragLayout(
-                draggedEvent,
-                newDayIndex,
-                roundToTimeStep(newStartHour),
-                roundToTimeStep(newEndHour)
+            eventEndDayIndex = (currentEvent.day ?? 0) + span;
+          }
+
+          let endDayIndex = eventEndDayIndex;
+          let startDayIndex = drag.originalDay;
+
+          if (drag.resizeDirection === 'top') {
+            const targetDayIndex = drag.dayIndex;
+            const proposedStartHour = mouseHour + (drag?.hourOffset ?? 0);
+
+            if (targetDayIndex < eventEndDayIndex) {
+              startDayIndex = targetDayIndex;
+              newStartHour = Math.max(
+                FIRST_HOUR,
+                Math.min(LAST_HOUR, proposedStartHour)
+              );
+            } else {
+              startDayIndex = eventEndDayIndex;
+
+              if (proposedStartHour > drag.originalEndHour) {
+                newStartHour = drag.originalEndHour;
+                newEndHour = proposedStartHour;
+                drag.hourOffset = newEndHour - mouseHour;
+              } else {
+                newStartHour = Math.max(FIRST_HOUR, proposedStartHour);
+                if (drag.originalEndHour - newStartHour < TIME_STEP) {
+                  newStartHour = drag.originalEndHour - TIME_STEP;
+                }
+              }
+            }
+          } else if (drag.resizeDirection === 'bottom') {
+            const targetDayIndex = drag.dayIndex;
+            const proposedEndHour = mouseHour + (drag?.hourOffset ?? 0);
+
+            if (targetDayIndex === drag.dayIndex) {
+              if (proposedEndHour < drag.originalStartHour) {
+                newEndHour = drag.originalStartHour;
+                newStartHour = proposedEndHour;
+                drag.hourOffset = newStartHour - mouseHour;
+              } else {
+                newEndHour = Math.min(LAST_HOUR, proposedEndHour);
+                if (newEndHour - drag.startHour < TIME_STEP) {
+                  newEndHour = drag.startHour + TIME_STEP;
+                }
+              }
+            } else {
+              endDayIndex = targetDayIndex;
+              newEndHour = Math.max(
+                FIRST_HOUR,
+                Math.min(LAST_HOUR, proposedEndHour)
               );
             }
           }
-          updateDragIndicator(
-            newDayIndex,
+
+          if (endDayIndex === startDayIndex) {
+            [newStartHour, newEndHour] = [
+              Math.max(FIRST_HOUR, Math.min(newStartHour, newEndHour)),
+              Math.min(LAST_HOUR, Math.max(newStartHour, newEndHour)),
+            ];
+          }
+
+          const [roundedStart, roundedEnd] = [
             roundToTimeStep(newStartHour),
             roundToTimeStep(newEndHour),
-            false,
-            dragLayout
+          ];
+          drag.startHour = newStartHour;
+          drag.endHour = newEndHour;
+          drag.dayIndex = startDayIndex;
+
+          throttledSetEvents(
+            (prev: Event[]) =>
+              prev.map(event => {
+                if (event.id !== drag.eventId) return event;
+
+                const eventStartDate = temporalToDate(event.start);
+                const newStartDate = createDateWithHour(
+                  currentWeekStart
+                    ? getDateByDayIndex(currentWeekStart, startDayIndex)
+                    : eventStartDate,
+                  roundedStart
+                ) as Date;
+                const endDate = currentWeekStart
+                  ? getDateByDayIndex(currentWeekStart, endDayIndex)
+                  : eventStartDate;
+                const newEndDate = createDateWithHour(
+                  endDate,
+                  roundedEnd
+                ) as Date;
+
+                drag.originalStartDate = new Date(newStartDate.getTime());
+                drag.originalEndDate = new Date(newEndDate.getTime());
+
+                const newStart = dateToZonedDateTime(
+                  newStartDate,
+                  getAppTimeZone()
+                );
+                const newEnd = dateToZonedDateTime(
+                  newEndDate,
+                  getAppTimeZone()
+                );
+
+                return {
+                  ...event,
+                  start: newStart,
+                  end: newEnd,
+                  day: startDayIndex,
+                };
+              }),
+            drag.mode
           );
+
+          updateDragIndicator(drag.dayIndex, roundedStart, roundedEnd, false);
         }
+      } else if (drag.mode === 'create') {
+        if (options.isMobile) {
+          // Mobile: Move the creation block instead of resizing, centering it under the finger
+          const newHour = roundToTimeStep(mouseHour + (drag.hourOffset ?? 0));
+          // Ensure within bounds
+          const safeStartHour = Math.max(
+            FIRST_HOUR,
+            Math.min(LAST_HOUR - (drag.duration || 1), newHour)
+          );
+          drag.startHour = safeStartHour;
+          drag.endHour = safeStartHour + (drag.duration || 1);
+        } else {
+          // Desktop: Resize behavior
+          const newHour = roundToTimeStep(mouseHour);
+          const [newStartHour, newEndHour] =
+            clientY < drag.startY
+              ? [newHour, Math.max(newHour + TIME_STEP, drag.endHour)]
+              : [drag.startHour, Math.max(drag.startHour + TIME_STEP, newHour)];
+
+          drag.startHour = newStartHour;
+          drag.endHour = newEndHour;
+        }
+
+        // Remove setDragState, only update at drag end
+
+        const newEventLayout = calculateNewEventLayout?.(
+          drag.dayIndex,
+          drag.startHour,
+          drag.endHour
+        );
+        updateDragIndicator(
+          drag.dayIndex,
+          drag.startHour,
+          drag.endHour,
+          false,
+          newEventLayout
+        );
+      } else if (drag.mode === 'move') {
+        const newDayIndex = isDayView
+          ? drag.dayIndex
+          : getColumnDayIndex(clientX);
+        let newStartHour = roundToTimeStep(mouseHour + (drag.hourOffset ?? 0));
+        newStartHour = Math.max(
+          FIRST_HOUR,
+          Math.min(LAST_HOUR - drag.duration, newStartHour)
+        );
+
+        const newEndHour = newStartHour + drag.duration;
+        drag.dayIndex = newDayIndex;
+        drag.startHour = newStartHour;
+        drag.endHour = newEndHour;
+
+        // Remove setDragState, only update at drag end
+
+        // Calculate layout and update drag indicator
+        let dragLayout: EventLayout | null = null;
+        if (drag.eventId && calculateDragLayout) {
+          const draggedEvent = events?.find(
+            target => target.id === drag.eventId
+          );
+          if (draggedEvent) {
+            dragLayout = calculateDragLayout(
+              draggedEvent,
+              newDayIndex,
+              roundToTimeStep(newStartHour),
+              roundToTimeStep(newEndHour)
+            );
+          }
+        }
+        updateDragIndicator(
+          newDayIndex,
+          roundToTimeStep(newStartHour),
+          roundToTimeStep(newEndHour),
+          false,
+          dragLayout
+        );
       }
     },
     [
@@ -1153,8 +1253,8 @@ export const useDragHandlers = (
   // Drag end handler - complete version
   const handleDragEnd = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      const drag = dragRef.current;
-      if (!drag || !drag.active) return;
+      const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
+      if (!drag || (!drag.active && !drag.pendingMove)) return;
 
       const readOnlyConfig = app?.getReadOnlyConfig();
       const isDraggable = readOnlyConfig?.draggable !== false;
@@ -1189,9 +1289,11 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      if (!drag || !drag.active) return;
+      if (!drag || (!drag.active && !drag.pendingMove)) return;
 
       if (isDateGridView) {
+        cancelScheduledDateGridPreview();
+        applyDateGridPreview(clientX, clientY);
         // Month view drag end logic
         if (
           drag.mode === 'resize' &&
@@ -1322,6 +1424,17 @@ export const useDragHandlers = (
                           title: event.title,
                         })
                       : event
+                  ),
+                false,
+                'drag'
+              );
+            } else if (drag.originalEvent) {
+              // Restore event to original position (real-time preview may have moved it)
+              const originalEvent = drag.originalEvent;
+              onEventsUpdate?.(
+                prev =>
+                  prev.map(event =>
+                    event.id === drag.eventId ? originalEvent : event
                   ),
                 false,
                 'drag'
@@ -1603,6 +1716,8 @@ export const useDragHandlers = (
     },
     [
       isDateGridView,
+      applyDateGridPreview,
+      cancelScheduledDateGridPreview,
       handleDragMove,
       removeDragIndicator,
       resetDragState,
@@ -1666,7 +1781,8 @@ export const useDragHandlers = (
       } else {
         // Week/Day view create event
         const [dayIndex, startHour] = args as [number, number];
-        const drag = dragRef.current;
+        const drag = dragRef.current as typeof dragRef.current &
+          InternalDragRef;
         if (!drag) return;
         // const roundedStart = roundToTimeStep(startHour);
         const isMobile = options.isMobile;
@@ -1751,9 +1867,11 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      const drag = dragRef.current;
+      const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
       if (!drag) return;
-      const sourceElement = e.currentTarget as HTMLElement;
+      const sourceElement = resolveDragSourceElement(
+        e.currentTarget as HTMLElement | null
+      );
       const sourceRect = sourceElement.getBoundingClientRect();
 
       if (isDateGridView) {
@@ -1791,6 +1909,7 @@ export const useDragHandlers = (
           : eventDurationDays;
 
         drag.active = true;
+        drag.pendingMove = false;
         drag.mode = 'move';
         drag.eventId = event.id;
         drag.startX = clientX;
@@ -1804,27 +1923,26 @@ export const useDragHandlers = (
         drag.eventDurationDays = eventDurationDays;
         drag.currentSegmentDays = currentSegmentDays;
 
-        // Calculate click offset within source element based on config
+        // Cursor anchors to center of the indicator
         const rect = sourceElement.getBoundingClientRect();
-        const dragConfig = app?.getPlugin<DragService>('drag')?.getConfig();
-        const cursorAtStart = dragConfig?.allDayDragCursorAtStart ?? true;
-        if (cursorAtStart) {
-          // Cursor aligns with the left edge of the event title (8px inset) and vertically centered
-          drag.dragOffset = 8;
-          drag.dragOffsetY = rect.height / 2;
-        } else {
-          drag.dragOffset = rect.width / 2;
-          drag.dragOffsetY = rect.height / 2;
-        }
+        drag.dragOffset = rect.width / 2;
+        drag.dragOffsetY = rect.height / 2;
 
-        setDragState({
-          active: true,
-          mode: 'move',
-          eventId: event.id,
-          targetDate: eventStartDate,
-          startDate: eventStartDate,
-          endDate: eventEndDate,
-        });
+        const shouldDeferMouseDragActivation = !isTouchLikeEvent(e);
+
+        if (shouldDeferMouseDragActivation) {
+          drag.active = false;
+          drag.pendingMove = true;
+        } else {
+          setDragState({
+            active: true,
+            mode: 'move',
+            eventId: event.id,
+            targetDate: eventStartDate,
+            startDate: eventStartDate,
+            endDate: eventEndDate,
+          });
+        }
 
         drag.sourceElement = sourceElement;
         drag.indicatorVisible = false;
@@ -1981,7 +2099,7 @@ export const useDragHandlers = (
 
       const { clientX, clientY } = getClientCoordinates(e);
 
-      const drag = dragRef.current;
+      const drag = dragRef.current as typeof dragRef.current & InternalDragRef;
       if (!drag) return;
 
       if (isDateGridView) {

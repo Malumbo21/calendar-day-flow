@@ -11,7 +11,7 @@ import {
   ICalendarApp,
   ViewType,
 } from '@/types';
-import { getTodayInTimeZone } from '@/utils';
+import { getTodayInTimeZone, temporalToVisualDate } from '@/utils';
 
 import { analyzeMultiDayEventsForRow } from './utils';
 import { YearDayCell } from './YearDayCell';
@@ -43,7 +43,119 @@ interface YearRowComponentProps {
   customEventDetailDialog?: EventDetailDialogRenderer;
   onContextMenu: (menu: { x: number; y: number; date: Date } | null) => void;
   appTimeZone?: string;
+  dragPreviewEvent?: Event | null;
 }
+
+const eventOverlapsRow = (
+  event: Event | null | undefined,
+  rowDays: Date[],
+  appTimeZone?: string
+) => {
+  if (!event || rowDays.length === 0) return false;
+
+  const firstDay = rowDays[0];
+  const lastDay = rowDays.at(-1);
+  if (!firstDay || !lastDay) return false;
+
+  const rowStartMs = new Date(
+    firstDay.getFullYear(),
+    firstDay.getMonth(),
+    firstDay.getDate()
+  ).getTime();
+  const rowEndMs = new Date(
+    lastDay.getFullYear(),
+    lastDay.getMonth(),
+    lastDay.getDate(),
+    23,
+    59,
+    59,
+    999
+  ).getTime();
+
+  const start = temporalToVisualDate(event.start, appTimeZone);
+  const end = event.end ? temporalToVisualDate(event.end, appTimeZone) : start;
+  const startMs = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate()
+  ).getTime();
+  const endMs = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+    23,
+    59,
+    59,
+    999
+  ).getTime();
+
+  return startMs <= rowEndMs && endMs >= rowStartMs;
+};
+
+const createPreviewRowSegment = (
+  event: Event | null | undefined,
+  rowDays: Date[],
+  columnsPerRow: number,
+  appTimeZone?: string
+) => {
+  if (!event || rowDays.length === 0) return null;
+
+  const firstDay = rowDays[0];
+  const lastDay = rowDays.at(-1);
+  if (!firstDay || !lastDay) return null;
+
+  const rowStartMs = new Date(
+    firstDay.getFullYear(),
+    firstDay.getMonth(),
+    firstDay.getDate()
+  ).getTime();
+  const rowEndMs = new Date(
+    lastDay.getFullYear(),
+    lastDay.getMonth(),
+    lastDay.getDate(),
+    23,
+    59,
+    59,
+    999
+  ).getTime();
+
+  const start = temporalToVisualDate(event.start, appTimeZone);
+  const end = event.end ? temporalToVisualDate(event.end, appTimeZone) : start;
+  const startMs = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate()
+  ).getTime();
+  const endMs = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate()
+  ).getTime();
+
+  if (startMs > rowEndMs || endMs < rowStartMs) {
+    return null;
+  }
+
+  let startCellIndex = Math.round(
+    (Math.max(startMs, rowStartMs) - rowStartMs) / (1000 * 60 * 60 * 24)
+  );
+  let endCellIndex = Math.round(
+    (Math.min(endMs, rowEndMs) - rowStartMs) / (1000 * 60 * 60 * 24)
+  );
+
+  startCellIndex = Math.max(0, Math.min(startCellIndex, columnsPerRow - 1));
+  endCellIndex = Math.max(0, Math.min(endCellIndex, columnsPerRow - 1));
+
+  return {
+    id: `${event.id}::preview-year-${rowStartMs}`,
+    event,
+    startCellIndex,
+    endCellIndex,
+    isFirstSegment: startMs >= rowStartMs,
+    isLastSegment: endMs <= rowEndMs,
+    visualRowIndex: 0,
+  };
+};
 
 export const YearRowComponent = memo(
   ({
@@ -69,6 +181,7 @@ export const YearRowComponent = memo(
     customEventDetailDialog,
     onContextMenu,
     appTimeZone,
+    dragPreviewEvent,
   }: YearRowComponentProps) => {
     const MAX_VISIBLE_ROWS = 3;
     const HEADER_HEIGHT = 26;
@@ -112,12 +225,66 @@ export const YearRowComponent = memo(
       ]
     );
 
+    const isMovePreviewActive =
+      isDragging &&
+      dragState.mode === 'move' &&
+      !!dragPreviewEvent &&
+      dragPreviewEvent.id === dragState.eventId;
+
+    const effectiveSegments = useMemo(() => {
+      if (!dragPreviewEvent) return segments;
+      if (isMovePreviewActive) return segments;
+
+      const adjustedEvents = events.filter(
+        event => event.id !== dragPreviewEvent.id
+      );
+      if (eventOverlapsRow(dragPreviewEvent, rowDays, appTimeZone)) {
+        adjustedEvents.push(dragPreviewEvent);
+      }
+
+      return analyzeMultiDayEventsForRow(
+        adjustedEvents,
+        rowDays,
+        columnsPerRow,
+        app.state.allDaySortComparator,
+        appTimeZone
+      );
+    }, [
+      dragPreviewEvent,
+      isMovePreviewActive,
+      segments,
+      events,
+      rowDays,
+      columnsPerRow,
+      app.state.allDaySortComparator,
+      appTimeZone,
+    ]);
+
+    const dragPreviewSegment = useMemo(
+      () =>
+        isMovePreviewActive
+          ? createPreviewRowSegment(
+              dragPreviewEvent,
+              rowDays,
+              columnsPerRow,
+              appTimeZone
+            )
+          : null,
+      [
+        isMovePreviewActive,
+        dragPreviewEvent,
+        rowDays,
+        columnsPerRow,
+        appTimeZone,
+      ]
+    );
+
     const { visibleSegments, moreCounts } = useMemo(() => {
       // 1. Calculate how many events are in each column
       const colCounts = Array.from({ length: rowDays.length }).fill(
         0
       ) as number[];
-      segments.forEach(segment => {
+      effectiveSegments.forEach(segment => {
         // Be careful with boundaries
         const start = Math.max(0, segment.startCellIndex);
         const end = Math.min(rowDays.length - 1, segment.endCellIndex);
@@ -127,11 +294,11 @@ export const YearRowComponent = memo(
         }
       });
 
-      const visible: typeof segments = [];
+      const visible: typeof effectiveSegments = [];
       const counts = Array.from({ length: rowDays.length }).fill(0) as number[];
 
       // 2. Determine visibility for each segment
-      segments.forEach(segment => {
+      effectiveSegments.forEach(segment => {
         let isVisible = true;
         const start = Math.max(0, segment.startCellIndex);
         const end = Math.min(rowDays.length - 1, segment.endCellIndex);
@@ -164,7 +331,26 @@ export const YearRowComponent = memo(
       });
 
       return { visibleSegments: visible, moreCounts: counts };
-    }, [segments, rowDays.length]);
+    }, [effectiveSegments, rowDays.length]);
+
+    const renderedSegments = useMemo(() => {
+      if (!isMovePreviewActive || !dragState.eventId) {
+        return effectiveSegments;
+      }
+
+      const staticSegments = effectiveSegments.filter(
+        segment => segment.event.id !== dragState.eventId
+      );
+
+      return dragPreviewSegment
+        ? [...staticSegments, dragPreviewSegment]
+        : staticSegments;
+    }, [
+      isMovePreviewActive,
+      dragState.eventId,
+      effectiveSegments,
+      dragPreviewSegment,
+    ]);
 
     return (
       <div
@@ -203,7 +389,15 @@ export const YearRowComponent = memo(
           onContextMenu={e => e.preventDefault()}
         >
           <div className='relative h-full w-full'>
-            {visibleSegments.map(segment => (
+            {(isMovePreviewActive && dragState.eventId
+              ? renderedSegments.filter(
+                  segment =>
+                    visibleSegments.some(
+                      visibleSegment => visibleSegment.id === segment.id
+                    ) || segment.id === dragPreviewSegment?.id
+                )
+              : visibleSegments
+            ).map(segment => (
               <div key={segment.id} className='pointer-events-auto'>
                 <CalendarEvent
                   event={segment.event}
@@ -240,6 +434,53 @@ export const YearRowComponent = memo(
           </div>
         </div>
       </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    const prevPreviewId = prevProps.dragPreviewEvent?.id;
+    const nextPreviewId = nextProps.dragPreviewEvent?.id;
+    const rowContainsDraggedEvent =
+      (!!prevPreviewId &&
+        prevProps.events.some(event => event.id === prevPreviewId)) ||
+      (!!nextPreviewId &&
+        nextProps.events.some(event => event.id === nextPreviewId));
+    const prevOverlaps = eventOverlapsRow(
+      prevProps.dragPreviewEvent,
+      prevProps.rowDays,
+      prevProps.appTimeZone
+    );
+    const nextOverlaps = eventOverlapsRow(
+      nextProps.dragPreviewEvent,
+      nextProps.rowDays,
+      nextProps.appTimeZone
+    );
+
+    if (rowContainsDraggedEvent || prevOverlaps || nextOverlaps) {
+      return false;
+    }
+
+    return (
+      prevProps.rowDays === nextProps.rowDays &&
+      prevProps.events === nextProps.events &&
+      prevProps.columnsPerRow === nextProps.columnsPerRow &&
+      prevProps.app === nextProps.app &&
+      prevProps.calendarRef === nextProps.calendarRef &&
+      prevProps.locale === nextProps.locale &&
+      prevProps.onMoveStart === nextProps.onMoveStart &&
+      prevProps.onResizeStart === nextProps.onResizeStart &&
+      prevProps.onCreateStart === nextProps.onCreateStart &&
+      prevProps.selectedEventId === nextProps.selectedEventId &&
+      prevProps.onEventSelect === nextProps.onEventSelect &&
+      prevProps.onMoreEventsClick === nextProps.onMoreEventsClick &&
+      prevProps.newlyCreatedEventId === nextProps.newlyCreatedEventId &&
+      prevProps.onDetailPanelOpen === nextProps.onDetailPanelOpen &&
+      prevProps.detailPanelEventId === nextProps.detailPanelEventId &&
+      prevProps.onDetailPanelToggle === nextProps.onDetailPanelToggle &&
+      prevProps.customDetailPanelContent ===
+        nextProps.customDetailPanelContent &&
+      prevProps.customEventDetailDialog === nextProps.customEventDetailDialog &&
+      prevProps.onContextMenu === nextProps.onContextMenu &&
+      prevProps.appTimeZone === nextProps.appTimeZone
     );
   }
 );

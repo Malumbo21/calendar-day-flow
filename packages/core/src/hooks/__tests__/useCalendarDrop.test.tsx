@@ -16,6 +16,12 @@ describe('useCalendarDrop', () => {
     const app = {
       timeZone: 'Asia/Shanghai',
       addEvent: jest.fn(),
+      getCalendarRegistry: jest.fn(() => ({
+        get: jest.fn(() => ({
+          readOnly: false,
+          subscription: false,
+        })),
+      })),
     } as unknown as ICalendarApp;
 
     const { result } = renderHook(() => useCalendarDrop({ app }));

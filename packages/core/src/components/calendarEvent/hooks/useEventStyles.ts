@@ -16,6 +16,7 @@ interface UseEventStylesProps {
   event: Event;
   timingEvent?: Event;
   layout?: EventLayout;
+  isBeingDragged: boolean;
   isAllDay: boolean;
   allDayHeight: number;
   viewType: ViewType;
@@ -52,6 +53,7 @@ export const useEventStyles = ({
   event,
   timingEvent,
   layout,
+  isBeingDragged,
   isAllDay,
   allDayHeight,
   viewType,
@@ -99,7 +101,17 @@ export const useEventStyles = ({
         opacity: 1,
         zIndex: isEventSelected || showDetailPanel ? 1000 : 1,
         transform: isPopping ? 'scale(1.05)' : 'scale(1)',
-        transition: POP_TRANSITION,
+        transition: isBeingDragged
+          ? [
+              'left 90ms cubic-bezier(0.22, 1, 0.36, 1)',
+              'top 90ms cubic-bezier(0.22, 1, 0.36, 1)',
+              'width 90ms cubic-bezier(0.22, 1, 0.36, 1)',
+              POP_TRANSITION,
+            ].join(', ')
+          : POP_TRANSITION,
+        willChange: isBeingDragged
+          ? ('left, top, width, transform' as const)
+          : ('transform' as const),
         cursor: isDraggable ? 'pointer' : canOpenDetail ? 'pointer' : 'default',
       };
     }

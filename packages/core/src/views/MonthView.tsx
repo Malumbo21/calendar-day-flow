@@ -34,6 +34,8 @@ import {
   WeeksData,
 } from '@/types';
 import {
+  dateToPlainDate,
+  dateToZonedDateTime,
   hasEventChanged,
   generateWeekData,
   temporalToVisualDate,
@@ -56,7 +58,68 @@ const getMonthWeeks = (date: Date, startOfWeek: number): WeeksData[] => {
   return weeks;
 };
 
+const getWeekStartForDate = (date: Date, startOfWeek: number) => {
+  const weekStart = new Date(date);
+  weekStart.setHours(0, 0, 0, 0);
+  const day = weekStart.getDay();
+  const diff = (day - startOfWeek + 7) % 7;
+  weekStart.setDate(weekStart.getDate() - diff);
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
+};
+
+const getBucketedEventDateRange = (event: Event, appTimeZone?: string) => {
+  const startFull = temporalToVisualDate(event.start, appTimeZone);
+  const endFull = event.end
+    ? temporalToVisualDate(event.end, appTimeZone)
+    : startFull;
+
+  const startDate = new Date(startFull);
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(endFull);
+  endDate.setHours(0, 0, 0, 0);
+
+  let adjustedEnd = new Date(endDate);
+
+  if (!event.allDay) {
+    const hasTimeComponent =
+      endFull.getHours() !== 0 ||
+      endFull.getMinutes() !== 0 ||
+      endFull.getSeconds() !== 0 ||
+      endFull.getMilliseconds() !== 0;
+
+    if (!hasTimeComponent) {
+      adjustedEnd.setDate(adjustedEnd.getDate() - 1);
+    }
+  }
+
+  if (adjustedEnd < startDate) {
+    adjustedEnd = new Date(startDate);
+  }
+
+  return { startDate, adjustedEnd };
+};
+
+const eventOverlapsWeek = (
+  event: Event,
+  weekStart: Date,
+  startOfWeek: number,
+  appTimeZone?: string
+) => {
+  const { startDate, adjustedEnd } = getBucketedEventDateRange(
+    event,
+    appTimeZone
+  );
+  const eventWeekStart = getWeekStartForDate(startDate, startOfWeek).getTime();
+  const eventWeekEnd = getWeekStartForDate(adjustedEnd, startOfWeek).getTime();
+  const targetWeek = getWeekStartForDate(weekStart, startOfWeek).getTime();
+
+  return targetWeek >= eventWeekStart && targetWeek <= eventWeekEnd;
+};
+
 const STATIC_TRANSITION_DURATION = 300;
+const EMPTY_WEEK_EVENTS: Event[] = [];
 
 const MonthView = ({
   app,
@@ -382,6 +445,7 @@ const MonthView = ({
     events,
     isMobile: screenSize !== 'desktop',
   });
+  const monthDragState = dragState as MonthEventDragState;
 
   // Use calendar drop functionality
   const { handleDrop, handleDragOver } = useCalendarDrop({
@@ -394,6 +458,75 @@ const MonthView = ({
   const weekDaysLabels = useMemo(
     () => getWeekDaysLabels(locale, 'short', startOfWeek),
     [locale, getWeekDaysLabels, startOfWeek]
+  );
+
+  const dragPreviewEvent = useMemo(() => {
+    if (
+      !isDragging ||
+      !monthDragState.eventId ||
+      !monthDragState.startDate ||
+      !monthDragState.endDate ||
+      (monthDragState.mode !== 'move' && monthDragState.mode !== 'resize')
+    ) {
+      return null;
+    }
+
+    const baseEvent = events.find(event => event.id === monthDragState.eventId);
+    if (!baseEvent) return null;
+
+    return {
+      ...baseEvent,
+      start: baseEvent.allDay
+        ? dateToPlainDate(monthDragState.startDate)
+        : dateToZonedDateTime(monthDragState.startDate, appTimeZone),
+      end: baseEvent.allDay
+        ? dateToPlainDate(monthDragState.endDate)
+        : dateToZonedDateTime(monthDragState.endDate, appTimeZone),
+    } as Event;
+  }, [
+    isDragging,
+    monthDragState.eventId,
+    monthDragState.startDate,
+    monthDragState.endDate,
+    monthDragState.mode,
+    events,
+    appTimeZone,
+  ]);
+
+  const getWeekEventsWithPreview = useCallback(
+    (weekStartDate: Date) => {
+      const baseEvents =
+        eventsByWeek.get(weekStartDate.getTime()) ?? EMPTY_WEEK_EVENTS;
+
+      if (!dragPreviewEvent) {
+        return baseEvents;
+      }
+
+      const containsOriginalEvent = baseEvents.some(
+        event => event.id === dragPreviewEvent.id
+      );
+      const previewOverlapsWeek = eventOverlapsWeek(
+        dragPreviewEvent,
+        weekStartDate,
+        startOfWeek,
+        appTimeZone
+      );
+
+      if (!containsOriginalEvent && !previewOverlapsWeek) {
+        return baseEvents;
+      }
+
+      const adjustedEvents = baseEvents.filter(
+        event => event.id !== dragPreviewEvent.id
+      );
+
+      if (previewOverlapsWeek) {
+        adjustedEvents.push(dragPreviewEvent);
+      }
+
+      return adjustedEvents;
+    },
+    [eventsByWeek, dragPreviewEvent, startOfWeek, appTimeZone]
   );
 
   const {
@@ -705,8 +838,7 @@ const MonthView = ({
         >
           <div style={fadeStyle}>
             {fadeWeeks.map((weekData, index) => {
-              const weekEvents =
-                eventsByWeek.get(weekData.startDate.getTime()) ?? [];
+              const weekEvents = getWeekEventsWithPreview(weekData.startDate);
               const item = {
                 index,
                 weekData,
@@ -736,7 +868,7 @@ const MonthView = ({
                   onCreateStart={handleCreateStart}
                   onResizeStart={handleResizeStart}
                   isDragging={isDragging}
-                  dragState={dragState as MonthEventDragState}
+                  dragState={monthDragState}
                   newlyCreatedEventId={newlyCreatedEventId}
                   onDetailPanelOpen={handleDetailPanelOpen}
                   onMoreEventsClick={app.onMoreEventsClick}
@@ -774,8 +906,9 @@ const MonthView = ({
         >
           <div style={{ height: topSpacerHeight }} />
           {visibleWeeks.map((item, index) => {
-            const weekEvents =
-              eventsByWeek.get(item.weekData.startDate.getTime()) ?? [];
+            const weekEvents = getWeekEventsWithPreview(
+              item.weekData.startDate
+            );
 
             const adjustedItem =
               index === 5
@@ -807,7 +940,7 @@ const MonthView = ({
                 onCreateStart={handleCreateStart}
                 onResizeStart={handleResizeStart}
                 isDragging={isDragging}
-                dragState={dragState as MonthEventDragState}
+                dragState={monthDragState}
                 newlyCreatedEventId={newlyCreatedEventId}
                 onDetailPanelOpen={handleDetailPanelOpen}
                 onMoreEventsClick={app.onMoreEventsClick}

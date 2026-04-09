@@ -16,6 +16,7 @@ import { useDragForView } from '@/plugins/dragBridge';
 import { scrollbarHide } from '@/styles/classNames';
 import {
   Event,
+  MonthEventDragState,
   ViewType,
   EventDetailContentRenderer,
   EventDetailDialogRenderer,
@@ -27,9 +28,16 @@ import {
   hasEventChanged,
   temporalToVisualDate,
 } from '@/utils';
-import { createAllDayDisplayComparator } from '@/utils/allDaySort';
 
-import { YearMultiDaySegment } from './utils';
+import {
+  buildEffectiveFixedWeekMonthsData,
+  buildFixedWeekMonthsData,
+  createFixedWeekDragPreviewEvent,
+  createPreviewMonthSegment,
+  FixedWeekMonthData,
+  getFixedWeekLabels,
+  getFixedWeekTotalColumns,
+} from './utils';
 
 interface FixedWeekYearViewProps {
   app: ICalendarApp;
@@ -41,162 +49,6 @@ interface FixedWeekYearViewProps {
   onEventSelect?: (eventId: string | null) => void;
   detailPanelEventId?: string | null;
   onDetailPanelToggle?: (eventId: string | null) => void;
-}
-
-interface MonthEventSegment extends YearMultiDaySegment {
-  monthIndex: number;
-}
-
-// Event layout constants
-const EVENT_ROW_SPACING = 18;
-const DATE_HEADER_HEIGHT = 20;
-const MIN_ROW_HEIGHT = 60; // 12 months × 60px = 720px, fits well in typical containers
-
-/**
- * Analyze events for a specific month in the fixed-week layout.
- * Returns segments with column indices based on the month's padding and days.
- */
-function analyzeEventsForMonth(
-  events: Event[],
-  monthIndex: number,
-  year: number,
-  startOfWeek: number = 1,
-  appTimeZone?: string
-): { segments: MonthEventSegment[]; maxVisualRow: number } {
-  const monthStart = new Date(year, monthIndex, 1);
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const monthStartDay = monthStart.getDay();
-  const paddingStart = (monthStartDay - startOfWeek + 7) % 7;
-
-  const monthStartMs = monthStart.getTime();
-  const monthEndMs = new Date(
-    year,
-    monthIndex,
-    daysInMonth,
-    23,
-    59,
-    59,
-    999
-  ).getTime();
-
-  // 1. Filter and normalize events that overlap with this month
-  const monthEventsWithDates = events
-    .filter(event => !!event.start)
-    .map(event => {
-      const start = temporalToVisualDate(event.start, appTimeZone);
-      const end = event.end
-        ? temporalToVisualDate(event.end, appTimeZone)
-        : start;
-
-      const eventStartDay = new Date(
-        start.getFullYear(),
-        start.getMonth(),
-        start.getDate()
-      );
-      const eventEndDay = new Date(
-        end.getFullYear(),
-        end.getMonth(),
-        end.getDate()
-      );
-
-      return {
-        event,
-        startMs: eventStartDay.getTime(),
-        endMs: eventEndDay.getTime(),
-        eventStartDay,
-        eventEndDay,
-      };
-    })
-    .filter(item => item.startMs <= monthEndMs && item.endMs >= monthStartMs);
-
-  if (monthEventsWithDates.length === 0) {
-    return { segments: [], maxVisualRow: -1 };
-  }
-
-  // 2. Sort events based on the all-day display priority
-  // This matches MonthView and WeekView logic.
-  const allDayComparator = createAllDayDisplayComparator(
-    monthEventsWithDates.map(i => i.event)
-  );
-  monthEventsWithDates.sort((a, b) => {
-    // Priority 1: All-day events always before timed events
-    const aAllDay = !!a.event.allDay;
-    const bAllDay = !!b.event.allDay;
-    if (aAllDay !== bAllDay) {
-      return aAllDay ? -1 : 1;
-    }
-    // Priority 2: Standard all-day sort logic (multi-day first, then calendar, then comparator)
-    return allDayComparator(a.event, b.event);
-  });
-
-  const segments: MonthEventSegment[] = [];
-  const occupiedSlots: boolean[][] = [];
-
-  monthEventsWithDates.forEach(
-    ({ event, startMs, endMs, eventStartDay, eventEndDay }) => {
-      // Day 1 of month is at column = paddingStart
-      // Day N of month is at column = paddingStart + (N - 1)
-
-      // Calculate column indices based on month boundaries
-      const clampedStartMs = Math.max(startMs, monthStartMs);
-      const clampedEndMs = Math.min(endMs, monthEndMs);
-
-      const startDay = new Date(clampedStartMs).getDate();
-      const endDay = new Date(clampedEndMs).getDate();
-
-      const startCellIndex = paddingStart + (startDay - 1);
-      const endCellIndex = paddingStart + (endDay - 1);
-
-      // Determine if it's the first/last segment of the entire event
-      const isFirstSegment =
-        eventStartDay.getMonth() === monthIndex &&
-        eventStartDay.getFullYear() === year;
-      const isLastSegment =
-        eventEndDay.getMonth() === monthIndex &&
-        eventEndDay.getFullYear() === year;
-
-      // Find visual row index (vertical slot)
-      let visualRowIndex = 0;
-      while (true) {
-        if (!occupiedSlots[visualRowIndex]) {
-          occupiedSlots[visualRowIndex] = [];
-        }
-
-        let overlap = false;
-        for (let i = startCellIndex; i <= endCellIndex; i++) {
-          if (occupiedSlots[visualRowIndex][i]) {
-            overlap = true;
-            break;
-          }
-        }
-
-        if (!overlap) {
-          for (let i = startCellIndex; i <= endCellIndex; i++) {
-            occupiedSlots[visualRowIndex][i] = true;
-          }
-          break;
-        }
-        visualRowIndex++;
-      }
-
-      segments.push({
-        id: `${event.id}::month-${monthIndex}`,
-        event,
-        startCellIndex,
-        endCellIndex,
-        isFirstSegment,
-        isLastSegment,
-        visualRowIndex,
-        monthIndex,
-      });
-    }
-  );
-
-  // Calculate max visual row index
-  const maxVisualRow =
-    segments.length > 0 ? Math.max(...segments.map(s => s.visualRowIndex)) : -1;
-
-  return { segments, maxVisualRow };
 }
 
 export const FixedWeekYearView = ({
@@ -313,20 +165,10 @@ export const FixedWeekYearView = ({
   }, []);
 
   // Calculate the maximum number of columns required for the current year
-  const totalColumns = useMemo(() => {
-    let maxSlots = 0;
-    for (let month = 0; month < 12; month++) {
-      const monthStart = new Date(currentYear, month, 1);
-      const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
-      const monthStartDay = monthStart.getDay();
-      const padding = (monthStartDay - startOfWeek + 7) % 7;
-      const slots = padding + daysInMonth;
-      if (slots > maxSlots) {
-        maxSlots = slots;
-      }
-    }
-    return maxSlots;
-  }, [currentYear, startOfWeek]);
+  const totalColumns = useMemo(
+    () => getFixedWeekTotalColumns(currentYear, startOfWeek),
+    [currentYear, startOfWeek]
+  );
 
   // Drag and Drop Hook
   const {
@@ -366,6 +208,7 @@ export const FixedWeekYearView = ({
       setNewlyCreatedEventId(event.id);
     },
   });
+  const yearDragState = dragState as MonthEventDragState;
 
   // Get config value
   const showTimedEvents = config?.showTimedEventsInYearView ?? false;
@@ -398,23 +241,16 @@ export const FixedWeekYearView = ({
   );
 
   // Generate week header labels
-  const weekLabels = useMemo(() => {
-    const labels = getWeekDaysLabels(locale, 'short', startOfWeek);
-
-    const formattedLabels = labels.map(label => {
-      if (locale.startsWith('zh')) {
-        return label.at(-1);
-      }
-      const twoChars = label.slice(0, 2);
-      return twoChars.charAt(0).toUpperCase() + twoChars.slice(1).toLowerCase();
-    });
-
-    const result = [];
-    for (let i = 0; i < totalColumns; i++) {
-      result.push(formattedLabels[i % 7]);
-    }
-    return result;
-  }, [locale, getWeekDaysLabels, totalColumns, startOfWeek]);
+  const weekLabels = useMemo(
+    () =>
+      getFixedWeekLabels({
+        locale,
+        totalColumns,
+        startOfWeek,
+        getWeekDaysLabels,
+      }),
+    [locale, totalColumns, startOfWeek, getWeekDaysLabels]
+  );
 
   // Helper to check if a date is today
   const isDateToday = (date: Date) => date.getTime() === today.getTime();
@@ -435,61 +271,55 @@ export const FixedWeekYearView = ({
   }, [rawEvents, currentYear, showTimedEvents, appTimeZone]);
 
   // Generate data for all 12 months with event segments
-  const monthsData = useMemo(() => {
-    const data = [];
-    for (let month = 0; month < 12; month++) {
-      const monthStart = new Date(currentYear, month, 1);
-      const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
-      const monthStartDay = monthStart.getDay();
-      const paddingStart = (monthStartDay - startOfWeek + 7) % 7;
-
-      const days: (Date | null)[] = [];
-
-      for (let i = 0; i < paddingStart; i++) {
-        days.push(null);
-      }
-
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push(new Date(currentYear, month, i));
-      }
-
-      while (days.length < totalColumns) {
-        days.push(null);
-      }
-
-      const rawMonthName = monthStart.toLocaleDateString(locale, {
-        month: 'short',
-      });
-      const monthName =
-        rawMonthName.charAt(0).toUpperCase() +
-        rawMonthName.slice(1).toLowerCase();
-
-      // Analyze events for this month
-      const { segments: eventSegments, maxVisualRow } = analyzeEventsForMonth(
+  const monthsData = useMemo<FixedWeekMonthData[]>(
+    () =>
+      buildFixedWeekMonthsData({
+        currentYear,
+        locale,
+        totalColumns,
         yearEvents,
-        month,
+        startOfWeek,
+        appTimeZone,
+      }),
+    [currentYear, locale, totalColumns, yearEvents, startOfWeek, appTimeZone]
+  );
+
+  const dragPreviewEvent = useMemo(
+    () =>
+      createFixedWeekDragPreviewEvent({
+        isDragging,
+        dragState: yearDragState,
+        yearEvents,
+        appTimeZone,
+      }),
+    [isDragging, yearDragState, yearEvents, appTimeZone]
+  );
+
+  const isMovePreviewActive =
+    isDragging &&
+    yearDragState.mode === 'move' &&
+    !!dragPreviewEvent &&
+    dragPreviewEvent.id === yearDragState.eventId;
+
+  const effectiveMonthsData = useMemo(
+    () =>
+      buildEffectiveFixedWeekMonthsData({
+        monthsData,
+        dragPreviewEvent,
+        isMovePreviewActive,
         currentYear,
         startOfWeek,
-        appTimeZone
-      );
-
-      // Calculate dynamic row height based on number of event rows
-      const eventRows = maxVisualRow + 1;
-      const minHeight = Math.max(
-        MIN_ROW_HEIGHT,
-        DATE_HEADER_HEIGHT + eventRows * EVENT_ROW_SPACING
-      );
-
-      data.push({
-        monthIndex: month,
-        monthName,
-        days,
-        eventSegments,
-        minHeight,
-      });
-    }
-    return data;
-  }, [currentYear, locale, totalColumns, yearEvents, startOfWeek, appTimeZone]);
+        appTimeZone,
+      }),
+    [
+      monthsData,
+      dragPreviewEvent,
+      isMovePreviewActive,
+      currentYear,
+      startOfWeek,
+      appTimeZone,
+    ]
+  );
 
   // Handle scroll synchronization
   const handleContentScroll = useCallback(
@@ -532,7 +362,7 @@ export const FixedWeekYearView = ({
     return () => {
       observer.disconnect();
     };
-  }, [monthsData]); // Re-measure when content changes
+  }, [effectiveMonthsData]); // Re-measure when content changes
 
   const getCustomTitle = () => {
     const isAsianLocale = locale.startsWith('zh') || locale.startsWith('ja');
@@ -620,11 +450,14 @@ export const FixedWeekYearView = ({
         className='overflow-hidden border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
       >
         <div className='flex min-h-full flex-col'>
-          {monthsData.map(month => (
+          {effectiveMonthsData.map(month => (
             <div
               key={month.monthIndex}
               className='flex shrink-0 grow items-center justify-center border-b border-gray-200 text-[10px] font-bold text-gray-500 dark:border-gray-700 dark:text-gray-400'
-              style={{ minHeight: `${month.minHeight}px` }}
+              style={{
+                minHeight: `${month.minHeight}px`,
+                transition: 'min-height 180ms cubic-bezier(0.22, 1, 0.36, 1)',
+              }}
             >
               {month.monthName}
             </div>
@@ -649,101 +482,128 @@ export const FixedWeekYearView = ({
           className='flex min-h-full flex-col'
           style={{ minWidth: '1352px' }}
         >
-          {monthsData.map(month => (
-            <div
-              key={month.monthIndex}
-              className='relative shrink-0 grow'
-              style={{ minHeight: `${month.minHeight}px` }}
-            >
-              {/* Background grid cells */}
+          {effectiveMonthsData.map(effectiveMonthData => {
+            const dragPreviewSegment =
+              isMovePreviewActive && dragPreviewEvent
+                ? createPreviewMonthSegment(
+                    dragPreviewEvent,
+                    effectiveMonthData.monthIndex,
+                    currentYear,
+                    startOfWeek,
+                    appTimeZone
+                  )
+                : null;
+            const renderedSegments =
+              isMovePreviewActive && yearDragState.eventId
+                ? [
+                    ...effectiveMonthData.eventSegments.filter(
+                      segment => segment.event.id !== yearDragState.eventId
+                    ),
+                    ...(dragPreviewSegment ? [dragPreviewSegment] : []),
+                  ]
+                : effectiveMonthData.eventSegments;
+            return (
               <div
-                className='absolute inset-0 z-0 grid'
+                key={effectiveMonthData.monthIndex}
+                className='relative shrink-0 grow'
                 style={{
-                  gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
+                  minHeight: `${effectiveMonthData.minHeight}px`,
+                  transition: 'min-height 180ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               >
-                {month.days.map((date, dayIndex) => {
-                  const dayOfWeek = (dayIndex + startOfWeek) % 7;
-                  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                {/* Background grid cells */}
+                <div
+                  className='absolute inset-0 z-0 grid'
+                  style={{
+                    gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {effectiveMonthData.days.map((date, dayIndex) => {
+                    const dayOfWeek = (dayIndex + startOfWeek) % 7;
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-                  if (!date) {
+                    if (!date) {
+                      return (
+                        <div
+                          key={`empty-${effectiveMonthData.monthIndex}-${dayIndex}`}
+                          className={`border-r border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800/40 ${isWeekend ? 'df-year-view-weekend-cell' : ''}`}
+                        />
+                      );
+                    }
+
+                    const isToday = isDateToday(date);
+
+                    // Format date for data attribute (YYYY-MM-DD)
+                    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
                     return (
                       <div
-                        key={`empty-${month.monthIndex}-${dayIndex}`}
-                        className={`border-r border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800/40 ${isWeekend ? 'df-year-view-weekend-cell' : ''}`}
-                      />
-                    );
-                  }
-
-                  const isToday = isDateToday(date);
-
-                  // Format date for data attribute (YYYY-MM-DD)
-                  const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-                  return (
-                    <div
-                      key={date.getTime()}
-                      data-date={dateString}
-                      className={`df-hover-primary-dark-md relative flex cursor-pointer items-start justify-end border-r border-b border-gray-200 p-0.5 transition-colors hover:bg-blue-100 dark:border-gray-700 ${isWeekend ? 'df-year-view-weekend-cell bg-blue-50 dark:bg-blue-900/30' : ''} `}
-                      onClick={() => app.selectDate(date)}
-                      onDblClick={e => handleCellDoubleClick(e, date)}
-                      onContextMenu={e => handleContextMenu(e, date)}
-                    >
-                      <span
-                        className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium ${isToday ? 'df-fill-primary font-bold shadow-sm' : 'text-gray-700 dark:text-gray-300'} `}
+                        key={date.getTime()}
+                        data-date={dateString}
+                        className={`df-hover-primary-dark-md relative flex cursor-pointer items-start justify-end border-r border-b border-gray-200 p-0.5 transition-colors ${isDragging ? '' : 'hover:bg-blue-100'} dark:border-gray-700 ${isWeekend ? 'df-year-view-weekend-cell bg-blue-50 dark:bg-blue-900/30' : ''} `}
+                        onClick={() => app.selectDate(date)}
+                        onDblClick={e => handleCellDoubleClick(e, date)}
+                        onContextMenu={e => handleContextMenu(e, date)}
                       >
-                        {date.getDate()}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Event segments overlay */}
-              {month.eventSegments.length > 0 && (
-                <div
-                  className='pointer-events-none absolute inset-0 z-20'
-                  style={{ top: 20 }}
-                >
-                  <div className='relative h-full w-full'>
-                    {month.eventSegments.map(segment => (
-                      <div key={segment.id} className='pointer-events-auto'>
-                        <CalendarEvent
-                          event={segment.event}
-                          isAllDay={!!segment.event.allDay}
-                          viewType={ViewType.YEAR}
-                          yearSegment={segment}
-                          columnsPerRow={totalColumns}
-                          isBeingDragged={
-                            isDragging && dragState.eventId === segment.event.id
-                          }
-                          selectedEventId={selectedEventId}
-                          onMoveStart={handleMoveStart}
-                          onResizeStart={handleResizeStart}
-                          onEventSelect={setSelectedEventId}
-                          onDetailPanelToggle={setDetailPanelEventId}
-                          newlyCreatedEventId={newlyCreatedEventId}
-                          onDetailPanelOpen={() => setNewlyCreatedEventId(null)}
-                          calendarRef={calendarRef}
-                          app={app}
-                          detailPanelEventId={detailPanelEventId}
-                          customDetailPanelContent={customDetailPanelContent}
-                          customEventDetailDialog={customEventDetailDialog}
-                          firstHour={0}
-                          hourHeight={0}
-                          onEventUpdate={updated =>
-                            app.updateEvent(updated.id, updated)
-                          }
-                          onEventDelete={id => app.deleteEvent(id)}
-                          appTimeZone={appTimeZone}
-                        />
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium ${isToday ? 'df-fill-primary font-bold shadow-sm' : 'text-gray-700 dark:text-gray-300'} `}
+                        >
+                          {date.getDate()}
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Event segments overlay */}
+                {renderedSegments.length > 0 && (
+                  <div
+                    className='pointer-events-none absolute inset-0 z-20'
+                    style={{ top: 20 }}
+                  >
+                    <div className='relative h-full w-full'>
+                      {renderedSegments.map(segment => (
+                        <div key={segment.id} className='pointer-events-auto'>
+                          <CalendarEvent
+                            event={segment.event}
+                            isAllDay={!!segment.event.allDay}
+                            viewType={ViewType.YEAR}
+                            yearSegment={segment}
+                            columnsPerRow={totalColumns}
+                            isBeingDragged={
+                              isDragging &&
+                              yearDragState.eventId === segment.event.id
+                            }
+                            selectedEventId={selectedEventId}
+                            onMoveStart={handleMoveStart}
+                            onResizeStart={handleResizeStart}
+                            onEventSelect={setSelectedEventId}
+                            onDetailPanelToggle={setDetailPanelEventId}
+                            newlyCreatedEventId={newlyCreatedEventId}
+                            onDetailPanelOpen={() =>
+                              setNewlyCreatedEventId(null)
+                            }
+                            calendarRef={calendarRef}
+                            app={app}
+                            detailPanelEventId={detailPanelEventId}
+                            customDetailPanelContent={customDetailPanelContent}
+                            customEventDetailDialog={customEventDetailDialog}
+                            firstHour={0}
+                            hourHeight={0}
+                            onEventUpdate={updated =>
+                              app.updateEvent(updated.id, updated)
+                            }
+                            onEventDelete={id => app.deleteEvent(id)}
+                            appTimeZone={appTimeZone}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       {isEditable && contextMenu && (

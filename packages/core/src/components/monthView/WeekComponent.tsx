@@ -788,6 +788,27 @@ const WeekComponent = memo(
       const hiddenOverlayHeight =
         (overlayVisibleLayerCount - displaySlotLimit) * ROW_SPACING;
 
+      // During drag, keep the dragged event at the front of the visible stack.
+      const dragEventId =
+        isDragging && dragState.eventId ? dragState.eventId : null;
+      const dragEventInDisplay = dragEventId
+        ? displayEvents.find(e => e.id === dragEventId)
+        : null;
+      const dragEventInTimedOnly =
+        dragEventId && !dragEventInDisplay
+          ? timedEventsOnly.find(e => e.id === dragEventId)
+          : null;
+      const orderedDisplayEvents = dragEventInDisplay
+        ? [
+            dragEventInDisplay,
+            ...displayEvents.filter(e => e.id !== dragEventId),
+          ]
+        : dragEventInTimedOnly && displayEvents.length > 0
+          ? [dragEventInTimedOnly, ...displayEvents.slice(0, -1)]
+          : dragEventInTimedOnly
+            ? [dragEventInTimedOnly]
+            : displayEvents;
+
       // Create render array - need to interleave placeholders and timed events
       const renderElements: unknown[] = [];
 
@@ -816,9 +837,9 @@ const WeekComponent = memo(
               }}
             />
           );
-        } else if (timedEventIndex < displayEvents.length) {
+        } else if (timedEventIndex < orderedDisplayEvents.length) {
           // This slot is a gap, after multi-day layers, or occupied by a hidden multi-day segment - fill with timed event
-          const event = displayEvents[timedEventIndex];
+          const event = orderedDisplayEvents[timedEventIndex];
 
           renderElements.push(
             <CalendarEvent
@@ -1108,7 +1129,40 @@ const WeekComponent = memo(
         )}
       </div>
     );
-  }
+  },
+  (prevProps, nextProps) =>
+    prevProps.currentMonth === nextProps.currentMonth &&
+    prevProps.currentYear === nextProps.currentYear &&
+    prevProps.newlyCreatedEventId === nextProps.newlyCreatedEventId &&
+    prevProps.screenSize === nextProps.screenSize &&
+    prevProps.isScrolling === nextProps.isScrolling &&
+    prevProps.showWeekNumbers === nextProps.showWeekNumbers &&
+    prevProps.showMonthIndicator === nextProps.showMonthIndicator &&
+    prevProps.item.weekData === nextProps.item.weekData &&
+    prevProps.weekHeight === nextProps.weekHeight &&
+    prevProps.events === nextProps.events &&
+    prevProps.calendarRef === nextProps.calendarRef &&
+    prevProps.onEventUpdate === nextProps.onEventUpdate &&
+    prevProps.onEventDelete === nextProps.onEventDelete &&
+    prevProps.onMoveStart === nextProps.onMoveStart &&
+    prevProps.onCreateStart === nextProps.onCreateStart &&
+    prevProps.onResizeStart === nextProps.onResizeStart &&
+    prevProps.onDetailPanelOpen === nextProps.onDetailPanelOpen &&
+    prevProps.onMoreEventsClick === nextProps.onMoreEventsClick &&
+    prevProps.onChangeView === nextProps.onChangeView &&
+    prevProps.onSelectDate === nextProps.onSelectDate &&
+    prevProps.selectedEventId === nextProps.selectedEventId &&
+    prevProps.onEventSelect === nextProps.onEventSelect &&
+    prevProps.onEventLongPress === nextProps.onEventLongPress &&
+    prevProps.detailPanelEventId === nextProps.detailPanelEventId &&
+    prevProps.onDetailPanelToggle === nextProps.onDetailPanelToggle &&
+    prevProps.customDetailPanelContent === nextProps.customDetailPanelContent &&
+    prevProps.customEventDetailDialog === nextProps.customEventDetailDialog &&
+    prevProps.onCalendarDrop === nextProps.onCalendarDrop &&
+    prevProps.onCalendarDragOver === nextProps.onCalendarDragOver &&
+    prevProps.app === nextProps.app &&
+    prevProps.enableTouch === nextProps.enableTouch &&
+    prevProps.appTimeZone === nextProps.appTimeZone
 );
 
 (WeekComponent as { displayName?: string }).displayName = 'WeekComponent';

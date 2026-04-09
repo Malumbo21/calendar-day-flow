@@ -14,6 +14,7 @@ import {
 } from '@dayflow/core';
 import DragIndicatorComponent from '@drag/components/DragIndicatorComponent';
 import MonthDragIndicatorComponent from '@drag/components/MonthDragIndicator';
+import { isUsableIndicatorBackground } from '@drag/hooks/utils/indicatorColor';
 import { h, render } from 'preact';
 import { useRef, useCallback } from 'preact/hooks';
 
@@ -98,9 +99,18 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
 
         if (sourceElement) {
           const sourceRect = sourceElement.getBoundingClientRect();
-          indicatorWidth = sourceRect.width;
+          // Use single day cell width for indicator (Apple Calendar style)
+          const dayCellEl = calendarRef.current?.querySelector('[data-date]');
+          indicatorWidth = dayCellEl
+            ? Math.round(dayCellEl.getBoundingClientRect().width)
+            : Math.min(sourceRect.width, 120);
           indicatorHeight = sourceRect.height;
           indicator.className = `rounded-sm shadow-sm ${sourceElement.className}`;
+          // Clamp dragOffset so cursor stays within the indicator pill
+          const initialDragOffset = drag.dragOffset ?? indicatorWidth / 2;
+          if (initialDragOffset > indicatorWidth / 2) {
+            drag.dragOffset = Math.round(indicatorWidth / 2);
+          }
         } else {
           indicatorWidth = 120;
           indicatorHeight = 22;
@@ -109,11 +119,13 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
 
         indicator.style.width = `${indicatorWidth}px`;
         indicator.style.height = `${indicatorHeight}px`;
+        indicator.style.left = '0px';
+        indicator.style.top = '0px';
+        indicator.style.willChange = 'transform';
 
         const dragOffset = drag.dragOffset ?? indicatorWidth / 2;
         const dragOffsetY = drag.dragOffsetY ?? indicatorHeight / 2;
-        indicator.style.left = `${drag.startX - dragOffset}px`;
-        indicator.style.top = `${drag.startY - dragOffsetY}px`;
+        indicator.style.transform = `translate3d(${drag.startX - dragOffset}px, ${drag.startY - dragOffsetY}px, 0)`;
 
         document.body.append(indicator);
 
@@ -297,7 +309,32 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
       }
 
       // Set color
-      if (color) {
+      if (isDateGridView && sourceElement) {
+        // Month/Year: prefer the rendered event shell color so the drag pill
+        // exactly matches the event, even when custom content handles the drag
+        // start or the color comes from computed styles instead of inline styles.
+        const computedStyle = window.getComputedStyle(sourceElement);
+        const resolvedBackgroundColor = isUsableIndicatorBackground(
+          sourceElement.style.backgroundColor
+        )
+          ? sourceElement.style.backgroundColor
+          : isUsableIndicatorBackground(computedStyle.backgroundColor)
+            ? computedStyle.backgroundColor
+            : color
+              ? getSelectedBgColor(color, app?.getCalendarRegistry())
+              : '';
+        const resolvedTextColor = sourceElement.style.color
+          ? sourceElement.style.color
+          : computedStyle.color || '#fff';
+
+        if (resolvedBackgroundColor) {
+          indicator.style.backgroundColor = resolvedBackgroundColor;
+          indicator.style.color = resolvedTextColor;
+        } else {
+          indicator.className +=
+            ' df-tint-primary border border-dashed df-border-primary-soft';
+        }
+      } else if (color) {
         indicator.style.backgroundColor = getSelectedBgColor(
           color,
           app?.getCalendarRegistry()
@@ -345,11 +382,8 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
         const dragOffsetY =
           dragPropsRef.current?.drag.dragOffsetY ?? height / 2;
 
-        requestAnimationFrame(() => {
-          indicator.style.left = `${clientX - dragOffset}px`;
-          indicator.style.top = `${clientY - dragOffsetY}px`;
-          indicator.style.transition = 'none';
-        });
+        indicator.style.transform = `translate3d(${clientX - dragOffset}px, ${clientY - dragOffsetY}px, 0)`;
+        indicator.style.transition = 'none';
       } else {
         const [dayIndex, startHour, endHour, isAllDay = false, layout] =
           args as [number, number, number, boolean?, EventLayout?];
