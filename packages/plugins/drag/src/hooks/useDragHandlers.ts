@@ -1232,6 +1232,15 @@ export const useDragHandlers = (
           );
         }
 
+        // Compute how many days into the event the user grabbed, so the grab
+        // point stays under the cursor during drag rather than the start snapping.
+        const grabDate = getTargetDateFromPosition(clientX, clientY);
+        const normalizedEventStart = new Date(eventStartDate);
+        normalizedEventStart.setHours(0, 0, 0, 0);
+        const grabDayOffset = grabDate
+          ? Math.max(0, daysDifference(normalizedEventStart, grabDate))
+          : 0;
+
         const {
           currentDragOffset,
           dragState: monthDragState,
@@ -1243,6 +1252,7 @@ export const useDragHandlers = (
           eventDurationDays,
           eventEndDate,
           eventStartDate,
+          grabDayOffset,
           isTouchLike: isTouchLikeEvent(e),
           sourceElement,
           sourceRect,
