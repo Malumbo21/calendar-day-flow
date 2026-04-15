@@ -1,7 +1,6 @@
+import { ZonedRange } from '@ui-range-picker/types';
 import { RefObject, JSX } from 'preact';
 import { Temporal } from 'temporal-polyfill';
-
-import { ZonedRange } from '@/components/rangePicker/types';
 
 import CalendarGrid from './CalendarGrid';
 import CalendarHeader from './CalendarHeader';
@@ -17,7 +16,6 @@ interface RangePickerPanelProps {
   isTimeEnabled: boolean;
   disabled?: boolean;
   matchTriggerWidth?: boolean;
-  // popupPlacement: string; // Not used in render, but used in parent for style
   popupRef: RefObject<HTMLDivElement>;
   timeListRefs: RefObject<{
     start: { hour: HTMLDivElement | null; minute: HTMLDivElement | null };

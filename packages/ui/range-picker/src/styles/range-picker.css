@@ -1,0 +1,82 @@
+/* ── DayFlow UI – Range Picker ──────────────────────────────────────────── */
+
+/* CSS custom properties (same defaults as @dayflow/core shared-foundation) */
+@layer df-theme {
+  :where(:root) {
+    --df-color-foreground: rgb(46 46 46);
+    --df-color-primary: rgb(46 46 46);
+    --df-color-primary-foreground: rgb(255 255 255);
+  }
+
+  :where(.dark) {
+    --df-color-foreground: rgb(229 229 229);
+    --df-color-primary: rgb(229 229 229);
+    --df-color-primary-foreground: rgb(15 23 42);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light):not(.dark) {
+      --df-color-foreground: rgb(229 229 229);
+      --df-color-primary: rgb(229 229 229);
+      --df-color-primary-foreground: rgb(23 23 23);
+    }
+  }
+}
+
+@layer components {
+  /* Bridge df-color-* → local color-* so Tailwind @apply and inline styles work */
+  .df-range-picker {
+    --color-primary: var(--df-color-primary);
+    --color-primary-foreground: var(--df-color-primary-foreground);
+    --color-foreground: var(--df-color-foreground);
+  }
+
+  .df-fill-primary {
+    background-color: var(--df-color-primary);
+    color: var(--df-color-primary-foreground);
+  }
+
+  .df-tint-primary {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
+    color: var(--df-color-primary);
+  }
+
+  .df-hover-primary:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
+    color: var(--df-color-primary);
+  }
+
+  .df-hover-primary-solid:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 90%,
+      transparent
+    );
+  }
+
+  .df-text-primary {
+    color: var(--df-color-primary);
+  }
+
+  .df-border-primary {
+    border-color: var(--df-color-primary);
+  }
+}
+
+/* Hide scrollbar utility */
+.df-scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.df-scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

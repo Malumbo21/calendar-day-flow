@@ -2,8 +2,36 @@ import { cloneElement, isValidElement, ComponentChildren } from 'preact';
 import { createPortal, forwardRef } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
-import { ChevronRight } from '@/components/common/Icons';
-import { useLocale } from '@/locale';
+// ---------------------------------------------------------------------------
+// Inline icon
+// ---------------------------------------------------------------------------
+
+interface IconProps {
+  className?: string;
+  width?: number;
+  height?: number;
+}
+
+const ChevronRight = ({ className, width = 24, height = 24 }: IconProps) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    width={width}
+    height={height}
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    stroke-width='2'
+    stroke-linecap='round'
+    stroke-linejoin='round'
+    className={className}
+  >
+    <path d='m9 18 6-6-6-6' />
+  </svg>
+);
+
+// ---------------------------------------------------------------------------
+// ContextMenu
+// ---------------------------------------------------------------------------
 
 interface ContextMenuProps {
   x: number;
@@ -17,7 +45,6 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
   ({ x, y, onClose, children, className }, ref) => {
     const internalRef = useRef<HTMLDivElement>(null);
 
-    // Sync external ref with internal ref
     const setRefs = (node: HTMLDivElement | null) => {
       internalRef.current = node;
       if (typeof ref === 'function') {
@@ -34,37 +61,26 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
           internalRef.current &&
           !internalRef.current.contains(event.target as Node)
         ) {
-          // Check if the click is within a submenu
           const target = event.target as HTMLElement;
-          if (target.closest('[data-submenu-content]')) {
-            return;
-          }
+          if (target.closest('[data-submenu-content]')) return;
           onClose();
         }
       };
 
-      // Close other menus when this one mounts
       window.dispatchEvent(new CustomEvent('dayflow-close-all-menus'));
-
-      // Listen for close-all event from other menus
       window.addEventListener('dayflow-close-all-menus', handleCloseAll);
-      // Use mousedown to capture clicks outside immediately
       document.body.addEventListener('mousedown', handleClickOutside, {
         capture: true,
       });
-      // Also capture right-clicks outside
       document.body.addEventListener('contextmenu', handleClickOutside, {
         capture: true,
       });
 
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          onClose();
-        }
+        if (event.key === 'Escape') onClose();
       };
       window.addEventListener('keydown', handleKeyDown);
 
-      // Also close on scroll or window resize
       const handleScrollOrResize = () => onClose();
       window.addEventListener('scroll', handleScrollOrResize, true);
       window.addEventListener('resize', handleScrollOrResize);
@@ -83,11 +99,7 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
       };
     }, [onClose]);
 
-    // Ensure menu stays within viewport
-    const style: Record<string, number | string> = {
-      top: y,
-      left: x,
-    };
+    const style: Record<string, number | string> = { top: y, left: x };
 
     return createPortal(
       <div
@@ -105,6 +117,10 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
 );
 
 ContextMenu.displayName = 'ContextMenu';
+
+// ---------------------------------------------------------------------------
+// ContextMenuItem
+// ---------------------------------------------------------------------------
 
 export const ContextMenuItem = ({
   onClick,
@@ -140,9 +156,17 @@ export const ContextMenuItem = ({
   </div>
 );
 
+// ---------------------------------------------------------------------------
+// ContextMenuSeparator
+// ---------------------------------------------------------------------------
+
 export const ContextMenuSeparator = () => (
   <div className='-mx-1 my-1 h-px bg-slate-200 dark:bg-slate-800' />
 );
+
+// ---------------------------------------------------------------------------
+// ContextMenuLabel
+// ---------------------------------------------------------------------------
 
 export const ContextMenuLabel = ({
   children,
@@ -154,7 +178,10 @@ export const ContextMenuLabel = ({
   </div>
 );
 
-// --- Submenu Components ---
+// ---------------------------------------------------------------------------
+// ContextMenuSub
+// ---------------------------------------------------------------------------
+
 export const ContextMenuSub = ({
   children,
 }: {
@@ -172,16 +199,12 @@ export const ContextMenuSub = ({
   };
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 100);
+    timeoutRef.current = setTimeout(() => setIsOpen(false), 100);
   };
 
   useEffect(
     () => () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     },
     []
   );
@@ -193,14 +216,16 @@ export const ContextMenuSub = ({
       onMouseLeave={handleMouseLeave}
     >
       {(Array.isArray(children) ? children : [children]).map(child => {
-        if (isValidElement(child)) {
-          return cloneElement(child, { isOpen });
-        }
+        if (isValidElement(child)) return cloneElement(child, { isOpen });
         return child;
       })}
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// ContextMenuSubTrigger
+// ---------------------------------------------------------------------------
 
 export const ContextMenuSubTrigger = ({
   children,
@@ -222,6 +247,10 @@ export const ContextMenuSubTrigger = ({
   </div>
 );
 
+// ---------------------------------------------------------------------------
+// ContextMenuSubContent
+// ---------------------------------------------------------------------------
+
 export const ContextMenuSubContent = ({
   children,
   isOpen,
@@ -236,14 +265,10 @@ export const ContextMenuSubContent = ({
     if (isOpen && ref.current) {
       const rect = ref.current.getBoundingClientRect();
       const parentRect = ref.current.parentElement?.getBoundingClientRect();
-
       if (parentRect) {
-        // Check if there is space on the right
-        if (parentRect.right + rect.width > window.innerWidth) {
-          setPosition('left');
-        } else {
-          setPosition('right');
-        }
+        setPosition(
+          parentRect.right + rect.width > window.innerWidth ? 'left' : 'right'
+        );
       }
     }
   }, [isOpen]);
@@ -253,7 +278,7 @@ export const ContextMenuSubContent = ({
   return (
     <div
       ref={ref}
-      className={`df-portal df-animate-in df-fade-in df-zoom-in-95 absolute top-0 z-50 min-w-32 overflow-hidden rounded-md border border-slate-200 bg-white p-1 whitespace-nowrap text-slate-950 shadow-md duration-100 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50`}
+      className='df-portal df-animate-in df-fade-in df-zoom-in-95 absolute top-0 z-50 min-w-32 overflow-hidden rounded-md border border-slate-200 bg-white p-1 whitespace-nowrap text-slate-950 shadow-md duration-100 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50'
       style={{
         left: position === 'right' ? '100%' : 'auto',
         right: position === 'left' ? '100%' : 'auto',
@@ -266,6 +291,10 @@ export const ContextMenuSubContent = ({
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// ContextMenuColorPicker
+// ---------------------------------------------------------------------------
 
 const COLORS = [
   '#ea426b',
@@ -281,44 +310,43 @@ export const ContextMenuColorPicker = ({
   selectedColor,
   onSelect,
   onCustomColor,
+  customColorLabel = 'Custom Color',
 }: {
   selectedColor?: string;
   onSelect: (color: string) => void;
   onCustomColor?: () => void;
-}) => {
-  const { t } = useLocale();
-  return (
-    <div>
-      <div className='grid grid-cols-7 gap-2 p-1 px-3'>
-        {COLORS.map(color => (
-          <button
-            key={color}
-            type='button'
-            className={`df-focus-ring-only h-5 w-5 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
-              selectedColor?.toLowerCase() === color.toLowerCase()
-                ? 'df-ring-primary-solid ring-2 ring-offset-1 dark:ring-offset-slate-800'
-                : ''
-            }`}
-            style={{ backgroundColor: color }}
-            onClick={e => {
-              e.stopPropagation();
-              onSelect(color);
-            }}
-            title={color}
-          />
-        ))}
-      </div>
-      {onCustomColor && (
-        <div
-          className='mt-1 flex cursor-pointer items-center rounded-sm px-3 py-0.5 text-[12px] text-[var(--df-color-foreground)] transition-colors hover:bg-[var(--df-color-primary)] hover:text-[var(--df-color-primary-foreground)]'
+  customColorLabel?: string;
+}) => (
+  <div>
+    <div className='grid grid-cols-7 gap-2 p-1 px-3'>
+      {COLORS.map(color => (
+        <button
+          key={color}
+          type='button'
+          className={`df-focus-ring-only h-5 w-5 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
+            selectedColor?.toLowerCase() === color.toLowerCase()
+              ? 'df-ring-primary-solid ring-2 ring-offset-1 dark:ring-offset-slate-800'
+              : ''
+          }`}
+          style={{ backgroundColor: color }}
           onClick={e => {
             e.stopPropagation();
-            onCustomColor();
+            onSelect(color);
           }}
-        >
-          {t('customColor')}
-        </div>
-      )}
+          title={color}
+        />
+      ))}
     </div>
-  );
-};
+    {onCustomColor && (
+      <div
+        className='mt-1 flex cursor-pointer items-center rounded-sm px-3 py-0.5 text-[12px] text-[var(--df-color-foreground)] transition-colors hover:bg-[var(--df-color-primary)] hover:text-[var(--df-color-primary-foreground)]'
+        onClick={e => {
+          e.stopPropagation();
+          onCustomColor();
+        }}
+      >
+        {customColorLabel}
+      </div>
+    )}
+  </div>
+);

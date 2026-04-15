@@ -1,8 +1,11 @@
 import { Temporal } from 'temporal-polyfill';
 
-import { Locale } from '@/locale/types';
-
 export type ZonedRange = [Temporal.ZonedDateTime, Temporal.ZonedDateTime];
+
+export interface Locale {
+  code: string;
+  messages?: Record<string, string>;
+}
 
 export interface RangePickerProps {
   value: [

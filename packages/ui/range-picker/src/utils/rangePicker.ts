@@ -1,7 +1,7 @@
 // oxlint-disable typescript/no-explicit-any
 import { Temporal } from 'temporal-polyfill';
 
-import { isPlainDate } from './temporalTypeGuards';
+import { isPlainDate } from './temporal';
 
 const TOKEN_REGEX = /(YYYY|YY|MM|DD|HH|mm)/g;
 
@@ -50,18 +50,13 @@ export const parseTemporalString = (
   zoneId: string
 ): Temporal.ZonedDateTime | null => {
   const trimmed = input.trim();
-  if (!trimmed) {
-    return null;
-  }
+  if (!trimmed) return null;
 
   const match = trimmed.match(regExp);
   const groups = match?.groups as
     | Record<string, string | undefined>
     | undefined;
-
-  if (!groups) {
-    return null;
-  }
+  if (!groups) return null;
 
   const resolvedYear = groups.YYYY
     ? Number(groups.YYYY)
@@ -94,15 +89,11 @@ export const parseTemporalString = (
 
 export const getZoneId = (value: Temporal.ZonedDateTime): string => {
   const asAny = value as any;
-  if (asAny.timeZoneId && typeof asAny.timeZoneId === 'string') {
+  if (asAny.timeZoneId && typeof asAny.timeZoneId === 'string')
     return asAny.timeZoneId;
-  }
-  if (asAny.timeZone && typeof asAny.timeZone.id === 'string') {
+  if (asAny.timeZone && typeof asAny.timeZone.id === 'string')
     return asAny.timeZone.id;
-  }
-  if (typeof asAny.timeZone === 'string') {
-    return asAny.timeZone;
-  }
+  if (typeof asAny.timeZone === 'string') return asAny.timeZone;
   return Temporal.Now.timeZoneId();
 };
 
@@ -122,27 +113,21 @@ export const normalizeToZoned = (
 
   if (isPlainDate(input)) {
     const zoneId = fallbackZone ?? Temporal.Now.timeZoneId();
-    const isoString = `${input.year}-${pad(input.month)}-${pad(
-      input.day
-    )}T00:00:00[${zoneId}]`;
+    const isoString = `${input.year}-${pad(input.month)}-${pad(input.day)}T00:00:00[${zoneId}]`;
     return Temporal.ZonedDateTime.from(isoString);
   }
 
   const asAny = input as any;
 
-  // Check if PlainDateTime — use timeZoneId (not timeZone) because temporal-polyfill v0.3.x
-  // does not expose `timeZone` via the `in` operator on ZonedDateTime instances.
   if ('hour' in asAny && !('timeZoneId' in asAny)) {
     const zoneId = fallbackZone ?? Temporal.Now.timeZoneId();
-    // Try to use toZonedDateTime if available (proper PlainDateTime)
     if (typeof asAny.toZonedDateTime === 'function') {
       try {
         return (input as Temporal.PlainDateTime).toZonedDateTime(zoneId);
       } catch {
-        // Fall through to manual construction
+        // fall through
       }
     }
-    // Manual construction for PlainDateTime-like objects
     return Temporal.ZonedDateTime.from({
       timeZone: zoneId,
       year: asAny.year as number,
@@ -176,7 +161,7 @@ export const normalizeToZoned = (
       try {
         return candidate.toZonedDateTime({ timeZone: resolvedZone });
       } catch {
-        // fall through to manual construction
+        // fall through
       }
     }
 

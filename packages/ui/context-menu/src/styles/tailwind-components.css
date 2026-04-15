@@ -1,0 +1,11 @@
+/* styles.components.css — for projects that already have Tailwind CSS
+ *
+ * This file includes DayFlow context-menu component styles only.
+ * It does NOT emit Tailwind utility classes.
+ */
+@layer theme, base, df-theme, components, utilities;
+
+@import 'tailwindcss/theme' layer(theme);
+@import './context-menu.css';
+
+@variant dark (.dark &);

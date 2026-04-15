@@ -1,9 +1,3 @@
-import { Check } from '@/components/common/Icons';
-import { useLocale } from '@/locale';
-import { ContentSlot } from '@/renderer/ContentSlot';
-import { Event, ICalendarApp } from '@/types';
-import { clipboardStore } from '@/utils/clipboardStore';
-
 import {
   ContextMenu,
   ContextMenuItem,
@@ -11,7 +5,13 @@ import {
   ContextMenuSub,
   ContextMenuSubTrigger,
   ContextMenuSubContent,
-} from './Primitives';
+} from '@dayflow/ui-context-menu';
+
+import { Check } from '@/components/common/Icons';
+import { useLocale } from '@/locale';
+import { ContentSlot } from '@/renderer/ContentSlot';
+import { Event, ICalendarApp } from '@/types';
+import { clipboardStore } from '@/utils/clipboardStore';
 
 interface EventContextMenuProps {
   event: Event;

@@ -1,9 +1,9 @@
+import { HOURS, MINUTES } from '@ui-range-picker/constants';
+import { ZonedRange } from '@ui-range-picker/types';
+import { pad } from '@ui-range-picker/utils/rangePicker';
 import { h, RefObject } from 'preact';
 
-import { HOURS, MINUTES } from '@/components/rangePicker/constants';
-import { ZonedRange } from '@/components/rangePicker/types';
-import { scrollbarHide } from '@/styles/classNames';
-import { pad } from '@/utils/rangePicker';
+const scrollbarHide = 'df-scrollbar-hide';
 
 interface TimeSelectorProps {
   focusedField: 'start' | 'end';
@@ -42,7 +42,6 @@ const TimeSelector = ({
         </div>
       </div>
 
-      {/* Hour and Minute Selectors */}
       <div className='flex p-1'>
         <div className='w-14'>
           <div

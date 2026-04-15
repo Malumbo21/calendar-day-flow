@@ -1,11 +1,10 @@
-import { Temporal } from 'temporal-polyfill';
-
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-} from '@/components/common/Icons';
+} from '@ui-range-picker/icons';
+import { Temporal } from 'temporal-polyfill';
 
 interface CalendarHeaderProps {
   visibleMonth: Temporal.PlainDate;

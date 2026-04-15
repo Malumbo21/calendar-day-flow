@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import './global.css';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 
 import { AppProvider } from '@/components/AppProvider';
 import { BASE_PATH, SITE_METADATA_BASE } from '@/lib/site';
@@ -50,6 +51,24 @@ export const metadata: Metadata = {
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html lang='en' className={inter.className} suppressHydrationWarning>
+      <head>
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            <Script
+              src='https://www.googletagmanager.com/gtag/js?id=G-QEXJYTSEME'
+              strategy='afterInteractive'
+            />
+            <Script id='google-analytics' strategy='afterInteractive'>
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-QEXJYTSEME');
+              `}
+            </Script>
+          </>
+        )}
+      </head>
       <body className='flex min-h-screen flex-col'>
         <AppProvider>{children}</AppProvider>
       </body>

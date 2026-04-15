@@ -54,11 +54,8 @@ export { getCalendarColorsForHex } from './core/calendarRegistry';
 export { LoadingButton } from './components/common/LoadingButton';
 export { BlossomColorPicker } from './components/common/BlossomColorPicker';
 export { DefaultColorPicker } from './components/common/DefaultColorPicker';
-export { default as DayflowRangePicker } from './components/rangePicker';
-export type {
-  RangePickerProps,
-  ZonedRange,
-} from './components/rangePicker/types';
+export { RangePicker as DayflowRangePicker } from '@dayflow/ui-range-picker';
+export type { RangePickerProps, ZonedRange } from '@dayflow/ui-range-picker';
 export { MiniCalendar } from './components/common/MiniCalendar';
 export { CreateCalendarDialog } from './components/common/CreateCalendarDialog';
 export { default as DefaultEventDetailPanel } from './components/common/DefaultEventDetailPanel';
@@ -66,6 +63,7 @@ export { default as DefaultEventDetailDialog } from './components/common/Default
 export { ContentSlot } from './renderer/ContentSlot';
 export { CalendarEvent } from './components/calendarEvent';
 export type { CalendarEventProps } from './components/calendarEvent/types';
+export { EventLayoutCalculator } from './components/eventLayout';
 
 // Icons
 export {

@@ -1,0 +1,114 @@
+/* ── DayFlow UI – Context Menu ──────────────────────────────────────────── */
+
+/* CSS custom properties (same defaults as @dayflow/core shared-foundation) */
+@layer df-theme {
+  :where(:root) {
+    --df-color-foreground: rgb(46 46 46);
+    --df-color-primary: rgb(46 46 46);
+    --df-color-primary-foreground: rgb(255 255 255);
+    --df-color-destructive: rgb(212 36 34);
+    --df-color-destructive-foreground: rgb(255 255 255);
+  }
+
+  :where(.dark) {
+    --df-color-foreground: rgb(229 229 229);
+    --df-color-primary: rgb(229 229 229);
+    --df-color-primary-foreground: rgb(15 23 42);
+    --df-color-destructive: rgb(147 70 69);
+    --df-color-destructive-foreground: rgb(254 242 242);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light):not(.dark) {
+      --df-color-foreground: rgb(229 229 229);
+      --df-color-primary: rgb(229 229 229);
+      --df-color-primary-foreground: rgb(23 23 23);
+      --df-color-destructive: rgb(147 70 69);
+      --df-color-destructive-foreground: rgb(254 242 242);
+    }
+  }
+}
+
+@layer components {
+  /* Bridge df-color-* → local color-* so Tailwind @apply and inline styles work */
+  .df-portal,
+  .df-context-menu {
+    --color-primary: var(--df-color-primary);
+    --color-primary-foreground: var(--df-color-primary-foreground);
+    --color-foreground: var(--df-color-foreground);
+    --color-destructive: var(--df-color-destructive);
+    --color-destructive-foreground: var(--df-color-destructive-foreground);
+  }
+
+  .df-fill-primary {
+    background-color: var(--df-color-primary);
+    color: var(--df-color-primary-foreground);
+  }
+
+  .df-hover-primary:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
+    color: var(--df-color-primary);
+  }
+
+  .df-hover-fill-destructive:hover {
+    background-color: var(--df-color-destructive);
+    color: var(--df-color-destructive-foreground);
+  }
+
+  .df-focus-fill-destructive:focus {
+    background-color: var(--df-color-destructive);
+    color: var(--df-color-destructive-foreground);
+  }
+
+  .df-text-destructive {
+    color: var(--df-color-destructive);
+  }
+
+  .df-ring-primary-solid {
+    --tw-ring-color: var(--df-color-primary);
+  }
+
+  .df-focus-ring-only:focus {
+    --tw-ring-color: var(--df-color-primary);
+  }
+
+  .df-animate-in {
+    animation-duration: 200ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  .df-fade-in {
+    animation-name: df-fade-in;
+  }
+
+  .df-zoom-in-95 {
+    animation-name: df-zoom-in;
+  }
+
+  .df-fade-in.df-zoom-in-95 {
+    animation-name: df-fade-in, df-zoom-in;
+  }
+}
+
+@keyframes df-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes df-zoom-in {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}

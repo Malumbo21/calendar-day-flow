@@ -9,8 +9,11 @@ import {
 } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
-import { MoveRight } from '@/components/common/Icons';
-import { getMonthLabels, getWeekDaysLabels } from '@/locale';
+import RangePickerPanel from './components/RangePickerPanel';
+import { DEFAULT_FORMAT, DEFAULT_TIME_FORMAT } from './constants';
+import { MoveRight } from './icons';
+import { RangePickerProps, ZonedRange } from './types';
+import { getMonthLabels, getWeekDaysLabels } from './utils/locale';
 import {
   mergeFormatTemplate,
   buildParseRegExp,
@@ -18,12 +21,8 @@ import {
   getZoneId,
   normalizeToZoned,
   formatTemporal,
-} from '@/utils/rangePicker';
-import { isPlainDate } from '@/utils/temporal';
-
-import RangePickerPanel from './components/RangePickerPanel';
-import { DEFAULT_FORMAT, DEFAULT_TIME_FORMAT } from './constants';
-import { RangePickerProps, ZonedRange } from './types';
+} from './utils/rangePicker';
+import { isPlainDate } from './utils/temporal';
 
 const RangePicker = ({
   value,
@@ -62,14 +61,9 @@ const RangePicker = ({
   );
 
   const effectiveTimeFormat = useMemo(() => {
-    if (!isTimeEnabled) {
-      return '';
-    }
-
-    if (typeof showTime === 'object' && showTime?.format) {
+    if (!isTimeEnabled) return '';
+    if (typeof showTime === 'object' && showTime?.format)
       return showTime.format;
-    }
-
     return showTimeFormat;
   }, [isTimeEnabled, showTime, showTimeFormat]);
 
@@ -92,9 +86,6 @@ const RangePicker = ({
           : getZoneId(value[1] as Temporal.ZonedDateTime)
         : getZoneId(value[0] as Temporal.ZonedDateTime));
 
-    // withTimeZone converts a ZonedDateTime from its original timezone to `zone`
-    // while preserving the instant. For PlainDate/PlainDateTime inputs,
-    // normalizeToZoned already constructs the ZDT in `zone`, so withTimeZone is a no-op.
     const start = normalizeToZoned(value[0], zone).withTimeZone(zone);
     const end = normalizeToZoned(value[1], zone, start).withTimeZone(zone);
     return [start, end];
@@ -156,7 +147,6 @@ const RangePicker = ({
     }
 
     lastNormalizedRef.current = normalizedValue;
-    // Don't reset focusedField here - it causes the field to switch back to 'start' when selecting time!
   }, [normalizedValue]);
 
   useEffect(() => {
@@ -181,7 +171,6 @@ const RangePicker = ({
       ).matches;
       const behavior: ScrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
 
-      // Only scroll if offset is significant to avoid micro-jitter
       if (Math.abs(container.scrollTop - delta) > 1) {
         container.scrollTo({ top: delta, behavior });
       }
@@ -191,7 +180,6 @@ const RangePicker = ({
 
   const scrollToActiveTime = useCallback(
     (field: 'start' | 'end') => {
-      // Use double requestAnimationFrame to ensure DOM is fully updated
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const refs = timeListRefs.current[field];
@@ -201,9 +189,7 @@ const RangePicker = ({
             const active = container.querySelector<HTMLElement>(
               '[data-active="true"]'
             );
-            if (active) {
-              alignActiveToTop(container, active, 0);
-            }
+            if (active) alignActiveToTop(container, active, 0);
           });
         });
       });
@@ -211,7 +197,6 @@ const RangePicker = ({
     [alignActiveToTop]
   );
 
-  // Scroll when panel opens or field changes (but NOT when draftRange changes to avoid interfering with user clicks)
   useEffect(() => {
     if (!isOpen || !isTimeEnabled) return;
     scrollToActiveTime(focusedField);
@@ -223,7 +208,6 @@ const RangePicker = ({
   const draftEndOffset = draftRange[1].offsetNanoseconds;
 
   useEffect(() => {
-    // Don't overwrite the input while the user is actively typing
     if (isEditingRef.current) return;
 
     const [currentStart, currentEnd] = draftRangeRef.current;
@@ -231,9 +215,7 @@ const RangePicker = ({
     const nextEnd = formatTemporal(currentEnd, format, effectiveTimeFormat);
     const [prevStart, prevEnd] = inputValuesRef.current;
 
-    if (prevStart === nextStart && prevEnd === nextEnd) {
-      return;
-    }
+    if (prevStart === nextStart && prevEnd === nextEnd) return;
 
     inputValuesRef.current = [nextStart, nextEnd];
     setInputValues([nextStart, nextEnd]);
@@ -251,29 +233,13 @@ const RangePicker = ({
 
     const handleClickOutside = (event: PointerEvent) => {
       const target = event.target as HTMLElement;
-      // Check if click is inside the input container
-      if (containerRef.current?.contains(target)) {
-        return;
-      }
-
-      // Check if click is inside the popup using both ref and data attribute
-      if (popupRef.current?.contains(target)) {
-        return;
-      }
-
-      const closestPopup = target.closest('[data-range-picker-popup]');
-      if (closestPopup) {
-        return;
-      }
-
-      // Click is outside both container and popup, close it
+      if (containerRef.current?.contains(target)) return;
+      if (popupRef.current?.contains(target)) return;
+      if (target.closest('[data-range-picker-popup]')) return;
       setIsOpen(false);
     };
 
-    // Use capture phase so host popovers/modals cannot swallow the event
-    // before RangePicker has a chance to close itself.
     document.addEventListener('pointerdown', handleClickOutside, true);
-
     return () => {
       document.removeEventListener('pointerdown', handleClickOutside, true);
     };
@@ -281,7 +247,6 @@ const RangePicker = ({
 
   useEffect(() => {
     if (isOpen) return;
-    // Reset to 'start' when panel closes
     setFocusedField('start');
     if (!committedRef.current) {
       setDraftRange(normalizedValue);
@@ -367,38 +332,25 @@ const RangePicker = ({
 
     if (focusedField === 'start') {
       const nextStart = buildValue(draftRange[0], day);
-
-      // Calculate the duration between original start and end to preserve time span
       const durationMs =
         draftRange[1].epochMilliseconds - draftRange[0].epochMilliseconds;
-
-      // Apply the same duration to the new start time
       const adjustedEnd = nextStart.add({ milliseconds: durationMs });
-
-      const nextRange: ZonedRange = [nextStart, adjustedEnd];
-      setDraftRange(nextRange);
-      // Don't auto-switch to end, keep user's current field selection
+      setDraftRange([nextStart, adjustedEnd]);
       return;
     }
 
     const nextEndCandidate = buildValue(draftRange[1], day);
-
-    // Calculate duration to preserve time span
     const durationMs =
       draftRange[1].epochMilliseconds - draftRange[0].epochMilliseconds;
 
-    // If end is before start, treat clicked date as new start and preserve duration
     if (Temporal.ZonedDateTime.compare(nextEndCandidate, draftRange[0]) < 0) {
       const newStart = buildValue(draftRange[0], day);
       const newEnd = newStart.add({ milliseconds: durationMs });
-      const nextRange: ZonedRange = [newStart, newEnd];
-      setDraftRange(nextRange);
-      // Don't auto-switch field, keep user's current selection
+      setDraftRange([newStart, newEnd]);
       return;
     }
 
-    const nextRange: ZonedRange = [draftRange[0], nextEndCandidate];
-    setDraftRange(nextRange);
+    setDraftRange([draftRange[0], nextEndCandidate]);
     setVisibleMonth(nextEndCandidate.toPlainDate().with({ day: 1 }));
   };
 
@@ -417,7 +369,6 @@ const RangePicker = ({
           nanosecond: 0,
         });
 
-        // Update the range using the same logic as updateRange
         if (field === 'start') {
           const safeEnd = normalizeToZoned(
             prev[1],
@@ -443,7 +394,6 @@ const RangePicker = ({
         return [adjustedStart, nextValue];
       });
 
-      // Wait for state update and DOM re-render before scrolling
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const container = timeListRefs.current[field].hour;
@@ -451,13 +401,11 @@ const RangePicker = ({
           const active = container.querySelector<HTMLElement>(
             '[data-active="true"]'
           );
-          if (active) {
-            alignActiveToTop(container, active, 0);
-          }
+          if (active) alignActiveToTop(container, active, 0);
         });
       });
     },
-    [disabled]
+    [disabled, alignActiveToTop]
   );
 
   const handleMinuteSelect = useCallback(
@@ -475,7 +423,6 @@ const RangePicker = ({
           nanosecond: 0,
         });
 
-        // Update the range using the same logic as updateRange
         if (field === 'start') {
           const safeEnd = normalizeToZoned(
             prev[1],
@@ -501,7 +448,6 @@ const RangePicker = ({
         return [adjustedStart, nextValue];
       });
 
-      // Wait for state update and DOM re-render before scrolling
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const container = timeListRefs.current[field].minute;
@@ -509,13 +455,11 @@ const RangePicker = ({
           const active = container.querySelector<HTMLElement>(
             '[data-active="true"]'
           );
-          if (active) {
-            alignActiveToTop(container, active, 0);
-          }
+          if (active) alignActiveToTop(container, active, 0);
         });
       });
     },
-    [disabled]
+    [disabled, alignActiveToTop]
   );
 
   const updateInputValue = useCallback(
@@ -546,9 +490,7 @@ const RangePicker = ({
         updateRange(field, parsed);
         const month = parsed.toPlainDate().with({ day: 1 });
         setVisibleMonth(month);
-        if (field === 'start') {
-          setFocusedField('end');
-        }
+        if (field === 'start') setFocusedField('end');
         return true;
       }
 
@@ -573,7 +515,6 @@ const RangePicker = ({
         isEditingRef.current = true;
         updateInputValue(field, newValue);
 
-        // Try to parse and sync to popup in real-time
         const index = field === 'start' ? 0 : 1;
         const reference = draftRangeRef.current[index];
         const zoneId = getZoneId(reference);
@@ -600,8 +541,6 @@ const RangePicker = ({
         isEditingRef.current = false;
 
         if (isOpen) {
-          // Reset input text to canonical format of current draftRange
-          // (draftRange was already synced in real-time for valid inputs)
           const index = field === 'start' ? 0 : 1;
           const formatted = formatTemporal(
             draftRangeRef.current[index],
@@ -616,7 +555,6 @@ const RangePicker = ({
           return;
         }
 
-        // Only commit if popup is closed
         const relatedTarget = event.relatedTarget as HTMLElement;
         if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
           commitInputValue(field, event.currentTarget.value);
@@ -633,9 +571,7 @@ const RangePicker = ({
           isEditingRef.current = false;
           commitInputValue(field, event.currentTarget.value);
         }
-        if (event.key === 'Escape') {
-          event.currentTarget.blur();
-        }
+        if (event.key === 'Escape') event.currentTarget.blur();
       },
     [commitInputValue]
   );
@@ -645,7 +581,6 @@ const RangePicker = ({
     emitChange(draftRange);
     emitOk(draftRange);
     setIsOpen(false);
-    // Don't set focusedField here - let the panel close useEffect handle it
   };
 
   const changeMonth = (months: number) => {
@@ -667,13 +602,11 @@ const RangePicker = ({
 
   const calculateOptimalPlacement = useCallback(
     (basePlacement: typeof placement = placement): typeof placement => {
-      if (!autoAdjustOverflow || !containerRef.current) {
-        return basePlacement;
-      }
+      if (!autoAdjustOverflow || !containerRef.current) return basePlacement;
 
       const triggerRect = containerRef.current.getBoundingClientRect();
-      const popupHeight = 500; // Approximate popup height
-      const popupWidth = matchTriggerWidth ? triggerRect.width : 480; // Approximate popup width
+      const popupHeight = 500;
+      const popupWidth = matchTriggerWidth ? triggerRect.width : 480;
 
       const spaceBelow = window.innerHeight - triggerRect.bottom;
       const spaceAbove = triggerRect.top;
@@ -749,10 +682,8 @@ const RangePicker = ({
     setIsOpen(true);
   };
 
-  // Adjust placement when popup opens and on window resize
   useEffect(() => {
     if (!isOpen) return;
-    // Immediately adjust placement to avoid flicker
     adjustPopupPlacement();
 
     const handleResize = () => adjustPopupPlacement();
@@ -769,19 +700,14 @@ const RangePicker = ({
 
     const triggerRect = containerRef.current.getBoundingClientRect();
     const placementDom = popupPlacementRef.current;
-    const style: JSX.CSSProperties = {
-      position: 'fixed',
-      zIndex: 9999,
-    };
+    const style: JSX.CSSProperties = { position: 'fixed', zIndex: 9999 };
 
-    // Vertical positioning
     if (placementDom.startsWith('bottom')) {
       style.top = triggerRect.bottom + 8;
     } else {
       style.bottom = window.innerHeight - triggerRect.top + 8;
     }
 
-    // Horizontal positioning
     if (placement.endsWith('Left')) {
       style.left = triggerRect.left;
     } else {

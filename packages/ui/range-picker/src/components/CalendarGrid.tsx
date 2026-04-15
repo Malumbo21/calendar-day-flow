@@ -1,7 +1,5 @@
 import { Temporal } from 'temporal-polyfill';
 
-import { compareDates } from '@/components/rangePicker/utils';
-
 interface CalendarGridProps {
   calendarDays: Temporal.PlainDate[];
   visibleMonth: Temporal.PlainDate;
@@ -11,6 +9,9 @@ interface CalendarGridProps {
   disabled?: boolean;
   onDaySelect: (day: Temporal.PlainDate) => void;
 }
+
+const compareDates = (a: Temporal.PlainDate, b: Temporal.PlainDate): number =>
+  Temporal.PlainDate.compare(a, b);
 
 const CalendarGrid = ({
   calendarDays,
@@ -32,15 +33,9 @@ const CalendarGrid = ({
       'flex h-9 w-9 items-center justify-center rounded-md text-sm transition';
 
     const stateClass = (() => {
-      if (isStart || isEnd) {
-        return 'df-fill-primary font-semibold';
-      }
-      if (isInRange) {
-        return 'df-tint-primary';
-      }
-      if (isOutsideMonth) {
-        return 'text-slate-300 dark:text-gray-600';
-      }
+      if (isStart || isEnd) return 'df-fill-primary font-semibold';
+      if (isInRange) return 'df-tint-primary';
+      if (isOutsideMonth) return 'text-slate-300 dark:text-gray-600';
       return 'text-slate-700 dark:text-gray-300 df-hover-primary';
     })();
 
