@@ -1,3 +1,4 @@
+import { RangePicker } from '@dayflow/ui-range-picker';
 import { JSX } from 'preact';
 import { createPortal } from 'preact/compat';
 import {
@@ -10,7 +11,6 @@ import {
 import { Temporal } from 'temporal-polyfill';
 
 import { getCalendarContentElement } from '@/components/calendarEvent/utils';
-import RangePicker from '@/components/rangePicker';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
 import { useLocale } from '@/locale';

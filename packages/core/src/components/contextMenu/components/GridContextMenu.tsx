@@ -1,10 +1,10 @@
+import { ContextMenu, ContextMenuItem } from '@dayflow/ui-context-menu';
+
 import { handlePasteEvent } from '@/components/contextMenu/utils';
 import { useLocale } from '@/locale';
 import { ContentSlot } from '@/renderer/ContentSlot';
 import { ICalendarApp, ViewType } from '@/types';
 import { clipboardStore } from '@/utils/clipboardStore';
-
-import { ContextMenu, ContextMenuItem } from './Primitives';
 
 interface GridContextMenuProps {
   x: number;

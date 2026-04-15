@@ -68,8 +68,10 @@ PACK_DIRS=()
 case $choice in
   1)
     echo "Selected: Core, React only"
-    BUILD_FILTER="--filter @dayflow/core --filter @dayflow/react"
+    BUILD_FILTER="--filter @dayflow/ui-context-menu --filter @dayflow/ui-range-picker --filter @dayflow/core --filter @dayflow/react"
     PACK_DIRS=(
+      "packages/ui/context-menu"
+      "packages/ui/range-picker"
       "packages/core"
       "packages/react"
     )
@@ -78,6 +80,8 @@ case $choice in
     echo "Selected: Install All"
     BUILD_FILTER="-r"
     PACK_DIRS=(
+      "packages/ui/context-menu"
+      "packages/ui/range-picker"
       "packages/core"
       "packages/react"
       "packages/angular"
@@ -135,10 +139,16 @@ add_to_install_list() {
 INSTALL_LIST=()
 case $choice in
   1)
+    # UI packages must be installed before core (core depends on them)
+    add_to_install_list "$ROOT_DIR/packages/ui/context-menu/dayflow-ui-context-menu-*.tgz"
+    add_to_install_list "$ROOT_DIR/packages/ui/range-picker/dayflow-ui-range-picker-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/core/dayflow-core-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/react/dayflow-react-*.tgz"
     ;;
   2)
+    # UI packages must be installed before core (core depends on them)
+    add_to_install_list "$ROOT_DIR/packages/ui/context-menu/dayflow-ui-context-menu-*.tgz"
+    add_to_install_list "$ROOT_DIR/packages/ui/range-picker/dayflow-ui-range-picker-*.tgz"
     # Core and Frameworks
     add_to_install_list "$ROOT_DIR/packages/core/dayflow-core-*.tgz"
     add_to_install_list "$ROOT_DIR/packages/react/dayflow-react-*.tgz"

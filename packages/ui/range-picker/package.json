@@ -1,0 +1,65 @@
+{
+  "name": "@dayflow/ui-range-picker",
+  "version": "0.1.0",
+  "description": "Standalone date/time range picker from the DayFlow UI ecosystem",
+  "keywords": [
+    "date-picker",
+    "dayflow",
+    "preact",
+    "range-picker",
+    "temporal",
+    "ui"
+  ],
+  "license": "MIT",
+  "author": "Jayce Li",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "*.css",
+    "**/*.css"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    },
+    "./dist/styles.css": "./dist/styles.css",
+    "./dist/styles.components.css": "./dist/styles.components.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json && rollup -c && pnpm run build:css",
+    "build:css": "node ./scripts/build-css.mjs",
+    "clean": "rimraf dist node_modules",
+    "postbuild": "rimraf dist/build dist/types",
+    "prebuild": "rimraf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@tailwindcss/postcss": "catalog:",
+    "autoprefixer": "catalog:",
+    "postcss": "catalog:",
+    "postcss-import": "catalog:",
+    "preact": "catalog:",
+    "rimraf": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
+    "tailwindcss": "catalog:",
+    "temporal-polyfill": "catalog:",
+    "tsc-alias": "^1.8.16",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "preact": ">=10",
+    "temporal-polyfill": ">=0.2"
+  }
+}

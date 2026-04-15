@@ -1,8 +1,8 @@
+import { RangePicker } from '@dayflow/ui-range-picker';
 import { createPortal } from 'preact/compat';
 import { useMemo, useState, useEffect, useRef } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
-import RangePicker from '@/components/rangePicker';
 import { getDefaultCalendarRegistry } from '@/core/calendarRegistry';
 import { useLocale } from '@/locale';
 import { dialogContainer } from '@/styles/classNames';

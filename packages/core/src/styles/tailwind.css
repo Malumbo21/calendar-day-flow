@@ -8,6 +8,7 @@
 @source "../**/*.{ts,tsx}";
 @source "../../../core/*/src/**/*.{ts,tsx}";
 @source "../../../plugins/*/src/**/*.{ts,tsx}";
+@source "../../../ui/*/src/**/*.{ts,tsx}";
 
 @variant dark (.dark &);
 
