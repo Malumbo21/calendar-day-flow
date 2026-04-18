@@ -214,19 +214,19 @@ System-preference dark mode (no explicit class) is also supported automatically.
 
 **Using `theme.mode` with Tailwind v4**
 
-Tailwind v4 compiles `dark:` utility classes as `@media (prefers-color-scheme: dark)` by default. DayFlow's `theme.mode` works by adding the `.dark` class to `<html>` — so if your Tailwind instance uses media-query dark mode, those `dark:` utilities inside DayFlow's components will not respond to the class change.
+DayFlow's distributed CSS already includes the `.dark` variant it needs for `theme.mode`. In Tailwind v4 projects, importing `@dayflow/core/dist/styles.components.css` is enough for DayFlow itself to respond to the `.dark` class on `<html>`.
 
-Add this to your CSS entry file to switch Tailwind to class-based dark mode:
+If you also want your app's own Tailwind `dark:` utilities to follow the same class toggle, add the class-based variant in your CSS entry:
 
 ```css
 @import '@dayflow/core/dist/styles.components.css';
 @import 'tailwindcss';
 
-/* Optional: only needed if you plan to use theme.mode */
+/* Optional: only needed for your app's own Tailwind dark: utilities */
 @variant dark (.dark &);
 ```
 
-Without this, `theme.mode: 'dark'` will still update the CSS custom properties (`--df-color-*`) correctly, but DayFlow's internal `dark:` utility rules will only activate when the system preference is dark.
+Without this extra line, DayFlow still switches correctly via `theme.mode`; only your own Tailwind `dark:` utilities stay on Tailwind's default media-query behavior.
 
 ### Practical recommendation
 

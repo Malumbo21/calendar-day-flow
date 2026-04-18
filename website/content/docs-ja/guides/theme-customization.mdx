@@ -206,19 +206,19 @@ document.documentElement.classList.toggle('dark', isDark);
 
 **Tailwind v4 で `theme.mode` を使う場合**
 
-Tailwind v4 はデフォルトで `dark:` ユーティリティクラスを `@media (prefers-color-scheme: dark)` としてコンパイルします。DayFlow の `theme.mode` は `<html>` に `.dark` クラスを付与することでテーマを切り替えますが、Tailwind がメディアクエリ方式を使っている場合、DayFlow コンポーネント内部の `dark:` ユーティリティはクラスの変化に反応しません。
+DayFlow が配布する CSS には、`theme.mode` に必要な `.dark` variant がすでに含まれています。Tailwind v4 プロジェクトでは、`@dayflow/core/dist/styles.components.css` を読み込むだけで、DayFlow 自身は `<html>` 上の `.dark` クラス切り替えに追従します。
 
-CSS エントリーファイルに以下を追加して、Tailwind をクラスベースのダークモードに切り替えてください：
+アプリ側で自分の Tailwind `dark:` ユーティリティも同じクラス切り替えに合わせたい場合だけ、CSS エントリーファイルに次を追加してください：
 
 ```css
 @import '@dayflow/core/dist/styles.components.css';
 @import 'tailwindcss';
 
-/* 任意: theme.mode を使う場合のみ追加 */
+/* 任意: アプリ側の Tailwind dark: ユーティリティにも必要な場合のみ */
 @variant dark (.dark &);
 ```
 
-この設定がない場合でも `theme.mode: 'dark'` は CSS カスタムプロパティ（`--df-color-*`）を正しく切り替えますが、DayFlow 内部の `dark:` ルールはシステムのダークモード設定が有効なときのみ適用されます。
+この設定がなくても DayFlow は `theme.mode` で正しく切り替わります。影響を受けるのは、アプリ側で書いた Tailwind `dark:` ユーティリティが Tailwind 既定のメディアクエリ挙動のままになる点だけです。
 
 ### 実践ガイド
 

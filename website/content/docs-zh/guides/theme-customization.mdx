@@ -205,19 +205,19 @@ document.documentElement.classList.toggle('dark', isDark);
 
 **在 Tailwind v4 中使用 `theme.mode`**
 
-Tailwind v4 默认将 `dark:` 工具类编译为 `@media (prefers-color-scheme: dark)`。DayFlow 的 `theme.mode` 通过给 `<html>` 添加 `.dark` 类来切换主题——如果你的 Tailwind 使用媒体查询方式，DayFlow 组件内部的 `dark:` 工具类将无法响应类名切换。
+DayFlow 发布的 CSS 已经内置了 `theme.mode` 所需的 `.dark` variant。在 Tailwind v4 项目里，只要导入 `@dayflow/core/dist/styles.components.css`，DayFlow 自身就会响应 `<html>` 上的 `.dark` 类切换。
 
-在你的 CSS 入口文件中添加以下内容，将 Tailwind 切换为基于类名的深色模式：
+如果你还希望项目里你自己写的 Tailwind `dark:` 工具类也跟随这个类名切换，再在 CSS 入口里补上 class-based 配置：
 
 ```css
 @import '@dayflow/core/dist/styles.components.css';
 @import 'tailwindcss';
 
-/* 可选：只有在你计划使用 theme.mode 时才需要 */
+/* 可选：只有你自己的 Tailwind dark: 工具类需要跟随 .dark 时才需要 */
 @variant dark (.dark &);
 ```
 
-如果缺少此配置，`theme.mode: 'dark'` 仍会正确更新 CSS 自定义属性（`--df-color-*`），但 DayFlow 内部的 `dark:` 工具规则只会在系统偏好为深色时才生效。
+如果不加这行，DayFlow 仍会通过 `theme.mode` 正常切换；只是你项目自己的 Tailwind `dark:` 工具类仍然保持 Tailwind 默认的媒体查询行为。
 
 ### 实践建议
 

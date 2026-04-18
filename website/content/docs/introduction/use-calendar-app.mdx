@@ -77,7 +77,6 @@ export function TeamCalendar() {
 
 - `onViewChange(view)` fires after a successful view switch.
 - `onDateChange(date)` fires whenever the focused date changes (navigation or selection).
-- `onVisibleMonthChange(date)` helps prefetch data as the visible month shifts.
 - `onVisibleRangeChange(start, end, reason)` fires whenever visible date-range shifts. Helps in more precise fetches without additional calculations.
 - `onEventCreate(event)`, `onEventUpdate(event)`, `onEventDelete(id)` mirror CRUD operations—ideal for syncing APIs.
 - `onEventDoubleClick(event, e)` fires when an event is double-clicked. Use `e.currentTarget` as an anchor for external popovers, and return `false` to suppress DayFlow's default detail panel/dialog.
@@ -342,7 +341,8 @@ export function AdvancedCalendar() {
     switcherMode: 'select',
     callbacks: {
       onEventUpdate: event => api.events.update(event),
-      onVisibleMonthChange: month => preloadMonthData(month),
+      onVisibleRangeChange: (start, end, reason) =>
+        preloadVisibleRange(start, end, reason),
     },
     plugins: [
       createSidebarPlugin({

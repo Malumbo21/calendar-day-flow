@@ -131,7 +131,6 @@ export class NavigationController {
       return;
     }
     this.visibleMonth = next;
-    this.getCallbacks().onVisibleMonthChange?.(new Date(this.visibleMonth));
     this.notify();
   }
 
