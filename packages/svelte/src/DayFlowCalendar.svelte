@@ -95,7 +95,6 @@
     eventContextMenu,
     gridContextMenu,
     collapsedSafeAreaLeft,
-    useEventDetailPanel: (calendar as UseCalendarAppReturn).useEventDetailPanel,
     search,
   } as Record<string, unknown>);
 

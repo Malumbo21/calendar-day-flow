@@ -171,7 +171,6 @@ export class DayFlowCalendarComponent
   private getRendererProps(): Record<string, unknown> {
     return {
       collapsedSafeAreaLeft: this.collapsedSafeAreaLeft,
-      useEventDetailPanel: this.app.getUseEventDetailPanel(),
       search: this.search,
     };
   }

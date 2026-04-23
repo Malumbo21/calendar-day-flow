@@ -385,7 +385,6 @@ export interface UseCalendarAppReturn {
   ) => void;
   canMutateFromUI: (id?: string) => boolean;
   readOnlyConfig: ReadOnlyConfig;
-  useEventDetailPanel: boolean;
 }
 
 /**

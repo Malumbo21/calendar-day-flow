@@ -52,8 +52,6 @@ export const DayFlowCalendar = defineComponent({
     // All renderer-level props in one object so a single watcher handles them all.
     const extraProps = computed(() => ({
       collapsedSafeAreaLeft: props.collapsedSafeAreaLeft,
-      useEventDetailPanel: (props.calendar as UseCalendarAppReturn)
-        .useEventDetailPanel,
       search: props.search,
     }));
 
