@@ -15,6 +15,7 @@
     "declarationMap": true,
     "paths": {
       "@dayflow/sync-core": ["../sync-core/src/index.ts"],
+      "@sync-core/*": ["../sync-core/src/*"],
       "@google-sync/*": ["./src/*"]
     }
   },

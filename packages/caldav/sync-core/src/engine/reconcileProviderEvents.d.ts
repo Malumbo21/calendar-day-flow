@@ -1,4 +1,4 @@
-import type { SyncEventChange } from '../types/change';
+import type { SyncEventChange } from '@sync-core/types/change';
 export type ReconcileProviderEventsResult<EventRecord> = {
   imported: number;
   updated: number;

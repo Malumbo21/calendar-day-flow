@@ -1,4 +1,4 @@
-import { reconcileProviderCalendars } from '../engine/reconcileProviderCalendars';
+import { reconcileProviderCalendars } from '@sync-core/engine/reconcileProviderCalendars';
 
 type RemoteCalendar = { id: string; summary: string };
 type CalendarRecord = {

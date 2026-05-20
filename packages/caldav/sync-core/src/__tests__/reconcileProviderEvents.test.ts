@@ -1,4 +1,4 @@
-import { reconcileProviderEvents } from '../engine/reconcileProviderEvents';
+import { reconcileProviderEvents } from '@sync-core/engine/reconcileProviderEvents';
 
 type RemoteEvent = { id: string; title: string };
 type DeletedRemoteEvent = { id: string };

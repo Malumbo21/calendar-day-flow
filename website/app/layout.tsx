@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
 import './global.css';
-import { Inter } from 'next/font/google';
 import Script from 'next/script';
 
 import { AppProvider } from '@/components/AppProvider';
@@ -13,18 +13,24 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: SITE_METADATA_BASE,
+  applicationName: 'DayFlow',
   title: {
     template: '%s | DayFlow',
-    default: 'DayFlow - Lightweight Calendar Component',
+    default: 'DayFlow – Lightweight calendar component',
   },
   description:
     'A lightweight and elegant full calendar component for React, Vue, Angular, and Svelte. Supports day, week, month, and year views with drag-and-drop, localization, and dark mode.',
+  icons: {
+    icon: `${BASE_PATH}/icon.png`,
+    shortcut: `${BASE_PATH}/icon.png`,
+    apple: `${BASE_PATH}/apple-icon.png`,
+  },
   openGraph: {
     type: 'website',
     siteName: 'DayFlow',
     title: {
-      template: '%s | DayFlow',
-      default: 'DayFlow - Lightweight Calendar Component',
+      template: '%s',
+      default: 'DayFlow – Lightweight calendar component',
     },
     description:
       'A lightweight and elegant full calendar component for React, Vue, Angular, and Svelte.',
@@ -40,8 +46,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: {
-      template: '%s | DayFlow',
-      default: 'DayFlow - Lightweight Calendar Component',
+      template: '%s',
+      default: 'DayFlow – Lightweight calendar component',
     },
     description:
       'A lightweight and elegant full calendar component for React, Vue, Angular, and Svelte.',
