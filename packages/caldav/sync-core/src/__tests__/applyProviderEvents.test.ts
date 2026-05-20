@@ -1,7 +1,6 @@
 import type { CalendarType, Event, ICalendarApp } from '@dayflow/core';
+import { applyProviderEventsToDayFlow } from '@sync-core/dayflow/applyProviderEvents';
 import { Temporal } from 'temporal-polyfill';
-
-import { applyProviderEventsToDayFlow } from '../dayflow/applyProviderEvents';
 
 function makeEvent(id: string, providerId: string): Event {
   return {

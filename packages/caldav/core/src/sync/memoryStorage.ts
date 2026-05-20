@@ -16,37 +16,44 @@ export function createMemoryCalDAVStorage(): CalDAVStorage {
   const eventStates = new Map<string, CalDAVEventSyncState>();
 
   return {
-    getSyncToken: async calendarId => syncTokens.get(calendarId) ?? null,
-    setSyncToken: async (calendarId, token) => {
+    getSyncToken: calendarId =>
+      Promise.resolve(syncTokens.get(calendarId) ?? null),
+    setSyncToken: (calendarId, token) => {
       if (token) {
         syncTokens.set(calendarId, token);
       } else {
         syncTokens.delete(calendarId);
       }
+      return Promise.resolve();
     },
 
-    getCtag: async calendarId => ctags.get(calendarId) ?? null,
-    setCtag: async (calendarId, ctag) => {
+    getCtag: calendarId => Promise.resolve(ctags.get(calendarId) ?? null),
+    setCtag: (calendarId, ctag) => {
       ctags.set(calendarId, ctag);
+      return Promise.resolve();
     },
 
-    getEtag: async href => etags.get(href) ?? null,
-    setEtag: async (href, etag) => {
+    getEtag: href => Promise.resolve(etags.get(href) ?? null),
+    setEtag: (href, etag) => {
       etags.set(href, etag);
+      return Promise.resolve();
     },
-    deleteEtag: async href => {
+    deleteEtag: href => {
       etags.delete(href);
+      return Promise.resolve();
     },
 
-    getEventState: async eventId => eventStates.get(eventId) ?? null,
-    setEventState: async (eventId, state) => {
+    getEventState: eventId => Promise.resolve(eventStates.get(eventId) ?? null),
+    setEventState: (eventId, state) => {
       eventStates.set(eventId, state);
+      return Promise.resolve();
     },
-    deleteEventState: async eventId => {
+    deleteEventState: eventId => {
       eventStates.delete(eventId);
+      return Promise.resolve();
     },
 
-    clearCalendar: async calendarId => {
+    clearCalendar: calendarId => {
       syncTokens.delete(calendarId);
       ctags.delete(calendarId);
 
@@ -58,6 +65,7 @@ export function createMemoryCalDAVStorage(): CalDAVStorage {
           }
         }
       }
+      return Promise.resolve();
     },
   };
 }

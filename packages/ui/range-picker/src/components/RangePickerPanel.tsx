@@ -61,7 +61,7 @@ const RangePickerPanel = ({
     <div
       ref={popupRef}
       className='df-range-picker df-range-picker-popup'
-      style={getPopupStyle() as any}
+      style={getPopupStyle()}
       data-range-picker-popup='true'
     >
       <div
@@ -70,7 +70,7 @@ const RangePickerPanel = ({
           {
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             width: matchTriggerWidth ? '100%' : undefined,
-          } as any
+          } as JSX.CSSProperties
         }
       >
         <div className='df-range-picker-panel-body'>

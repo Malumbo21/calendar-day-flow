@@ -1,3 +1,4 @@
+import { JSX } from 'preact';
 import { createPortal } from 'preact/compat';
 import {
   useCallback,
@@ -551,67 +552,70 @@ const RangePicker = ({
   );
 
   const handleInputChange = useCallback(
-    (field: 'start' | 'end') => (event: any) => {
-      const newValue = event.currentTarget.value;
-      isEditingRef.current = true;
-      updateInputValue(field, newValue);
+    (field: 'start' | 'end') =>
+      (event: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+        const newValue = event.currentTarget.value;
+        isEditingRef.current = true;
+        updateInputValue(field, newValue);
 
-      const index = field === 'start' ? 0 : 1;
-      const reference = draftRangeRef.current[index];
-      const zoneId = getZoneId(reference);
-      const parsed = parseTemporalString(
-        newValue,
-        parseRegExp,
-        reference,
-        zoneId
-      );
-      if (parsed) {
-        updateRange(field, parsed);
-        const month = parsed.toPlainDate().with({ day: 1 });
-        setVisibleMonth(month);
-        scrollToActiveTime(field);
-      }
-    },
+        const index = field === 'start' ? 0 : 1;
+        const reference = draftRangeRef.current[index];
+        const zoneId = getZoneId(reference);
+        const parsed = parseTemporalString(
+          newValue,
+          parseRegExp,
+          reference,
+          zoneId
+        );
+        if (parsed) {
+          updateRange(field, parsed);
+          const month = parsed.toPlainDate().with({ day: 1 });
+          setVisibleMonth(month);
+          scrollToActiveTime(field);
+        }
+      },
     [updateInputValue, parseRegExp, updateRange, scrollToActiveTime]
   );
 
   const handleInputBlur = useCallback(
-    (field: 'start' | 'end') => (event: any) => {
-      if (disabled) return;
-      isEditingRef.current = false;
+    (field: 'start' | 'end') =>
+      (event: JSX.TargetedEvent<HTMLInputElement, FocusEvent>) => {
+        if (disabled) return;
+        isEditingRef.current = false;
 
-      if (isOpen) {
-        const index = field === 'start' ? 0 : 1;
-        const formatted = formatTemporal(
-          draftRangeRef.current[index],
-          format,
-          effectiveTimeFormat
-        );
-        setInputValues(prev => {
-          const next: [string, string] = [...prev] as [string, string];
-          next[index] = formatted;
-          return next;
-        });
-        return;
-      }
+        if (isOpen) {
+          const index = field === 'start' ? 0 : 1;
+          const formatted = formatTemporal(
+            draftRangeRef.current[index],
+            format,
+            effectiveTimeFormat
+          );
+          setInputValues(prev => {
+            const next: [string, string] = [...prev] as [string, string];
+            next[index] = formatted;
+            return next;
+          });
+          return;
+        }
 
-      const relatedTarget = event.relatedTarget as HTMLElement;
-      if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
-        commitInputValue(field, event.currentTarget.value);
-      }
-    },
+        const relatedTarget = event.relatedTarget as HTMLElement;
+        if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
+          commitInputValue(field, event.currentTarget.value);
+        }
+      },
     [commitInputValue, disabled, isOpen, format, effectiveTimeFormat]
   );
 
   const handleInputKeyDown = useCallback(
-    (field: 'start' | 'end') => (event: any) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        isEditingRef.current = false;
-        commitInputValue(field, event.currentTarget.value);
-      }
-      if (event.key === 'Escape') event.currentTarget.blur();
-    },
+    (field: 'start' | 'end') =>
+      (event: JSX.TargetedEvent<HTMLInputElement, KeyboardEvent>) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          isEditingRef.current = false;
+          commitInputValue(field, event.currentTarget.value);
+        }
+        if (event.key === 'Escape') event.currentTarget.blur();
+      },
     [commitInputValue]
   );
 
@@ -736,12 +740,12 @@ const RangePicker = ({
     };
   }, [isOpen, adjustPopupPlacement]);
 
-  const getPopupStyle = (): any => {
+  const getPopupStyle = (): JSX.CSSProperties => {
     if (!containerRef.current) return {};
 
     const triggerRect = containerRef.current.getBoundingClientRect();
     const placementDom = popupPlacementRef.current;
-    const style: any = { position: 'fixed', zIndex: 9999 };
+    const style: JSX.CSSProperties = { position: 'fixed', zIndex: 9999 };
 
     if (placementDom.startsWith('bottom')) {
       style.top = triggerRect.bottom + 8;
@@ -812,7 +816,7 @@ const RangePicker = ({
 
       {isOpen &&
         (getPopupContainer
-          ? (createPortal(
+          ? createPortal(
               <RangePickerPanel
                 visibleMonth={visibleMonth}
                 monthLabels={monthLabels}
@@ -836,8 +840,8 @@ const RangePicker = ({
                 getPopupStyle={getPopupStyle}
               />,
               getPopupContainer()
-            ) as any)
-          : (createPortal(
+            )
+          : createPortal(
               <RangePickerPanel
                 visibleMonth={visibleMonth}
                 monthLabels={monthLabels}
@@ -861,9 +865,9 @@ const RangePicker = ({
                 getPopupStyle={getPopupStyle}
               />,
               document.body
-            ) as any))}
+            ))}
     </div>
-  ) as any;
+  );
 };
 
 export default RangePicker;

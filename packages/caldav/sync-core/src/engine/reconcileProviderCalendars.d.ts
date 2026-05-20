@@ -1,4 +1,4 @@
-import type { SyncCalendarChange } from '../types/change';
+import type { SyncCalendarChange } from '@sync-core/types/change';
 export type ReconcileProviderCalendarsResult<CalendarRecord> = {
   records: CalendarRecord[];
   changed: boolean;

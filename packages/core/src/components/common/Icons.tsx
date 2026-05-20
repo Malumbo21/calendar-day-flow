@@ -1,4 +1,4 @@
-interface IconProps extends Record<string, any> {
+interface IconProps extends Record<string, unknown> {
   className?: string;
   width?: number;
   height?: number;

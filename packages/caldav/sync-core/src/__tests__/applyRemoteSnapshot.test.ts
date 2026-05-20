@@ -1,4 +1,4 @@
-import { applyRemoteSnapshot } from '../snapshot/applyRemoteSnapshot';
+import { applyRemoteSnapshot } from '@sync-core/snapshot/applyRemoteSnapshot';
 
 type TestCalendar = { id: string; name: string; source?: string };
 type TestEvent = { id: string; title: string; source?: string };
@@ -24,7 +24,7 @@ function createApp({
     calls,
     app: {
       getCalendars: () => state.calendars,
-      createCalendar: async (calendar: TestCalendar) => {
+      createCalendar: (calendar: TestCalendar) => {
         state.calendars.push(calendar);
       },
       updateCalendar: (id: string, calendar: Partial<TestCalendar>) => {
@@ -32,7 +32,7 @@ function createApp({
           existing.id === id ? { ...existing, ...calendar } : existing
         );
       },
-      deleteCalendar: async (id: string) => {
+      deleteCalendar: (id: string) => {
         calls.deletedCalendars.push(id);
         state.calendars = state.calendars.filter(
           calendar => calendar.id !== id
