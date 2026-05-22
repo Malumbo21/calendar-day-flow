@@ -373,6 +373,10 @@ export interface ICalendarApp {
   // Get whether to use event detail panel
   getUseEventDetailPanel: () => boolean;
 
+  // Whether any event-detail UI (panel or dialog) is enabled. Behavior gates
+  // (e.g. open-on-dblclick) should use this instead of the per-UI flags.
+  getEventDetailEnabled: () => boolean;
+
   // Update configuration dynamically
   updateConfig: (config: Partial<CalendarAppConfig>) => void;
 

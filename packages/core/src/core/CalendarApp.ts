@@ -102,7 +102,11 @@ export class CalendarApp implements ICalendarApp {
     this.pluginManager = new PluginManager(this.state, this.notify);
 
     this.useEventDetailDialog = config.useEventDetailDialog ?? false;
-    this.useEventDetailPanel = config.useEventDetailPanel ?? true;
+    // Dialog and panel are mutually exclusive renderings of the same selection
+    // state — dialog wins when both are requested.
+    this.useEventDetailPanel = this.useEventDetailDialog
+      ? false
+      : (config.useEventDetailPanel ?? true);
     this.useCalendarHeader = config.useCalendarHeader ?? true;
 
     config.views.forEach(view => this.state.views.set(view.type, view));
@@ -372,6 +376,8 @@ export class CalendarApp implements ICalendarApp {
   getCalendarRegistry = (): CalendarRegistry => this.calendarRegistry;
   getUseEventDetailDialog = (): boolean => this.useEventDetailDialog;
   getUseEventDetailPanel = (): boolean => this.useEventDetailPanel;
+  getEventDetailEnabled = (): boolean =>
+    this.useEventDetailDialog || this.useEventDetailPanel;
   getCalendarHeaderConfig = (): boolean => this.useCalendarHeader;
 
   get timeZone(): string {
@@ -387,18 +393,23 @@ export class CalendarApp implements ICalendarApp {
     let hasChanged = false;
 
     if (
-      config.useEventDetailDialog !== undefined &&
-      config.useEventDetailDialog !== this.useEventDetailDialog
+      config.useEventDetailDialog !== undefined ||
+      config.useEventDetailPanel !== undefined
     ) {
-      this.useEventDetailDialog = config.useEventDetailDialog;
-      hasChanged = true;
-    }
-    if (
-      config.useEventDetailPanel !== undefined &&
-      config.useEventDetailPanel !== this.useEventDetailPanel
-    ) {
-      this.useEventDetailPanel = config.useEventDetailPanel;
-      hasChanged = true;
+      const nextDialog =
+        config.useEventDetailDialog ?? this.useEventDetailDialog;
+      // Dialog wins when both are requested (see constructor).
+      const nextPanel = nextDialog
+        ? false
+        : (config.useEventDetailPanel ?? this.useEventDetailPanel);
+      if (
+        nextDialog !== this.useEventDetailDialog ||
+        nextPanel !== this.useEventDetailPanel
+      ) {
+        this.useEventDetailDialog = nextDialog;
+        this.useEventDetailPanel = nextPanel;
+        hasChanged = true;
+      }
     }
     if (
       config.useCalendarHeader !== undefined &&

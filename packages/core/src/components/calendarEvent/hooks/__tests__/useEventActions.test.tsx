@@ -175,6 +175,7 @@ describe('useEventActions', () => {
   it('defers non-year click callbacks until the double-click window passes', () => {
     const app = {
       onEventClick: jest.fn(),
+      getEventDetailEnabled: () => true,
     } as unknown as import('@/types').ICalendarApp;
     const onEventSelect = jest.fn();
     const onDetailPanelToggle = jest.fn();
@@ -238,6 +239,7 @@ describe('useEventActions', () => {
   it('suppresses click callbacks when a non-year event becomes a double click', async () => {
     const app = {
       onEventClick: jest.fn(),
+      getEventDetailEnabled: () => true,
       onEventDoubleClick: jest.fn(),
     } as unknown as import('@/types').ICalendarApp;
     const onEventSelect = jest.fn();
@@ -308,6 +310,7 @@ describe('useEventActions', () => {
   it('allows onEventDoubleClick to suppress the default detail panel', async () => {
     const app = {
       onEventClick: jest.fn(),
+      getEventDetailEnabled: () => true,
       onEventDoubleClick: jest.fn(() => false),
     } as unknown as import('@/types').ICalendarApp;
     const onEventSelect = jest.fn();
@@ -370,6 +373,7 @@ describe('useEventActions', () => {
   it('waits for resource-view scrolling to settle before opening the detail panel', async () => {
     const app = {
       onEventClick: jest.fn(),
+      getEventDetailEnabled: () => true,
     } as unknown as import('@/types').ICalendarApp;
     const onEventSelect = jest.fn();
     const onDetailPanelToggle = jest.fn();
@@ -507,6 +511,7 @@ describe('useEventActions', () => {
   it('does not auto-scroll resource-view events that are already fully visible', async () => {
     const app = {
       onEventClick: jest.fn(),
+      getEventDetailEnabled: () => true,
     } as unknown as import('@/types').ICalendarApp;
     const onEventSelect = jest.fn();
     const onDetailPanelToggle = jest.fn();

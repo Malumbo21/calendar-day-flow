@@ -161,7 +161,6 @@ const CalendarEvent = ({
     onEventSelect,
     onDetailPanelToggle,
     canOpenDetail,
-    useEventDetailPanel,
     app,
     multiDaySegmentInfo,
     isMultiDay,
@@ -431,7 +430,7 @@ const CalendarEvent = ({
       newlyCreatedEventId === event.id &&
       !showDetailPanel &&
       isFirst &&
-      useEventDetailPanel !== false
+      (!app || app.getEventDetailEnabled())
     ) {
       setTimeout(() => {
         onDetailPanelToggle?.(detailPanelKey);

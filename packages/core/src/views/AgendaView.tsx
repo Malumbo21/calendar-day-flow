@@ -405,7 +405,7 @@ const AgendaView = ({
       clickTimerRef.current = setTimeout(() => {
         app.onEventClick(event);
         onEventSelect?.(event.id);
-        if (useEventDetailPanel !== false) {
+        if (app.getEventDetailEnabled()) {
           onDetailPanelToggle?.(null);
         }
         clickTimerRef.current = null;
@@ -428,11 +428,7 @@ const AgendaView = ({
           if (result === false) return;
           if (app.getReadOnlyConfig(event.id).viewable !== false) {
             const target = selectedEventElementRef.current;
-            if (
-              target &&
-              useEventDetailPanel !== false &&
-              !app.getUseEventDetailDialog()
-            ) {
+            if (target && useEventDetailPanel !== false) {
               const rect = target.getBoundingClientRect();
               const panelWidth = 320;
               const gap = 12;
@@ -466,11 +462,7 @@ const AgendaView = ({
         .catch(() => {
           if (app.getReadOnlyConfig(event.id).viewable !== false) {
             const target = selectedEventElementRef.current;
-            if (
-              target &&
-              useEventDetailPanel !== false &&
-              !app.getUseEventDetailDialog()
-            ) {
+            if (target && useEventDetailPanel !== false) {
               const rect = target.getBoundingClientRect();
               const panelWidth = 320;
               const gap = 12;
@@ -697,43 +689,41 @@ const AgendaView = ({
         )}
       </div>
 
-      {detailPanelEvent &&
-        useEventDetailPanel !== false &&
-        !app.getUseEventDetailDialog() && (
-          <>
-            <div
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 9998,
-                pointerEvents: 'none',
-              }}
-            />
-            <EventDetailPanel
-              showDetailPanel={true}
-              detailPanelPosition={detailPanelPosition}
-              event={detailPanelEvent}
-              detailPanelRef={detailPanelRef}
-              isAllDay={detailPanelEvent.allDay === true}
-              eventVisibility='standard'
-              calendarRef={calendarRef}
-              selectedEventElementRef={selectedEventElementRef}
-              onEventUpdate={event => app.updateEvent(event.id, event)}
-              onEventDelete={id => app.deleteEvent(id)}
-              handlePanelClose={() => {
-                setDetailPanelPosition(null);
-                onDetailPanelToggle?.(null);
-                onEventSelect?.(null);
-              }}
-              customRenderingStore={customRenderingStore}
-              contentSlotRenderer={contentSlotRenderer}
-              app={app}
-            />
-          </>
-        )}
+      {detailPanelEvent && useEventDetailPanel !== false && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9998,
+              pointerEvents: 'none',
+            }}
+          />
+          <EventDetailPanel
+            showDetailPanel={true}
+            detailPanelPosition={detailPanelPosition}
+            event={detailPanelEvent}
+            detailPanelRef={detailPanelRef}
+            isAllDay={detailPanelEvent.allDay === true}
+            eventVisibility='standard'
+            calendarRef={calendarRef}
+            selectedEventElementRef={selectedEventElementRef}
+            onEventUpdate={event => app.updateEvent(event.id, event)}
+            onEventDelete={id => app.deleteEvent(id)}
+            handlePanelClose={() => {
+              setDetailPanelPosition(null);
+              onDetailPanelToggle?.(null);
+              onEventSelect?.(null);
+            }}
+            customRenderingStore={customRenderingStore}
+            contentSlotRenderer={contentSlotRenderer}
+            app={app}
+          />
+        </>
+      )}
     </div>
   );
 };
