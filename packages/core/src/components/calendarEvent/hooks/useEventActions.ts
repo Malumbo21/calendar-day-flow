@@ -307,7 +307,7 @@ export const useEventActions = ({
         setIsSelected(true);
       }
 
-      if (useEventDetailPanel !== false) {
+      if (!app || app.getEventDetailEnabled()) {
         onDetailPanelToggle?.(null);
         setDetailPanelPosition(null);
       }
@@ -375,10 +375,13 @@ export const useEventActions = ({
 
       const openDetailPanel = () => {
         scrollEventToCenter().then(() => {
-          if (useEventDetailPanel === false) return;
+          if (app && !app.getEventDetailEnabled()) return;
+          if (isMobile) return;
 
-          if (!isMobile) {
-            onDetailPanelToggle?.(detailPanelKey);
+          onDetailPanelToggle?.(detailPanelKey);
+          // Positioning only matters when the floating panel renders;
+          // the dialog handles its own placement.
+          if (useEventDetailPanel !== false) {
             setDetailPanelPosition({
               top: -9999,
               left: -9999,
