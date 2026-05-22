@@ -1,3 +1,4 @@
+/* eslint-disable react/iframe-missing-sandbox -- same-origin demo iframe; needs storage access */
 'use client';
 
 import { BASE_PATH } from '@/lib/site';
@@ -16,7 +17,7 @@ export const MobileEventDetailShowcase = () => (
           title='Mobile Event Detail Simulator'
           src={demoSrc}
           className='block h-[720px] w-full border-0 bg-white'
-          sandbox='allow-scripts'
+          sandbox='allow-scripts allow-same-origin'
         />
       </div>
     </div>
