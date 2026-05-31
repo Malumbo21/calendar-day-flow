@@ -16,3 +16,14 @@ export const SITE_URL = rawSiteUrl.endsWith('/')
   : rawSiteUrl;
 
 export const SITE_METADATA_BASE = new URL(SITE_URL);
+
+const PRO_BASE_URL = 'https://pro.dayflow.studio';
+
+export function proUrl(content: string): string {
+  const params = new URLSearchParams({
+    utm_source: 'calendar.dayflow.studio',
+    utm_medium: 'referral',
+    utm_content: content,
+  });
+  return `${PRO_BASE_URL}/?${params.toString()}`;
+}
