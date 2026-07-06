@@ -1,0 +1,110 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=0.48in]{geometry}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[unicode,draft=false]{hyperref}
+\usepackage{xcolor}
+\usepackage{fontawesome5}
+
+\definecolor{maincolor}{HTML}{152A5D}
+\hypersetup{colorlinks=true,urlcolor=maincolor,linkcolor=maincolor}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\baselinestretch}{0.94}
+
+\titleformat{\section}{\large\scshape\bfseries}{}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{5pt}{3pt}
+\setlist[itemize]{leftmargin=1.35em,itemsep=0.4pt,topsep=1pt,parsep=0pt,partopsep=0pt}
+
+\newcommand{\resumeItem}[1]{\item #1}
+\newcommand{\role}[4]{%
+  \textbf{#1} \hfill \textit{#2}\\
+  \textit{#3} \hfill #4\vspace{-2pt}
+}
+\newcommand{\project}[3]{%
+  \textbf{#1}\\
+  \textit{#2} \hfill #3\vspace{-2pt}
+}
+\newcommand{\education}[4]{%
+  \textbf{#1} \hfill \textit{#2}\\
+  \textit{\underline{#3}} \hfill #4\vspace{2pt}
+}
+
+\begin{document}
+\color{maincolor}
+
+\noindent
+\begin{minipage}[c]{0.45\linewidth}
+  {\Huge \textbf{Jayce Li}}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.55\linewidth}
+  \begin{tabular}{@{}l@{\hspace{8pt}}l@{}}
+    \textbf{Email:} & \href{mailto:lijuncai552@gmail.com}{lijuncai552@gmail.com} \\
+    \textbf{Phone:} & +61 452 530 297 \\
+    \textbf{LinkedIn:} & \href{https://www.linkedin.com/in/juncai-jayce-li-b3a50b267/}{linkedin.com/in/juncai-jayce-li-b3a50b267} \\
+    \textbf{GitHub:} & \href{https://github.com/JayceV552}{github.com/JayceV552} \\
+  \end{tabular}
+\end{minipage}
+\vspace{-6pt}
+
+\section{Summary}
+Full-stack Developer with 3+ years of experience shipping user-centric web and mobile applications. Strong in React, Next.js, TypeScript, and Node.js, with hands-on experience in 0-to-1 product development, frontend performance optimization, SSR/SEO, and \textbf{CI/CD pipelines with GitHub Actions}. Creator of \textbf{DayFlow Calendar}, an open-source multi-framework calendar library with \textbf{760+ GitHub stars}.
+
+\section{Technical Skills}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+Languages: & TypeScript, JavaScript, Dart, Python, Java \\
+Frontend: & React, Next.js, Tailwind CSS, shadcn/ui, Redux, React Router, Flutter Web, HTML5, CSS3 \\
+Backend: & Node.js, Express.js, Spring Boot, Firebase Cloud Functions, RESTful APIs \\
+Database / Cloud: & Firebase (Firestore, Auth), Supabase, PostgreSQL, Cloudfare, AWS (EC2, S3, Lambda) \\
+Tools: & Git, GitHub Actions, Monorepo (pnpm, Turborepo), Webpack, Jest \\
+\end{tabularx}
+
+\section{Open-source Projects}
+
+\project{DayFlow Calendar}{Open-source multi-framework calendar component library}{Feb 2025 -- Present}
+\begin{itemize}
+\resumeItem{Built a production-ready calendar library with \textbf{760+ GitHub stars}, using a modular monorepo architecture for core, adapters, plugins, and utilities.}
+  \resumeItem{Architected a \textbf{Preact} core with \textbf{React, Vue, Angular, and Svelte} adapters via a custom slot portal.}
+  \resumeItem{Designed a \textbf{plugin architecture} for drag-and-drop, keyboard shortcuts, i18n, and sidebar extensions.}
+  \resumeItem{Built a two-way \textbf{CalDAV sync engine} for Google Calendar and Outlook as standalone npm modules.}
+\end{itemize}
+
+\section{Work Experience}
+
+\role{Software Engineer}{Remote / Nanjing, China}{Amino Capital}{Jun 2022 -- Jan 2024}
+\begin{itemize}
+  \resumeItem{Analysed requirements from investment managers and finance stakeholders, translating fund operations, portfolio tracking, capital calls, and reporting workflows into scalable product features.}
+  \resumeItem{Developed cross-platform investment management applications using \textbf{Flutter}, \textbf{Next.js}, \textbf{TypeScript}, and \textbf{Tailwind CSS} across mobile and web environments.}
+  \resumeItem{Built serverless backend services with \textbf{Firebase}, \textbf{Cloud Functions}, and \textbf{Firestore triggers}, supporting event-driven workflows, financial calculations, and access validation.}
+  \resumeItem{Developed automated data ingestion pipelines to collect, transform, and store startup and investment datasets from external sources for internal analytics.}
+\resumeItem{Implemented role-based access control with \textbf{Firebase Auth} and \textbf{Firestore security rules}.}
+\resumeItem{Optimized \textbf{Firestore indexes} and queries to improve retrieval performance and reduce reads.}
+\end{itemize}
+
+\role{Software Engineer}{Nanjing, China}{Focus Technology Co., Ltd.}{Apr 2021 -- May 2022}
+\begin{itemize}
+  \resumeItem{Built a customer-facing insurance platform with \textbf{Next.js}, \textbf{React}, \textbf{Formily}, and \textbf{Node.js}, migrating key pages from legacy \textbf{JSP} to a modern SSR architecture.}
+  \resumeItem{Implemented complex insurance purchase journeys, including product configuration, underwriting questionnaires, dynamic forms, and policy issuance workflows.}
+\resumeItem{Reduced manual form logic by \textbf{80\%} using schema-driven \textbf{Formily} forms.}
+  \resumeItem{Improved frontend performance by optimizing \textbf{Webpack}, code splitting, lazy loading, and bundle analysis, reducing assets from \textbf{27MB to 10MB} and load time from \textbf{3s to 1.2s}.}
+\end{itemize}
+
+\role{Frontend Developer}{Fuzhou, China}{Whale Cloud Technology Co., Ltd.}{Mar 2020 -- Feb 2021}
+\begin{itemize}
+  \resumeItem{Built mobile-first hybrid application features for promotional and customer-facing flows using \textbf{JavaScript}, \textbf{Canvas}-based animations, \textbf{CSS3}, and \textbf{REST APIs}.}
+\resumeItem{Collaborated with designers and backend engineers to deliver mobile-first features.}
+\end{itemize}
+\section{Education}
+
+\textbf{Master of Computer Science} \hfill \textit{Sydney, Australia}\\
+\textit{\underline{The University of Sydney}}, Specialized in \textbf{Software Engineering} \hfill Feb 2024 -- May 2026\vspace{2pt}
+
+\education{Bachelor of Network Engineering}{Fuzhou, China}{Fuzhou University}{Sep 2017 -- Jun 2021}
+\begin{itemize}
+  \resumeItem{Awarded \textbf{1 First-class} and \textbf{5 Third-class scholarships} during undergraduate studies.}
+\end{itemize}
+
+\end{document}

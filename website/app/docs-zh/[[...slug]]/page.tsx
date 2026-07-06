@@ -42,10 +42,18 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params;
   const page = sourceZh.getPage(params.slug);
-  if (!page) notFound();
+  if (!page) return {};
 
   return {
     title: page.data.title,
     description: page.data.description,
+    alternates: {
+      canonical: page.url,
+    },
+    openGraph: {
+      title: page.data.title,
+      description: page.data.description,
+      url: page.url,
+    },
   };
 }
