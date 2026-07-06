@@ -59,9 +59,18 @@ export async function generateMetadata(props: {
   const params = await props.params;
   const page = findPost(params.slug);
   if (!page) notFound();
+  const canonical = `/blog/${params.slug.join('/')}`;
 
   return {
     title: page.title,
     description: page.description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: page.title,
+      description: page.description,
+      url: canonical,
+    },
   };
 }

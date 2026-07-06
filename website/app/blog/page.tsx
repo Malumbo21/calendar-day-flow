@@ -5,6 +5,15 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'The latest news and technical articles from the DayFlow team.',
+  alternates: {
+    canonical: '/blog',
+  },
+  openGraph: {
+    title: 'Blog',
+    description:
+      'The latest news and technical articles from the DayFlow team.',
+    url: '/blog',
+  },
 };
 
 export default function BlogPage() {

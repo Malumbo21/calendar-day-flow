@@ -7,9 +7,11 @@ export const BASE_PATH =
 
 const rawSiteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
-  (BASE_PATH
-    ? `https://dayflow-js.github.io${BASE_PATH}`
-    : 'http://localhost:3000');
+  (process.env.NODE_ENV === 'production'
+    ? 'https://calendar.dayflow.studio'
+    : BASE_PATH
+      ? `https://dayflow-js.github.io${BASE_PATH}`
+      : 'http://localhost:3000');
 
 export const SITE_URL = rawSiteUrl.endsWith('/')
   ? rawSiteUrl.slice(0, -1)
