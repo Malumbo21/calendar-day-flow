@@ -48,6 +48,72 @@
   --color-fd-secondary: hsl(0, 0%, 12.9%);
 }
 
+.landing-root {
+  position: relative;
+}
+
+.landing-root [data-reveal] {
+  --reveal-delay: 0ms;
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  filter: blur(10px);
+  transition:
+    opacity 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) var(--reveal-delay),
+    transform 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) var(--reveal-delay),
+    filter 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) var(--reveal-delay);
+  will-change: opacity, transform, filter;
+}
+
+.landing-root [data-reveal][data-revealed='true'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0);
+}
+
+.hero-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(48, 126, 254, 0.18),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 16% 24%,
+      rgba(16, 185, 129, 0.1),
+      transparent 30%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), transparent 44%);
+}
+
+.dark .hero-glow {
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(96, 165, 250, 0.24),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 16% 24%,
+      rgba(52, 211, 153, 0.14),
+      transparent 30%
+    ),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.4), transparent 44%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-root [data-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
 /* Clerk TOC: Tailwind v4 uses logical properties (padding-block, inset-block) for
    multi-axis utilities (py-*, inset-y-*), causing conflicts with physical properties
    (padding-top, top) from single-axis classes. These rules are outside @layer so

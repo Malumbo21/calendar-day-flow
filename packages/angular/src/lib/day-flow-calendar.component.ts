@@ -27,6 +27,7 @@ import type {
   CalendarHeaderProps,
   EventContextMenuSlotArgs,
   GridContextMenuSlotArgs,
+  GridPopupContentSlotArgs,
   CalendarSearchProps,
   MobileEventProps,
   MonthDateNumberSlotArgs,
@@ -90,6 +91,7 @@ export class DayFlowCalendarComponent
   @Input() calendarHeader?: TemplateRef<CalendarHeaderProps>;
   @Input() eventContextMenu?: TemplateRef<EventContextMenuSlotArgs>;
   @Input() gridContextMenu?: TemplateRef<GridContextMenuSlotArgs>;
+  @Input() gridPopupContent?: TemplateRef<GridPopupContentSlotArgs>;
   @Input() monthDateNumberContent?: TemplateRef<MonthDateNumberSlotArgs>;
   @Input() mobileEventDetail?: TemplateRef<MobileEventProps>;
   @Input() collapsedSafeAreaLeft?: number;
@@ -165,6 +167,7 @@ export class DayFlowCalendarComponent
         'calendarHeader',
         'eventContextMenu',
         'gridContextMenu',
+        'gridPopupContent',
         'monthDateNumberContent',
         'mobileEventDetail',
         'sidebar',
@@ -228,6 +231,7 @@ export class DayFlowCalendarComponent
       calendarHeader: this.calendarHeader,
       eventContextMenu: this.eventContextMenu,
       gridContextMenu: this.gridContextMenu,
+      gridPopupContent: this.gridPopupContent,
       monthDateNumberContent: this.monthDateNumberContent,
       mobileEventDetail: this.mobileEventDetail,
       sidebar: this.sidebar,
@@ -361,6 +365,9 @@ export class DayFlowCalendarComponent
       }
       case 'gridContextMenu': {
         return this.gridContextMenu ?? null;
+      }
+      case 'gridPopupContent': {
+        return this.gridPopupContent ?? null;
       }
       case 'monthDateNumberContent': {
         return this.monthDateNumberContent ?? null;

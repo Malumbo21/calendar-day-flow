@@ -3,6 +3,7 @@ import Image from 'next/image';
 
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
+import { proUrl } from '@/lib/site';
 
 export const gitConfig = {
   user: 'dayflow-js',
@@ -11,7 +12,7 @@ export const gitConfig = {
 };
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
-const PRO_URL = 'https://pro.dayflow.studio';
+const PRO_URL = proUrl('nav');
 
 export const sidebarTabs = [
   {

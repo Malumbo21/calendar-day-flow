@@ -7,12 +7,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
+import { proUrl } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
-const PRO_URL = 'https://pro.dayflow.studio';
+const PRO_URL = proUrl('docs_nav');
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
