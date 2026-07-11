@@ -399,6 +399,7 @@ export interface ICalendarApp {
   // Theme management
   setTheme: (mode: ThemeMode) => void;
   getTheme: () => ThemeMode;
+  getThemeColors: () => ThemeConfig['colors'];
   subscribeThemeChange: (callback: (theme: ThemeMode) => void) => () => void;
   unsubscribeThemeChange: (callback: (theme: ThemeMode) => void) => void;
 }
