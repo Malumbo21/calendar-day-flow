@@ -1,149 +1,376 @@
 ---
 title: Pro Installation
-description: Install DayFlow Pro packages, configure private registry access, and activate your DayFlow Pro license key.
+description: Install DayFlow Pro packages, configure private registry access, activate your license, and load the correct styles.
 status: pro
 ---
 
 # Pro Installation
 
-DayFlow Pro uses two separate credentials:
+DayFlow Pro uses up to three separate credentials:
 
-- A private npm registry token for installing `@dayflow-pro/*` packages
-- A signed DayFlow Pro license key used to activate Pro features
+- A private npm token for installing `@dayflow-pro/*` packages
+- A Pro runtime npm token for private runtime dependencies used by Resource Timeline
+- A signed DayFlow Pro license key used by the application to activate Pro features
+
+The two npm tokens are download credentials. Keep them in your local shell or CI
+secret store and never expose them through client-side environment variables. The
+signed Pro license key is a separate client-side activation token.
 
 ## 1. Configure private registry access
 
-Add your DayFlow Pro npm token to `.npmrc` before installing private packages:
+Add the registry configuration to the `.npmrc` file at your project root:
 
 ```ini
 @dayflow-pro:registry=https://gitlab.com/api/v4/projects/81880038/packages/npm/
 //gitlab.com/api/v4/projects/81880038/packages/npm/:_authToken=${DAYFLOW_PRO_NPM_TOKEN}
+
+@dayflow-scheduler:registry=https://gitlab.com/api/v4/projects/84910604/packages/npm/
+//gitlab.com/api/v4/projects/84910604/packages/npm/:_authToken=${DAYFLOW_PRO_RUNTIME_TOKEN}
 ```
 
-After that, install the packages you purchased as usual:
+Export the tokens before installing packages. For example:
 
 ```bash
-pnpm add @dayflow-pro/license @dayflow-pro/resource-grid
+export DAYFLOW_PRO_NPM_TOKEN="your-pro-package-token"
+export DAYFLOW_PRO_RUNTIME_TOKEN="your-pro-runtime-token"
 ```
 
-## 2. Register your license key once
+Install only the packages used by your application:
 
-Register your DayFlow Pro license key during app startup:
+```bash
+pnpm add @dayflow-pro/license \
+  @dayflow-pro/resource-timeline \
+  @dayflow-pro/resource-grid \
+  @dayflow-pro/plugin-print
+```
 
-```tsx
+If you do not use Resource Timeline, you may omit both
+`@dayflow-pro/resource-timeline` and the `@dayflow-scheduler` registry configuration.
+
+## 2. Choose how to provide the license
+
+DayFlow Pro supports both global registration and an explicit `license` option.
+Choose one approach based on how your application obtains the signed license key.
+
+### Option A: Register once during startup
+
+Use global registration when the license key is fixed for the lifetime of the page.
+Call `registerDayflowProLicense()` before the framework renders your application:
+
+```tsx title="src/main.tsx (Vite)"
 import { registerDayflowProLicense } from '@dayflow-pro/license';
 
-registerDayflowProLicense({
-  token: process.env.NEXT_PUBLIC_DAYFLOW_PRO_LICENSE_TOKEN!,
-});
+const token = import.meta.env.VITE_DAYFLOW_PRO_LICENSE_TOKEN;
+
+if (!token) {
+  throw new Error('Missing VITE_DAYFLOW_PRO_LICENSE_TOKEN');
+}
+
+registerDayflowProLicense({ token });
+
+// Render React, Vue, Angular, or Svelte after registration.
 ```
 
-Once this is registered, your Pro views and plugins can read the token automatically.
+For Next.js client code, use a client-exposed variable such as
+`process.env.NEXT_PUBLIC_DAYFLOW_PRO_LICENSE_TOKEN`.
+
+Once registered, Pro views and plugins read the license automatically. Global
+registration is not reactive, so it should happen before the first render. If a user
+can enter, replace, or switch licenses while the application is running, use the
+explicit option below.
+
+### Option B: Pass the license explicitly
+
+Use explicit configuration for runtime license input, account switching, multi-tenant
+applications, or tokens restored from browser storage:
+
+```tsx
+import type { PackageLicenseConfig } from '@dayflow-pro/license';
+
+const license: PackageLicenseConfig = {
+  token,
+  onTokenRefresh: nextToken => {
+    localStorage.setItem('dayflow-pro-license', nextToken);
+  },
+};
+
+const timelineView = createResourceTimelineView({
+  license,
+  resources: timelineResources,
+});
+
+const gridView = createResourceGridView({
+  license,
+  mode: 'resourceView',
+  resources: gridResources,
+});
+
+const printPlugin = createPrintPlugin({ license });
+```
+
+An explicit `license` option overrides the globally registered license for that view
+or plugin.
 
 ## 3. Use Pro packages normally
 
-After installation and registration, you can use Pro packages without repeating the license config in every call:
+Pro views are added to the `views` array, and Pro plugins are added to the `plugins`
+array, just like public DayFlow packages:
+
+| Package                          | Factory                        | Add it to |
+| -------------------------------- | ------------------------------ | --------- |
+| `@dayflow-pro/resource-timeline` | `createResourceTimelineView()` | `views`   |
+| `@dayflow-pro/resource-grid`     | `createResourceGridView()`     | `views`   |
+| `@dayflow-pro/plugin-print`      | `createPrintPlugin()`          | `plugins` |
+
+The Pro factories are framework-independent. Put the shared configuration in one
+module, then connect it to your framework adapter:
+
+```ts title="src/dayflow-pro.ts"
+import {
+  createEvent,
+  createWeekView,
+  type CalendarAppConfig,
+  type Event,
+} from '@dayflow/core';
+import type { PackageLicenseConfig } from '@dayflow-pro/license';
+import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+import { createResourceGridView } from '@dayflow-pro/resource-grid';
+import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+const getResourceId = (event: Event) =>
+  typeof event.meta?.resourceId === 'string'
+    ? event.meta.resourceId
+    : event.calendarId;
+
+export function createProCalendar(license?: PackageLicenseConfig) {
+  const timelineView = createResourceTimelineView({
+    license,
+    resources: [
+      {
+        id: 'design',
+        name: 'Design',
+        groupId: 'delivery',
+        groupName: 'Delivery',
+        subtitle: 'Product design',
+      },
+      {
+        id: 'engineering',
+        name: 'Engineering',
+        groupId: 'delivery',
+        groupName: 'Delivery',
+        subtitle: 'Frontend engineering',
+      },
+    ],
+    defaultView: 'week',
+    height: 640,
+    getResourceId,
+  });
+
+  const gridView = createResourceGridView({
+    license,
+    mode: 'resourceView',
+    resources: [
+      { id: 'design', title: 'Design' },
+      { id: 'engineering', title: 'Engineering' },
+    ],
+    visibleDays: 3,
+    firstHour: 8,
+    lastHour: 18,
+    getResourceId,
+  });
+
+  const printPlugin = createPrintPlugin({
+    license,
+    defaultOptions: {
+      miniCalendar: true,
+      calendarKeys: true,
+      textSize: 'medium',
+    },
+  });
+
+  const config: CalendarAppConfig = {
+    views: [createWeekView(), timelineView, gridView],
+    plugins: [printPlugin],
+    defaultView: 'resource',
+    events: [
+      createEvent({
+        id: 'launch-plan',
+        title: 'Launch planning',
+        start: new Date(2026, 6, 29, 9),
+        end: new Date(2026, 6, 29, 11),
+        calendarId: 'design',
+        meta: { resourceId: 'design' },
+      }),
+    ],
+  };
+
+  return { config, printPlugin };
+}
+```
+
+The examples below use global license registration from Option A. When using Option
+B, call `createProCalendar(license)` with your explicit license object.
 
 <FrameworkTabs>
   <Tab>
-    ```tsx
+    ```tsx title="src/App.tsx"
     import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
-    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { createProCalendar } from './dayflow-pro';
 
-    function App() {
-      const calendar = useCalendarApp({
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      });
+    const { config, printPlugin } = createProCalendar();
 
-      return <DayFlowCalendar calendar={calendar} />;
+    export default function App() {
+      const calendar = useCalendarApp(config);
+
+      return (
+        <>
+          <button type='button' onClick={() => printPlugin.api.open()}>
+            Print
+          </button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
     }
     ```
 
   </Tab>
   <Tab>
-    ```vue
+    ```vue title="src/App.vue"
     <template>
+      <button type="button" @click="printPlugin.api.open()">Print</button>
       <DayFlowCalendar :calendar="calendar" />
     </template>
 
-    <script setup>
+    <script setup lang="ts">
     import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
-    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { createProCalendar } from './dayflow-pro';
 
-    const calendar = useCalendarApp({
-      views: [
-        createResourceGridView({
-          mode: 'resourceView',
-          resources: [
-            { id: 'room-a', title: 'Room A' },
-            { id: 'room-b', title: 'Room B' },
-          ],
-        }),
-      ],
-    });
+    const { config, printPlugin } = createProCalendar();
+    const calendar = useCalendarApp(config);
     </script>
     ```
 
   </Tab>
   <Tab>
-    ```typescript
+    ```typescript title="src/app/app.component.ts"
     import { Component } from '@angular/core';
-    import { createResourceGridView } from '@dayflow-pro/resource-grid';
     import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createProCalendar } from '../dayflow-pro';
 
     @Component({
       selector: 'app-root',
       standalone: true,
       imports: [DayFlowCalendarModule],
       template: `
+        <button type="button" (click)="printPlugin.api.open()">Print</button>
         <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
-      `
+      `,
     })
     export class AppComponent {
-      calendar = {
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      };
+      private readonly pro = createProCalendar();
+      readonly calendar = this.pro.config;
+      readonly printPlugin = this.pro.printPlugin;
     }
     ```
 
   </Tab>
   <Tab>
-    ```svelte
-    <script>
+    ```svelte title="src/App.svelte"
+    <script lang="ts">
       import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
-      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+      import { createProCalendar } from './dayflow-pro';
 
-      const calendar = useCalendarApp({
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      });
+      const { config, printPlugin } = createProCalendar();
+      const calendar = useCalendarApp(config);
     </script>
 
+    <button type="button" onclick={() => printPlugin.api.open()}>Print</button>
     <DayFlowCalendar {calendar} />
     ```
 
   </Tab>
 </FrameworkTabs>
+
+Resource Timeline uses `name` for its resource label, while Resource Grid uses
+`title`. Events must resolve to a resource ID. By default, both views read
+`event.resourceId` and then fall back to `event.calendarId`; use `getResourceId` when
+your data stores the value elsewhere.
+
+## 4. Import Pro styles correctly
+
+Every installed view or plugin needs its distributed stylesheet. Choose exactly one
+full `styles.css` foundation, then use `styles.components.css` for every other
+DayFlow package.
+
+### Without Tailwind, using Resource Timeline
+
+Use Scheduler as the single full CSS foundation. Keep this import order:
+
+```css title="src/index.css"
+@import '@dayflow-scheduler/core/dist/styles.css';
+@import '@dayflow/core/dist/styles.components.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+```
+
+Do not also import `@dayflow/core/dist/styles.css` in this setup. Loading both full
+stylesheets introduces two CSS foundations/resets, and the later one can override
+Scheduler component rules. Typical symptoms are plain view-switcher buttons, overly
+dark grid lines, incorrect spacing, or event content that appears missing.
+
+### Without Tailwind, not using Resource Timeline
+
+Use DayFlow Core as the full foundation and load Pro package component styles after
+it:
+
+```css title="src/index.css"
+@import '@dayflow/core/dist/styles.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+```
+
+Remove imports for packages your application does not install.
+
+### With Tailwind CSS v4
+
+Your application already provides the CSS foundation, so use component-only entries
+for every DayFlow package:
+
+```css title="src/app.css"
+@import '@dayflow/core/dist/styles.components.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
+@import '@dayflow-scheduler/core/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+@import 'tailwindcss';
+
+@source '../node_modules/@dayflow/core/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/resource-grid/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/resource-timeline/dist/**/*.js';
+@source '../node_modules/@dayflow-scheduler/core/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/plugin-print/dist/**/*.js';
+```
+
+Adjust the relative `@source` paths to match the location of your CSS file. Do not
+mix any package's full `styles.css` entry into this Tailwind setup.
+
+## Troubleshooting
+
+### Resource Timeline fails to install
+
+Confirm that `.npmrc` contains both registry scopes and that both
+`DAYFLOW_PRO_NPM_TOKEN` and `DAYFLOW_PRO_RUNTIME_TOKEN` are available in the shell or
+CI job running the package manager.
+
+### A Pro view reports a missing license
+
+For global registration, confirm that `registerDayflowProLicense()` runs before the
+first render. For explicit configuration, pass `license` to every Pro view or plugin
+factory.
+
+### The view renders but looks unstyled
+
+Confirm that each installed Pro package has a matching stylesheet import. Then check
+that the application uses only one full `styles.css` foundation and that all
+remaining imports use `styles.components.css`.
