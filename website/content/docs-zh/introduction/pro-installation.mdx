@@ -1,149 +1,361 @@
 ---
 title: Pro 安装
-description: 安装 DayFlow Pro 软件包，配置私有镜像源访问，并激活您的 DayFlow Pro 许可证密钥。
+description: 安装 DayFlow Pro 软件包、配置私有镜像源、激活许可证并正确导入样式。
 status: pro
 ---
 
 # Pro 安装
 
-DayFlow Pro 使用两种独立的凭据：
+DayFlow Pro 最多会使用三种独立凭据：
 
-- 用于安装 `@dayflow-pro/*` 软件包的私有 npm 镜像源 token
-- 用于激活 Pro 功能的已签名 DayFlow Pro 许可证密钥
+- 用于安装 `@dayflow-pro/*` 软件包的私有 npm token
+- Resource Timeline 私有运行时依赖所需的 Pro runtime npm token
+- 应用中用于激活 Pro 功能的已签名 DayFlow Pro 许可证密钥
+
+前两个 npm token 只用于下载软件包。请将它们保存在本地 shell 或 CI 密钥中，
+不要通过客户端环境变量暴露。已签名的 Pro 许可证密钥则是独立的客户端激活 token。
 
 ## 1. 配置私有镜像源访问
 
-在安装私有软件包之前，将您的 DayFlow Pro npm token 添加到 `.npmrc`：
+在项目根目录的 `.npmrc` 中加入：
 
 ```ini
 @dayflow-pro:registry=https://gitlab.com/api/v4/projects/81880038/packages/npm/
 //gitlab.com/api/v4/projects/81880038/packages/npm/:_authToken=${DAYFLOW_PRO_NPM_TOKEN}
+
+@dayflow-scheduler:registry=https://gitlab.com/api/v4/projects/84910604/packages/npm/
+//gitlab.com/api/v4/projects/84910604/packages/npm/:_authToken=${DAYFLOW_PRO_RUNTIME_TOKEN}
 ```
 
-之后，像往常一样安装您购买的软件包：
+安装前先设置环境变量，例如：
 
 ```bash
-pnpm add @dayflow-pro/license @dayflow-pro/resource-grid
+export DAYFLOW_PRO_NPM_TOKEN="your-pro-package-token"
+export DAYFLOW_PRO_RUNTIME_TOKEN="your-pro-runtime-token"
 ```
 
-## 2. 注册您的许可证密钥一次
+只安装应用实际使用的包：
 
-在应用启动时注册您的 DayFlow Pro 许可证密钥：
+```bash
+pnpm add @dayflow-pro/license \
+  @dayflow-pro/resource-timeline \
+  @dayflow-pro/resource-grid \
+  @dayflow-pro/plugin-print
+```
 
-```tsx
+如果不使用 Resource Timeline，可以同时省略
+`@dayflow-pro/resource-timeline` 和 `@dayflow-scheduler` 镜像源配置。
+
+## 2. 选择许可证配置方式
+
+DayFlow Pro 同时支持全局注册和显式传入 `license`。请根据应用获取许可证密钥的方式
+选择其中一种。
+
+### 方式 A：应用启动时注册一次
+
+如果许可证在页面生命周期内不会改变，请在框架首次渲染之前调用
+`registerDayflowProLicense()`：
+
+```tsx title="src/main.tsx（Vite）"
 import { registerDayflowProLicense } from '@dayflow-pro/license';
 
-registerDayflowProLicense({
-  token: process.env.NEXT_PUBLIC_DAYFLOW_PRO_LICENSE_TOKEN!,
-});
+const token = import.meta.env.VITE_DAYFLOW_PRO_LICENSE_TOKEN;
+
+if (!token) {
+  throw new Error('Missing VITE_DAYFLOW_PRO_LICENSE_TOKEN');
+}
+
+registerDayflowProLicense({ token });
+
+// 注册完成后再渲染 React、Vue、Angular 或 Svelte 应用。
 ```
 
-一旦注册成功，您的 Pro 视图和插件将自动读取该 token。
+在 Next.js 客户端代码中，可以使用
+`process.env.NEXT_PUBLIC_DAYFLOW_PRO_LICENSE_TOKEN` 之类的客户端环境变量。
+
+注册后，Pro 视图和插件会自动读取许可证。全局注册不是响应式状态，因此必须在首次
+渲染之前完成。如果用户可以在运行时输入、更换许可证或切换账号，请使用下面的显式方式。
+
+### 方式 B：显式传入许可证
+
+运行时输入许可证、账号切换、多租户应用或从浏览器存储恢复 token 时，使用显式配置：
+
+```tsx
+import type { PackageLicenseConfig } from '@dayflow-pro/license';
+
+const license: PackageLicenseConfig = {
+  token,
+  onTokenRefresh: nextToken => {
+    localStorage.setItem('dayflow-pro-license', nextToken);
+  },
+};
+
+const timelineView = createResourceTimelineView({
+  license,
+  resources: timelineResources,
+});
+
+const gridView = createResourceGridView({
+  license,
+  mode: 'resourceView',
+  resources: gridResources,
+});
+
+const printPlugin = createPrintPlugin({ license });
+```
+
+某个视图或插件显式传入的 `license` 会覆盖全局注册的许可证。
 
 ## 3. 正常使用 Pro 软件包
 
-在安装和注册后，您可以正常使用 Pro 软件包，而无需在每次调用中重复许可证配置：
+Pro 视图与公开版 DayFlow 视图一样加入 `views` 数组；Pro 插件则加入 `plugins` 数组：
+
+| 软件包                           | 工厂函数                       | 添加位置  |
+| -------------------------------- | ------------------------------ | --------- |
+| `@dayflow-pro/resource-timeline` | `createResourceTimelineView()` | `views`   |
+| `@dayflow-pro/resource-grid`     | `createResourceGridView()`     | `views`   |
+| `@dayflow-pro/plugin-print`      | `createPrintPlugin()`          | `plugins` |
+
+Pro 工厂函数与框架无关。先把共享配置放进一个模块，再接入对应的框架适配器：
+
+```ts title="src/dayflow-pro.ts"
+import {
+  createEvent,
+  createWeekView,
+  type CalendarAppConfig,
+  type Event,
+} from '@dayflow/core';
+import type { PackageLicenseConfig } from '@dayflow-pro/license';
+import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+import { createResourceGridView } from '@dayflow-pro/resource-grid';
+import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+const getResourceId = (event: Event) =>
+  typeof event.meta?.resourceId === 'string'
+    ? event.meta.resourceId
+    : event.calendarId;
+
+export function createProCalendar(license?: PackageLicenseConfig) {
+  const timelineView = createResourceTimelineView({
+    license,
+    resources: [
+      {
+        id: 'design',
+        name: '设计',
+        groupId: 'delivery',
+        groupName: '交付',
+        subtitle: '产品设计',
+      },
+      {
+        id: 'engineering',
+        name: '工程',
+        groupId: 'delivery',
+        groupName: '交付',
+        subtitle: '前端工程',
+      },
+    ],
+    defaultView: 'week',
+    height: 640,
+    getResourceId,
+  });
+
+  const gridView = createResourceGridView({
+    license,
+    mode: 'resourceView',
+    resources: [
+      { id: 'design', title: '设计' },
+      { id: 'engineering', title: '工程' },
+    ],
+    visibleDays: 3,
+    firstHour: 8,
+    lastHour: 18,
+    getResourceId,
+  });
+
+  const printPlugin = createPrintPlugin({
+    license,
+    defaultOptions: {
+      miniCalendar: true,
+      calendarKeys: true,
+      textSize: 'medium',
+    },
+  });
+
+  const config: CalendarAppConfig = {
+    views: [createWeekView(), timelineView, gridView],
+    plugins: [printPlugin],
+    defaultView: 'resource',
+    events: [
+      createEvent({
+        id: 'launch-plan',
+        title: '发布计划',
+        start: new Date(2026, 6, 29, 9),
+        end: new Date(2026, 6, 29, 11),
+        calendarId: 'design',
+        meta: { resourceId: 'design' },
+      }),
+    ],
+  };
+
+  return { config, printPlugin };
+}
+```
+
+下面的示例使用方式 A 的全局许可证。如果使用方式 B，请将显式许可证对象传给
+`createProCalendar(license)`。
 
 <FrameworkTabs>
   <Tab>
-    ```tsx
+    ```tsx title="src/App.tsx"
     import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
-    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { createProCalendar } from './dayflow-pro';
 
-    function App() {
-      const calendar = useCalendarApp({
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      });
+    const { config, printPlugin } = createProCalendar();
 
-      return <DayFlowCalendar calendar={calendar} />;
+    export default function App() {
+      const calendar = useCalendarApp(config);
+
+      return (
+        <>
+          <button type='button' onClick={() => printPlugin.api.open()}>
+            打印
+          </button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
     }
     ```
 
   </Tab>
   <Tab>
-    ```vue
+    ```vue title="src/App.vue"
     <template>
+      <button type="button" @click="printPlugin.api.open()">打印</button>
       <DayFlowCalendar :calendar="calendar" />
     </template>
 
-    <script setup>
-      import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
-      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    <script setup lang="ts">
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createProCalendar } from './dayflow-pro';
 
-      const calendar = useCalendarApp({
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      });
+    const { config, printPlugin } = createProCalendar();
+    const calendar = useCalendarApp(config);
     </script>
     ```
 
   </Tab>
   <Tab>
-    ```typescript
+    ```typescript title="src/app/app.component.ts"
     import { Component } from '@angular/core';
-    import { createResourceGridView } from '@dayflow-pro/resource-grid';
     import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createProCalendar } from '../dayflow-pro';
 
     @Component({
       selector: 'app-root',
       standalone: true,
       imports: [DayFlowCalendarModule],
       template: `
+        <button type="button" (click)="printPlugin.api.open()">打印</button>
         <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
-      `
+      `,
     })
     export class AppComponent {
-      calendar = {
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      };
+      private readonly pro = createProCalendar();
+      readonly calendar = this.pro.config;
+      readonly printPlugin = this.pro.printPlugin;
     }
     ```
 
   </Tab>
   <Tab>
-    ```svelte
-    <script>
+    ```svelte title="src/App.svelte"
+    <script lang="ts">
       import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
-      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+      import { createProCalendar } from './dayflow-pro';
 
-      const calendar = useCalendarApp({
-        views: [
-          createResourceGridView({
-            mode: 'resourceView',
-            resources: [
-              { id: 'room-a', title: 'Room A' },
-              { id: 'room-b', title: 'Room B' },
-            ],
-          }),
-        ],
-      });
+      const { config, printPlugin } = createProCalendar();
+      const calendar = useCalendarApp(config);
     </script>
 
+    <button type="button" onclick={() => printPlugin.api.open()}>打印</button>
     <DayFlowCalendar {calendar} />
     ```
 
   </Tab>
 </FrameworkTabs>
+
+Resource Timeline 使用 `name` 作为资源名称，Resource Grid 使用 `title`。事件必须能
+解析出资源 ID。默认情况下，两个视图都会先读取 `event.resourceId`，再回退到
+`event.calendarId`；如果你的数据保存在其他字段，请配置 `getResourceId`。
+
+## 4. 正确导入 Pro 样式
+
+每个已安装的视图或插件都需要导入对应的样式。整个应用只能选择一个完整的
+`styles.css` 作为基础样式，其他 DayFlow 包必须使用 `styles.components.css`。
+
+### 未使用 Tailwind，并使用 Resource Timeline
+
+使用 Scheduler 作为唯一的完整 CSS 基础，并保持下面的导入顺序：
+
+```css title="src/index.css"
+@import '@dayflow-scheduler/core/dist/styles.css';
+@import '@dayflow/core/dist/styles.components.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+```
+
+此时不要再导入 `@dayflow/core/dist/styles.css`。同时加载两个完整样式会引入两套
+CSS 基础/reset，后加载的样式可能覆盖 Scheduler 的组件规则。常见表现包括视图切换
+按钮变成默认样式、网格线过深、间距异常，或事件内容看起来像是消失了。
+
+### 未使用 Tailwind，也不使用 Resource Timeline
+
+使用 DayFlow Core 作为完整基础，再加载各 Pro 包的组件样式：
+
+```css title="src/index.css"
+@import '@dayflow/core/dist/styles.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+```
+
+没有安装的包应删除对应的导入。
+
+### 使用 Tailwind CSS v4
+
+应用已经提供 CSS 基础，因此所有 DayFlow 包都应使用仅包含组件规则的入口：
+
+```css title="src/app.css"
+@import '@dayflow/core/dist/styles.components.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
+@import '@dayflow-scheduler/core/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+@import 'tailwindcss';
+
+@source '../node_modules/@dayflow/core/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/resource-grid/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/resource-timeline/dist/**/*.js';
+@source '../node_modules/@dayflow-scheduler/core/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/plugin-print/dist/**/*.js';
+```
+
+请根据 CSS 文件的位置调整 `@source` 相对路径。此配置中不要混入任何包的完整
+`styles.css`。
+
+## 故障排查
+
+### Resource Timeline 安装失败
+
+确认 `.npmrc` 同时包含两个镜像源，并且运行包管理器的 shell 或 CI 任务中同时存在
+`DAYFLOW_PRO_NPM_TOKEN` 和 `DAYFLOW_PRO_RUNTIME_TOKEN`。
+
+### Pro 视图提示缺少许可证
+
+使用全局注册时，确认 `registerDayflowProLicense()` 在首次渲染之前执行；使用显式
+配置时，应将 `license` 传给每一个 Pro 视图或插件工厂函数。
+
+### 视图已渲染但样式异常
+
+确认每个已安装的 Pro 包都有对应的样式导入。然后检查应用是否只使用一个完整的
+`styles.css` 基础，其余导入是否全部为 `styles.components.css`。
