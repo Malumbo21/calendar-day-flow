@@ -6,15 +6,14 @@ status: pro
 
 # Pro Installation
 
-DayFlow Pro uses up to three separate credentials:
+DayFlow Pro uses two separate credentials:
 
 - A private npm token for installing `@dayflow-pro/*` packages
-- A Pro runtime npm token for private runtime dependencies used by Resource Timeline
 - A signed DayFlow Pro license key used by the application to activate Pro features
 
-The two npm tokens are download credentials. Keep them in your local shell or CI
-secret store and never expose them through client-side environment variables. The
-signed Pro license key is a separate client-side activation token.
+The npm token is a download credential. Keep it in your local shell or CI secret
+store and never expose it through client-side environment variables. The signed Pro
+license key is a separate client-side activation token.
 
 ## 1. Configure private registry access
 
@@ -23,16 +22,12 @@ Add the registry configuration to the `.npmrc` file at your project root:
 ```ini
 @dayflow-pro:registry=https://gitlab.com/api/v4/projects/81880038/packages/npm/
 //gitlab.com/api/v4/projects/81880038/packages/npm/:_authToken=${DAYFLOW_PRO_NPM_TOKEN}
-
-@dayflow-scheduler:registry=https://gitlab.com/api/v4/projects/84910604/packages/npm/
-//gitlab.com/api/v4/projects/84910604/packages/npm/:_authToken=${DAYFLOW_PRO_RUNTIME_TOKEN}
 ```
 
-Export the tokens before installing packages. For example:
+Export the npm token before installing packages. For example:
 
 ```bash
 export DAYFLOW_PRO_NPM_TOKEN="your-pro-package-token"
-export DAYFLOW_PRO_RUNTIME_TOKEN="your-pro-runtime-token"
 ```
 
 Install only the packages used by your application:
@@ -43,9 +38,6 @@ pnpm add @dayflow-pro/license \
   @dayflow-pro/resource-grid \
   @dayflow-pro/plugin-print
 ```
-
-If you do not use Resource Timeline, you may omit both
-`@dayflow-pro/resource-timeline` and the `@dayflow-scheduler` registry configuration.
 
 ## 2. Choose how to provide the license
 
@@ -304,20 +296,20 @@ DayFlow package.
 
 ### Without Tailwind, using Resource Timeline
 
-Use Scheduler as the single full CSS foundation. Keep this import order:
+Use Resource Timeline as the single full CSS foundation. It already contains all
+styles required by the view:
 
 ```css title="src/index.css"
-@import '@dayflow-scheduler/core/dist/styles.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.css';
 @import '@dayflow/core/dist/styles.components.css';
 @import '@dayflow-pro/resource-grid/dist/styles.components.css';
-@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
 @import '@dayflow-pro/plugin-print/dist/styles.components.css';
 ```
 
 Do not also import `@dayflow/core/dist/styles.css` in this setup. Loading both full
-stylesheets introduces two CSS foundations/resets, and the later one can override
-Scheduler component rules. Typical symptoms are plain view-switcher buttons, overly
-dark grid lines, incorrect spacing, or event content that appears missing.
+stylesheets introduces two CSS foundations/resets. Typical symptoms are plain
+view-switcher buttons, overly dark grid lines, incorrect spacing, or event content
+that appears missing.
 
 ### Without Tailwind, not using Resource Timeline
 
@@ -341,14 +333,12 @@ for every DayFlow package:
 @import '@dayflow/core/dist/styles.components.css';
 @import '@dayflow-pro/resource-grid/dist/styles.components.css';
 @import '@dayflow-pro/resource-timeline/dist/styles.components.css';
-@import '@dayflow-scheduler/core/dist/styles.components.css';
 @import '@dayflow-pro/plugin-print/dist/styles.components.css';
 @import 'tailwindcss';
 
 @source '../node_modules/@dayflow/core/dist/**/*.js';
 @source '../node_modules/@dayflow-pro/resource-grid/dist/**/*.js';
 @source '../node_modules/@dayflow-pro/resource-timeline/dist/**/*.js';
-@source '../node_modules/@dayflow-scheduler/core/dist/**/*.js';
 @source '../node_modules/@dayflow-pro/plugin-print/dist/**/*.js';
 ```
 
@@ -359,9 +349,10 @@ mix any package's full `styles.css` entry into this Tailwind setup.
 
 ### Resource Timeline fails to install
 
-Confirm that `.npmrc` contains both registry scopes and that both
-`DAYFLOW_PRO_NPM_TOKEN` and `DAYFLOW_PRO_RUNTIME_TOKEN` are available in the shell or
-CI job running the package manager.
+Confirm that `.npmrc` contains the `@dayflow-pro` registry and that
+`DAYFLOW_PRO_NPM_TOKEN` is available in the shell or CI job running the package
+manager. Then confirm that the package name and registry URL match the configuration
+shown above.
 
 ### A Pro view reports a missing license
 

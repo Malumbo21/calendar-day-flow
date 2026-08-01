@@ -6,14 +6,13 @@ status: pro
 
 # Proのインストール
 
-DayFlow Pro では、最大 3 種類の認証情報を使用します：
+DayFlow Pro では、2 種類の認証情報を使用します：
 
 - `@dayflow-pro/*` パッケージをインストールするためのプライベート npm トークン
-- Resource Timeline のプライベートランタイム依存関係に必要な Pro runtime npm トークン
 - アプリケーション内で Pro 機能を有効化する署名済み DayFlow Pro ライセンスキー
 
-2 つの npm トークンはパッケージのダウンロード専用です。ローカルシェルまたは CI
-のシークレットストアに保存し、クライアント側の環境変数として公開しないでください。
+この npm トークンはパッケージのダウンロード専用です。ローカルシェルまたは CI の
+シークレットストアに保存し、クライアント側の環境変数として公開しないでください。
 署名済み Pro ライセンスキーは、これらとは別のクライアント側アクティベーショントークンです。
 
 ## 1. プライベートレジストリへのアクセス設定
@@ -23,16 +22,12 @@ DayFlow Pro では、最大 3 種類の認証情報を使用します：
 ```ini
 @dayflow-pro:registry=https://gitlab.com/api/v4/projects/81880038/packages/npm/
 //gitlab.com/api/v4/projects/81880038/packages/npm/:_authToken=${DAYFLOW_PRO_NPM_TOKEN}
-
-@dayflow-scheduler:registry=https://gitlab.com/api/v4/projects/84910604/packages/npm/
-//gitlab.com/api/v4/projects/84910604/packages/npm/:_authToken=${DAYFLOW_PRO_RUNTIME_TOKEN}
 ```
 
 インストール前にトークンを環境変数へ設定します：
 
 ```bash
 export DAYFLOW_PRO_NPM_TOKEN="your-pro-package-token"
-export DAYFLOW_PRO_RUNTIME_TOKEN="your-pro-runtime-token"
 ```
 
 アプリケーションで使用するパッケージだけをインストールしてください：
@@ -43,9 +38,6 @@ pnpm add @dayflow-pro/license \
   @dayflow-pro/resource-grid \
   @dayflow-pro/plugin-print
 ```
-
-Resource Timeline を使用しない場合は、`@dayflow-pro/resource-timeline` と
-`@dayflow-scheduler` レジストリ設定の両方を省略できます。
 
 ## 2. ライセンスの設定方法を選ぶ
 
@@ -302,20 +294,20 @@ Resource Timeline はリソース名に `name`、Resource Grid は `title` を�
 
 ### Tailwind を使わず、Resource Timeline を使用する場合
 
-Scheduler を唯一の完全版 CSS 基盤として、次の順序でインポートします：
+Resource Timeline を唯一の完全版 CSS 基盤として使用します。このビューに必要な
+すべてのスタイルが含まれています：
 
 ```css title="src/index.css"
-@import '@dayflow-scheduler/core/dist/styles.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.css';
 @import '@dayflow/core/dist/styles.components.css';
 @import '@dayflow-pro/resource-grid/dist/styles.components.css';
-@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
 @import '@dayflow-pro/plugin-print/dist/styles.components.css';
 ```
 
 この構成では `@dayflow/core/dist/styles.css` を追加で読み込まないでください。完全版
-スタイルを 2 つ読み込むと CSS 基盤/reset が重複し、後のスタイルが Scheduler の
-コンポーネントルールを上書きすることがあります。ビュー切替ボタンが素の表示になる、
-グリッド線が濃すぎる、間隔が崩れる、イベント内容が見えない、といった症状が発生します。
+スタイルを 2 つ読み込むと CSS 基盤/reset が重複します。ビュー切替ボタンが素の表示に
+なる、グリッド線が濃すぎる、間隔が崩れる、イベント内容が見えない、といった症状が
+発生します。
 
 ### Tailwind を使わず、Resource Timeline を使用しない場合
 
@@ -339,14 +331,12 @@ DayFlow Core を完全版の基盤にして、その後に Pro パッケージ�
 @import '@dayflow/core/dist/styles.components.css';
 @import '@dayflow-pro/resource-grid/dist/styles.components.css';
 @import '@dayflow-pro/resource-timeline/dist/styles.components.css';
-@import '@dayflow-scheduler/core/dist/styles.components.css';
 @import '@dayflow-pro/plugin-print/dist/styles.components.css';
 @import 'tailwindcss';
 
 @source '../node_modules/@dayflow/core/dist/**/*.js';
 @source '../node_modules/@dayflow-pro/resource-grid/dist/**/*.js';
 @source '../node_modules/@dayflow-pro/resource-timeline/dist/**/*.js';
-@source '../node_modules/@dayflow-scheduler/core/dist/**/*.js';
 @source '../node_modules/@dayflow-pro/plugin-print/dist/**/*.js';
 ```
 
@@ -357,9 +347,9 @@ CSS ファイルの場所に合わせて `@source` の相対パスを調整し�
 
 ### Resource Timeline をインストールできない
 
-`.npmrc` に両方のレジストリスコープがあり、パッケージマネージャーを実行するシェル
-または CI に `DAYFLOW_PRO_NPM_TOKEN` と `DAYFLOW_PRO_RUNTIME_TOKEN` が存在することを
-確認してください。
+`.npmrc` に `@dayflow-pro` レジストリがあり、パッケージマネージャーを実行する
+シェルまたは CI に `DAYFLOW_PRO_NPM_TOKEN` が存在することを確認してください。
+その後、パッケージ名と registry URL が上記の設定と一致しているか確認します。
 
 ### Pro ビューでライセンス不足が表示される
 

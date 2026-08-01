@@ -26,7 +26,10 @@ import { isEventDeepEqual } from '@/utils/eventUtils';
 import { logger } from '@/utils/logger';
 import { isPlainDate } from '@/utils/temporal';
 import { resolveAppliedTheme } from '@/utils/themeUtils';
-import { restoreVisualEventToCanonical } from '@/utils/timeUtils';
+import {
+  restoreVisualEventToCanonical,
+  getViewTimeFormat,
+} from '@/utils/timeUtils';
 
 import { CalendarOption, CalendarPicker } from './CalendarPicker';
 import { LoadingButton } from './LoadingButton';
@@ -475,6 +478,9 @@ const DefaultEventDetailPanel = ({
             value={[draftEvent.start, draftEvent.end]}
             timeZone={eventTimeZone}
             startOfWeek={startOfWeek}
+            showTimeFormat={
+              getViewTimeFormat(app) === '12h' ? 'hh:mm A' : 'HH:mm'
+            }
             disabled={!isEditable || isLoading}
             onChange={(
               nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]

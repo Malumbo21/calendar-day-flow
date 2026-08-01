@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'preact/hooks';
 import { ArrowLeft, X } from '@/components/common/Icons';
 import { useLocale } from '@/locale';
 import { mobileFullscreen } from '@/styles/classNames';
+import { ICalendarApp } from '@/types';
 import { CalendarSearchEvent } from '@/types/search';
 
 import SearchResultsList from './SearchResultsList';
@@ -17,6 +18,8 @@ interface MobileSearchDialogProps {
   loading: boolean;
   onResultClick?: (event: CalendarSearchEvent) => void;
   emptyText?: string | Record<string, string>;
+  app?: ICalendarApp;
+  timeFormat?: '12h' | '24h';
 }
 
 const MobileSearchDialog = ({
@@ -28,6 +31,8 @@ const MobileSearchDialog = ({
   loading,
   onResultClick,
   emptyText,
+  app,
+  timeFormat,
 }: MobileSearchDialogProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLocale();
@@ -96,6 +101,8 @@ const MobileSearchDialog = ({
             onResultClick?.(e);
           }}
           emptyText={emptyText}
+          app={app}
+          timeFormat={timeFormat}
         />
       </div>
     </div>,

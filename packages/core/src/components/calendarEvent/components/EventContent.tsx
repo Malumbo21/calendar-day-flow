@@ -140,6 +140,7 @@ export const EventContent = ({
         viewable={canOpenDetail}
         isPopping={isPopping}
         appTimeZone={appTimeZone}
+        timeFormat={timeFormat}
         renderSlot={defaultContent => (
           <ContentSlot
             store={customRenderingStore}
@@ -186,6 +187,7 @@ export const EventContent = ({
         isEventSelected={isEventSelected}
         hideTime={hideTime}
         isMobile={isMobile}
+        timeFormat={timeFormat}
       />
     );
     return (

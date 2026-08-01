@@ -7,7 +7,7 @@
 
 import { Temporal } from 'temporal-polyfill';
 
-import { Event, TimeZoneValue } from '@/types';
+import { Event, ICalendarApp, TimeZoneValue } from '@/types';
 
 // Temporal polyfill implementations expose the timezone in different shapes.
 interface TemporalZoneShape {
@@ -59,15 +59,16 @@ export const formatTime = (
   hours: number,
   minutes = 0,
   format: '12h' | '24h' = '24h',
-  showUnits = true
+  showUnits = true,
+  alwaysShowMinutes = false
 ) => {
   const h = Math.floor(hours);
   const m = minutes || Math.round((hours - h) * 60);
 
   if (format === '12h') {
-    const period = h >= 12 ? 'PM' : 'AM';
+    const period = h >= 12 ? 'pm' : 'am';
     const displayHour = h % 12 || 12;
-    if (m === 0) {
+    if (m === 0 && !alwaysShowMinutes) {
       return `${displayHour}${showUnits ? ` ${period}` : ''}`;
     }
     return `${displayHour}:${m.toString().padStart(2, '0')}${showUnits ? ` ${period}` : ''}`;
@@ -120,19 +121,96 @@ export const getEventEndHour = (event: Event): number => {
   return endHour;
 };
 
+const get12Parts = (h: number, m: number) => {
+  const period = h % 24 >= 12 ? 'pm' : 'am';
+  const displayH = h % 12 || 12;
+  const timeStr =
+    m === 0 ? `${displayH}` : `${displayH}:${m.toString().padStart(2, '0')}`;
+  return { timeStr, period };
+};
+
+/**
+ * Format start and end hours/minutes into a formatted time range string.
+ * In 12h mode:
+ * - Same period (both AM or both PM): omit start's AM/PM, e.g. "12-1pm", "9-10am", "9:30-10:30am".
+ * - Cross boundary (AM to PM or PM to AM): include AM/PM on both, e.g. "11am-12pm", "11pm-12am".
+ * In 24h mode:
+ * - e.g. "14:00 - 16:00"
+ */
+export const formatTimeRangeFormatted = (
+  startHour: number,
+  startMinute: number,
+  endHour: number,
+  endMinute: number,
+  format: '12h' | '24h' = '24h'
+): string => {
+  if (format === '24h') {
+    const sStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+    const eStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    return `${sStr} - ${eStr}`;
+  }
+
+  const sParts = get12Parts(startHour, startMinute);
+  const eParts = get12Parts(endHour, endMinute);
+
+  if (sParts.period === eParts.period) {
+    return `${sParts.timeStr}-${eParts.timeStr}${eParts.period}`;
+  }
+
+  return `${sParts.timeStr}${sParts.period}-${eParts.timeStr}${eParts.period}`;
+};
+
 /**
  * Format event time range as a string
  * @param event Event object
  * @param format Time format ('12h' or '24h', defaults to '24h')
- * @returns Formatted time range (e.g., "14:00 - 16:00" or "All day")
+ * @returns Formatted time range (e.g., "14:00 - 16:00" or "12-1PM")
  */
 export const formatEventTimeRange = (
   event: Event,
   format: '12h' | '24h' = '24h'
 ) => {
-  const startHour = extractHourFromDate(event.start);
-  const endHour = getEventEndHour(event);
-  return `${formatTime(startHour, 0, format)} - ${formatTime(endHour, 0, format)}`;
+  if (!event.start || !event.end) return '';
+  const startDate = temporalToDate(event.start);
+  const endDate = temporalToDate(event.end);
+  const startHour = startDate.getHours();
+  const startMinute = startDate.getMinutes();
+
+  let endHour = endDate.getHours();
+  const endMinute = endDate.getMinutes();
+
+  if (getEventEndHour(event) === 24) {
+    endHour = 24;
+  }
+
+  return formatTimeRangeFormatted(
+    startHour,
+    startMinute,
+    endHour,
+    endMinute,
+    format
+  );
+};
+
+/**
+ * Read the active view's `timeFormat` config.
+ * For components that only receive the app instance and cannot take the value
+ * as a prop from their owning view.
+ * @param app Calendar app instance
+ * @returns Time format of the current view ('24h' when unset)
+ */
+export const getViewTimeFormat = (app?: ICalendarApp): '12h' | '24h' => {
+  try {
+    if (app?.state?.timeFormat) {
+      return app.state.timeFormat;
+    }
+    // getCurrentView() throws while the active view is still unregistered.
+    return app?.getCurrentView?.()?.config?.timeFormat === '12h'
+      ? '12h'
+      : '24h';
+  } catch {
+    return '24h';
+  }
 };
 
 /**
@@ -159,16 +237,31 @@ export const roundToTimeStep = (hour: number) => {
  * @param referenceDate Reference date used for DST-accurate conversion (defaults to today)
  * @returns Array of formatted time strings for the secondary timezone
  */
+export interface SecondaryTimeSlot {
+  hour: number;
+  minute: number;
+}
+
+/**
+ * Generate secondary timezone time slots for each primary time slot.
+ * Uses Temporal to correctly handle DST and timezone conversions.
+ *
+ * @param timeSlots Primary time slots array
+ * @param secondaryTimeZone Secondary IANA timezone identifier
+ * @param timeFormat Time format ('12h' or '24h')
+ * @param referenceDate Reference date used for DST-accurate conversion (defaults to today)
+ * @returns Array of SecondaryTimeSlot objects for the secondary timezone
+ */
 export const generateSecondaryTimeSlots = (
-  timeSlots: Array<{ hour: number; label: string }>,
+  timeSlots: Array<{ hour: number; label: unknown }>,
   secondaryTimeZone: TimeZoneValue,
   timeFormat: '12h' | '24h' = '24h',
   referenceDate: Date = new Date(),
   baseTimeZone?: string
-): string[] => {
+): Array<SecondaryTimeSlot | null> => {
   const normalizedSecondaryTimeZone = normalizeTimeZoneValue(secondaryTimeZone);
   if (!normalizedSecondaryTimeZone) {
-    return timeSlots.map(() => '');
+    return timeSlots.map(() => null);
   }
 
   const primaryTimeZone = baseTimeZone ?? Temporal.Now.timeZoneId();
@@ -189,9 +282,9 @@ export const generateSecondaryTimeSlots = (
         timeZone: primaryTimeZone,
       });
       const secondaryZDT = primaryZDT.withTimeZone(normalizedSecondaryTimeZone);
-      return formatTime(secondaryZDT.hour, secondaryZDT.minute, timeFormat);
+      return { hour: secondaryZDT.hour, minute: secondaryZDT.minute };
     } catch {
-      return '';
+      return null;
     }
   });
 };

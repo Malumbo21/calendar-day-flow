@@ -17,6 +17,7 @@ interface RangePickerPanelProps {
   focusedField: 'start' | 'end';
   isTimeEnabled: boolean;
   disabled?: boolean;
+  timeFormat?: string;
   matchTriggerWidth?: boolean;
   popupRef: RefObject<HTMLDivElement>;
   timeListRefs: RefObject<{
@@ -43,6 +44,7 @@ const RangePickerPanel = ({
   focusedField,
   isTimeEnabled,
   disabled,
+  timeFormat,
   matchTriggerWidth,
   popupRef,
   timeListRefs,
@@ -101,6 +103,7 @@ const RangePickerPanel = ({
                 focusedField={focusedField}
                 draftRange={draftRange}
                 disabled={disabled}
+                timeFormat={timeFormat}
                 onHourSelect={onHourSelect}
                 onMinuteSelect={onMinuteSelect}
                 timeListRefs={timeListRefs}

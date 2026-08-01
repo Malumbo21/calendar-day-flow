@@ -12,7 +12,11 @@ import { useLocale } from '@/locale';
 import { ICalendarApp, Event } from '@/types';
 import { generateUniKey } from '@/utils/helpers';
 import { dateToZonedDateTime } from '@/utils/temporalTypeGuards';
-import { getNextHourRangeInTimeZone } from '@/utils/timeUtils';
+import {
+  formatTimeRangeFormatted,
+  getNextHourRangeInTimeZone,
+  getViewTimeFormat,
+} from '@/utils/timeUtils';
 
 interface QuickCreateEventPopupProps {
   app: ICalendarApp;
@@ -30,15 +34,14 @@ interface SuggestionItem {
   end: Date;
 }
 
-const formatTime = (d: Date) =>
-  d.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-
-const formatTimeRange = (start: Date, end: Date) =>
-  `${formatTime(start)} - ${formatTime(end)}`;
+const formatTimeRange = (start: Date, end: Date, timeFormat: '12h' | '24h') =>
+  formatTimeRangeFormatted(
+    start.getHours(),
+    start.getMinutes(),
+    end.getHours(),
+    end.getMinutes(),
+    timeFormat
+  );
 
 export const QuickCreateEventPopup = ({
   app,
@@ -47,6 +50,7 @@ export const QuickCreateEventPopup = ({
   isOpen,
 }: QuickCreateEventPopupProps) => {
   const { t } = useLocale();
+  const timeFormat = getViewTimeFormat(app);
   const [inputValue, setInputValue] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isReady, setIsReady] = useState(false);
@@ -299,7 +303,7 @@ export const QuickCreateEventPopup = ({
                 </span>
               </div>
               <div className='df-quick-create-item-time'>
-                {formatTimeRange(item.start, item.end)}
+                {formatTimeRange(item.start, item.end, timeFormat)}
               </div>
             </div>
           </div>

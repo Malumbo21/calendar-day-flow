@@ -70,6 +70,7 @@ interface WeekComponentProps {
   app: ICalendarApp;
   enableTouch?: boolean;
   appTimeZone?: string;
+  timeFormat?: '12h' | '24h';
 }
 
 const MULTI_DAY_TOP_OFFSET = 33;
@@ -113,6 +114,7 @@ const WeekComponent = memo(
     app,
     enableTouch,
     appTimeZone,
+    timeFormat = '24h',
   }: WeekComponentProps) => {
     const { t, locale } = useLocale();
     const [shouldShowMonthTitle, setShouldShowMonthTitle] = useState(false);
@@ -516,6 +518,7 @@ const WeekComponent = memo(
                   totalSlotsNeeded={dayLayoutData[index].totalSlotsNeeded}
                   weekHeightPx={weekHeightPx}
                   eventHeight={eventHeight}
+                  timeFormat={timeFormat}
                 />
               ))}
             </div>
@@ -580,6 +583,7 @@ const WeekComponent = memo(
                             enableTouch={enableTouch}
                             appTimeZone={appTimeZone}
                             monthEventHeight={eventHeight}
+                            timeFormat={timeFormat}
                           />
                         ))}
                     </div>

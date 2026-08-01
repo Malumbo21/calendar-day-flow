@@ -45,11 +45,14 @@ export {
   TIME_STEP,
   formatTime,
   formatEventTimeRange,
+  formatTimeRangeFormatted,
   roundToTimeStep,
   getEventEndHour,
   generateSecondaryTimeSlots,
   getTimezoneDisplayLabel,
+  getViewTimeFormat,
 } from './timeUtils';
+export type { SecondaryTimeSlot } from './timeUtils';
 
 // Re-export Date constants
 export {

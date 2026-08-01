@@ -228,6 +228,11 @@ export interface CalendarAppConfig {
    * Switching this field only triggers a re-render — it never calls onEventUpdate or any persistence callback.
    */
   timeZone?: TimeZoneValue;
+  /**
+   * Global time format for all views and features ('12h' or '24h').
+   * When set, takes highest priority and overrides view-level or search-level format configs.
+   */
+  timeFormat?: '12h' | '24h';
 }
 
 /**
@@ -258,6 +263,8 @@ export interface CalendarAppState {
   allDaySortComparator?: AllDaySortComparator;
   /** Resolved global timezone (IANA string). See CalendarAppConfig.timeZone. */
   timeZone: string;
+  /** Global time format override ('12h' or '24h'). */
+  timeFormat?: '12h' | '24h';
 }
 
 /**

@@ -64,10 +64,12 @@ const DayView = ({
     lastHour: configLastHour = defaultDragConfig.LAST_HOUR,
     allDayHeight: configAllDayHeight = defaultDragConfig.ALL_DAY_HEIGHT,
     showAllDay = true,
-    timeFormat = '24h',
+    timeFormat: configTimeFormat = '24h',
     secondaryTimeZone,
     showEventDots = true,
   } = config;
+
+  const timeFormat = app.state.timeFormat ?? configTimeFormat;
 
   const HOUR_HEIGHT = configHourHeight;
   const FIRST_HOUR = configFirstHour;

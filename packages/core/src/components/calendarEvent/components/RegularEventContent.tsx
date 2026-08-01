@@ -18,7 +18,7 @@ import {
   getPrimaryCalendarId,
   extractHourFromDate,
   getEventEndHour,
-  formatTime,
+  formatTimeRangeFormatted,
 } from '@/utils';
 
 interface RegularEventContentProps {
@@ -109,7 +109,7 @@ const RegularEventContent = ({
         {duration > 0.5 && (
           <div className={eventTime}>
             {multiDaySegmentInfo
-              ? `${formatTime(startHour, 0, timeFormat)} - ${formatTime(endHour, 0, timeFormat)}`
+              ? formatTimeRangeFormatted(startHour, 0, endHour, 0, timeFormat)
               : formatEventTimeRange(event, timeFormat)}
           </div>
         )}

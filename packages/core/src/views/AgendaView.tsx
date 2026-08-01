@@ -18,6 +18,7 @@ import { AgendaViewProps, Event, ICalendarApp } from '@/types';
 import {
   compareAllDayDisplayPriority,
   formatTime,
+  formatTimeRangeFormatted,
   getEventBgColor,
   getEventTextColor,
   getTodayInTimeZone,
@@ -136,7 +137,13 @@ const formatAgendaTimeLabel = (
 
   if (!multiDay) {
     return {
-      timeLabel: `${formatTime(start.getHours(), start.getMinutes(), timeFormat)} - ${formatTime(end.getHours(), end.getMinutes(), timeFormat)}`,
+      timeLabel: formatTimeRangeFormatted(
+        start.getHours(),
+        start.getMinutes(),
+        end.getHours(),
+        end.getMinutes(),
+        timeFormat
+      ),
       renderAsBadge: false,
       sortMs: start.getTime(),
     };
@@ -163,6 +170,35 @@ const formatAgendaTimeLabel = (
     renderAsBadge: true,
     sortMs: day.getTime() - DAY_MS / 2,
   };
+};
+
+const renderAgendaTimeLabel = (label: string, timeFormat?: string) => {
+  if (timeFormat !== '12h') {
+    return label;
+  }
+
+  const parts = label.split(/(am|pm|AM|PM)/);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part === 'am' || part === 'AM') {
+          return (
+            <span key={index} className='df-agenda-unit'>
+              am
+            </span>
+          );
+        }
+        if (part === 'pm' || part === 'PM') {
+          return (
+            <span key={index} className='df-agenda-unit'>
+              pm
+            </span>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
 };
 
 const buildAgendaGroups = (
@@ -286,7 +322,7 @@ const AgendaView = ({
       ? Math.floor(config.daysToShow as number)
       : 14;
   const showEmptyDays = config.showEmptyDays !== false;
-  const timeFormat = config.timeFormat ?? '24h';
+  const timeFormat = app.state.timeFormat ?? config.timeFormat ?? '24h';
 
   const rangeStart = useMemo(() => normalizeDate(currentDate), [currentDate]);
   const rangeEnd = useMemo(
@@ -677,7 +713,9 @@ const AgendaView = ({
                         key={`${group.date.toISOString()}-${entry.event.id}`}
                         className='df-agenda-item'
                       >
-                        <div className='df-agenda-time'>{entry.timeLabel}</div>
+                        <div className='df-agenda-time'>
+                          {renderAgendaTimeLabel(entry.timeLabel, timeFormat)}
+                        </div>
                         {renderAgendaEventButton(entry)}
                       </div>
                     ))}

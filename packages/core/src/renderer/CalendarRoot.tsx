@@ -32,6 +32,7 @@ import {
 import { ThemeMode } from '@/types/calendarTypes';
 import { CalendarSearchProps } from '@/types/search';
 import { getThemeColorCssVariables } from '@/utils/themeUtils';
+import { getViewTimeFormat } from '@/utils/timeUtils';
 
 import { ContentSlot } from './ContentSlot';
 import { CustomRenderingContext } from './CustomRenderingContext';
@@ -318,6 +319,7 @@ export const CalendarRoot = ({
     },
     draftEvent: quickCreate.mobileDraftEvent,
     app: app,
+    timeFormat: getViewTimeFormat(app),
   };
 
   return (
@@ -385,6 +387,8 @@ export const CalendarRoot = ({
                     search.handleSearchResultClick(e, 'desktop')
                   }
                   emptyText={searchConfig?.emptyText}
+                  app={app}
+                  timeFormat={searchConfig?.timeFormat}
                 />
               </div>
 
@@ -397,6 +401,8 @@ export const CalendarRoot = ({
                 loading={search.searchLoading}
                 onResultClick={e => search.handleSearchResultClick(e, 'mobile')}
                 emptyText={searchConfig?.emptyText}
+                app={app}
+                timeFormat={searchConfig?.timeFormat}
               />
             </div>
           </div>

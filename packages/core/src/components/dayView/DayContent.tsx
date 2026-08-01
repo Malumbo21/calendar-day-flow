@@ -2,6 +2,7 @@ import { RefObject } from 'preact';
 import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
 
 import CalendarEventComponent from '@/components/calendarEvent';
+import { TimeAxisLabel } from '@/components/common/TimeAxisLabel';
 import ViewHeader from '@/components/common/ViewHeader';
 import { GridContextMenu } from '@/components/contextMenu';
 import { useLocale } from '@/locale';
@@ -97,7 +98,7 @@ interface DayContentProps {
   showAllDay: boolean;
   showStartOfDayLabel: boolean;
   timeFormat?: '12h' | '24h';
-  secondaryTimeSlots?: string[];
+  secondaryTimeSlots?: Array<{ hour: number; minute: number } | null>;
   primaryTzLabel?: string;
   secondaryTzLabel?: string;
   appTimeZone?: string;
@@ -375,6 +376,7 @@ export const DayContent = ({
                     isMobile={isMobile}
                     enableTouch={isTouch}
                     appTimeZone={appTimeZone}
+                    timeFormat={timeFormat}
                   />
                 ))}
               </div>
@@ -419,7 +421,13 @@ export const DayContent = ({
                     <div className='df-day-content-current-time-side'>
                       <div className='df-day-content-current-time-side-inner' />
                       <div className={currentTimeLabel}>
-                        {formatTime(hours, 0, timeFormat, false)}
+                        {formatTime(
+                          now.getHours(),
+                          now.getMinutes(),
+                          timeFormat,
+                          false,
+                          true
+                        )}
                       </div>
                     </div>
 
@@ -451,14 +459,29 @@ export const DayContent = ({
                           : (secondaryTimeSlots?.[slotIndex] ?? '')}
                       </span>
                       <span className='df-time-column-tz-value'>
-                        {showStartOfDayLabel && slotIndex === 0
-                          ? ''
-                          : slot.label}
+                        {showStartOfDayLabel && slotIndex === 0 ? (
+                          ''
+                        ) : secondaryTimeSlots?.[slotIndex] ? (
+                          <TimeAxisLabel
+                            hour={secondaryTimeSlots[slotIndex]!.hour}
+                            minute={secondaryTimeSlots[slotIndex]!.minute}
+                            timeFormat={timeFormat}
+                          />
+                        ) : (
+                          ''
+                        )}
                       </span>
                     </div>
                   ) : (
                     <div className={timeLabel}>
-                      {showStartOfDayLabel && slotIndex === 0 ? '' : slot.label}
+                      {showStartOfDayLabel && slotIndex === 0 ? (
+                        ''
+                      ) : (
+                        <TimeAxisLabel
+                          hour={slot.hour}
+                          timeFormat={timeFormat}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -482,9 +505,11 @@ export const DayContent = ({
                   className={cn(midnightLabel, 'df-midnight-label-offset')}
                   style={{ top: 'auto', bottom: '-0.625rem' }}
                 >
-                  {showStartOfDayLabel
-                    ? formatTime(FIRST_HOUR, 0, timeFormat)
-                    : ''}
+                  {showStartOfDayLabel ? (
+                    <TimeAxisLabel hour={FIRST_HOUR} timeFormat={timeFormat} />
+                  ) : (
+                    ''
+                  )}
                 </div>
               </div>
               <div
@@ -570,14 +595,26 @@ export const DayContent = ({
                         width: isMobile ? '5rem' : '5.5rem',
                       }}
                     >
-                      <span>{secondaryTimeSlots?.[0] ?? ''}</span>
-                      <span>{formatTime(0, 0, timeFormat)}</span>
+                      <span>
+                        {secondaryTimeSlots?.[0] ? (
+                          <TimeAxisLabel
+                            hour={secondaryTimeSlots[0].hour}
+                            minute={secondaryTimeSlots[0].minute}
+                            timeFormat={timeFormat}
+                          />
+                        ) : (
+                          ''
+                        )}
+                      </span>
+                      <span>
+                        <TimeAxisLabel hour={0} timeFormat={timeFormat} />
+                      </span>
                     </div>
                   ) : (
                     <div
                       className={cn(midnightLabel, 'df-midnight-label-offset')}
                     >
-                      {formatTime(0, 0, timeFormat)}
+                      <TimeAxisLabel hour={0} timeFormat={timeFormat} />
                     </div>
                   )}
                 </div>
@@ -638,6 +675,7 @@ export const DayContent = ({
                           isMobile={isMobile}
                           enableTouch={isTouch}
                           appTimeZone={appTimeZone}
+                          timeFormat={timeFormat}
                         />
                       );
                     })}
