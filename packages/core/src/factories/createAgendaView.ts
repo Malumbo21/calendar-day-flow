@@ -35,7 +35,7 @@ export const createAgendaView: ViewFactory<AgendaViewConfig> = (
 
   return {
     type: ViewType.AGENDA,
-    label: 'Agenda',
+    ...(config.label ? { label: config.label } : {}),
     component: AgendaViewAdapter,
     config: finalConfig,
   };

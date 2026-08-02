@@ -84,9 +84,11 @@ const WeekView = ({
     lastHour: configLastHour = defaultDragConfig.LAST_HOUR,
     allDayHeight: configAllDayHeight = defaultDragConfig.ALL_DAY_HEIGHT,
     showAllDay = true,
-    timeFormat = '24h',
+    timeFormat: configTimeFormat = '24h',
     secondaryTimeZone,
   } = config;
+
+  const timeFormat = app.state.timeFormat ?? configTimeFormat;
 
   const sidebarWidth =
     secondaryTimeZone && screenSize !== 'mobile'

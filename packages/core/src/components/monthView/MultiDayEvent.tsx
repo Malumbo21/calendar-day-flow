@@ -53,6 +53,7 @@ interface MultiDayEventProps {
   /** Optional slot renderer — receives the default visual content and wraps it in a ContentSlot */
   renderSlot?: (defaultContent: ComponentChildren) => ComponentChildren;
   appTimeZone?: string;
+  timeFormat?: '12h' | '24h';
 }
 
 const DEFAULT_EVENT_HEIGHT = 16;
@@ -85,6 +86,7 @@ export const MultiDayEvent = memo(
     isPopping,
     renderSlot,
     appTimeZone,
+    timeFormat = '24h',
   }: MultiDayEventProps) => {
     const [isPressed, setIsPressed] = useState(false);
     const HORIZONTAL_MARGIN = 2; // 2px spacing on left and right
@@ -241,8 +243,8 @@ export const MultiDayEvent = memo(
       const visualCalendarId = getPrimaryCalendarId(visualEvent);
       const startHour = extractHourFromDate(visualEvent.start);
       const endHour = getEventEndHour(visualEvent);
-      const startTimeText = formatTime(startHour);
-      const endTimeText = formatTime(endHour);
+      const startTimeText = formatTime(startHour, 0, timeFormat);
+      const endTimeText = formatTime(endHour, 0, timeFormat);
       const lineColors = getCalendarLineColors(segment.event);
       const hideColorBar =
         (isActive && isMultiCalendarEvent) ||

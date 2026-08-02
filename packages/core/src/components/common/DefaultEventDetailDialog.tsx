@@ -10,7 +10,10 @@ import { ICalendarApp } from '@/types';
 import { EventDetailDialogProps } from '@/types/eventDetail';
 import { isEventDeepEqual } from '@/utils/eventUtils';
 import { isPlainDate } from '@/utils/temporal';
-import { restoreVisualEventToCanonical } from '@/utils/timeUtils';
+import {
+  restoreVisualEventToCanonical,
+  getViewTimeFormat,
+} from '@/utils/timeUtils';
 
 import { CalendarPicker, CalendarOption } from './CalendarPicker';
 import { LoadingButton } from './LoadingButton';
@@ -260,6 +263,9 @@ const DefaultEventDetailDialog = ({
                 value={[editedEvent.start, editedEvent.end]}
                 timeZone={eventTimeZone}
                 startOfWeek={startOfWeek}
+                showTimeFormat={
+                  getViewTimeFormat(app) === '12h' ? 'hh:mm A' : 'HH:mm'
+                }
                 disabled={!isEditable || isPending}
                 onChange={(
                   nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]

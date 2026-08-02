@@ -2,7 +2,9 @@ import { useMemo } from 'preact/hooks';
 
 import { Loader2 } from '@/components/common/Icons';
 import { useLocale } from '@/locale/useLocale';
+import { ICalendarApp } from '@/types';
 import { CalendarSearchEvent } from '@/types/search';
+import { getViewTimeFormat } from '@/utils';
 import {
   groupSearchResults,
   getSearchHeaderInfo,
@@ -16,6 +18,8 @@ interface SearchResultsListProps {
   keyword: string;
   onResultClick?: (event: CalendarSearchEvent) => void;
   emptyText?: string | Record<string, string>;
+  app?: ICalendarApp;
+  timeFormat?: '12h' | '24h';
 }
 
 const SearchIconPlaceholder = () => (
@@ -40,8 +44,12 @@ const SearchResultsList = ({
   keyword,
   onResultClick,
   emptyText,
+  app,
+  timeFormat,
 }: SearchResultsListProps) => {
   const { t, locale } = useLocale();
+  const effectiveTimeFormat =
+    app?.state?.timeFormat ?? timeFormat ?? getViewTimeFormat(app);
 
   const today = useMemo(() => normalizeDate(new Date()), []);
 
@@ -103,6 +111,7 @@ const SearchResultsList = ({
                 const timeOpt: Intl.DateTimeFormatOptions = {
                   hour: '2-digit',
                   minute: '2-digit',
+                  hour12: effectiveTimeFormat === '12h',
                 };
                 const startTimeStr = event.allDay
                   ? t('allDay') || 'All Day'

@@ -74,6 +74,7 @@ export type YearViewProps = BaseViewProps<YearViewConfig>;
  * Base configuration for creating views
  */
 export interface ViewFactoryConfig {
+  label?: string;
   // Shared layout properties
   hourHeight?: number;
   firstHour?: number;

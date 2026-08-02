@@ -4,6 +4,7 @@ import {
   getCalendarLineColors,
   buildColorBarGradient,
   extractHourFromDate,
+  formatTime,
 } from '@/utils';
 
 const mobileFadeStyle = {
@@ -22,6 +23,7 @@ interface MonthRegularContentProps {
   isEventSelected: boolean;
   hideTime?: boolean;
   isMobile?: boolean;
+  timeFormat?: '12h' | '24h';
 }
 
 const MonthRegularContent = ({
@@ -30,12 +32,14 @@ const MonthRegularContent = ({
   isEventSelected: _isEventSelected,
   hideTime,
   isMobile,
+  timeFormat = '24h',
 }: MonthRegularContentProps) => {
-  const startTime = `${Math.floor(extractHourFromDate(event.start)).toString().padStart(2, '0')}:${Math.round(
-    (extractHourFromDate(event.start) % 1) * 60
-  )
-    .toString()
-    .padStart(2, '0')}`;
+  const startDecimalHour = extractHourFromDate(event.start);
+  const startTime = formatTime(
+    Math.floor(startDecimalHour),
+    Math.round((startDecimalHour % 1) * 60),
+    timeFormat
+  );
 
   const lineColors = getCalendarLineColors(event, app?.getCalendarRegistry());
   const colorBarValue = buildColorBarGradient(lineColors);

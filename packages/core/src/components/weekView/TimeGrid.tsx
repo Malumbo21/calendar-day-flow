@@ -8,6 +8,7 @@ import {
 } from 'preact/hooks';
 
 import CalendarEventComponent from '@/components/calendarEvent';
+import { TimeAxisLabel } from '@/components/common/TimeAxisLabel';
 import { GridContextMenu } from '@/components/contextMenu';
 import { analyzeMultiDayRegularEvent } from '@/components/monthView/util';
 import {
@@ -54,7 +55,7 @@ interface TimeGridProps {
   swipeContentRef: RefObject<HTMLDivElement>;
   calendarRef: RefObject<HTMLDivElement>;
   handleScroll: (e: TargetedEvent<HTMLDivElement, globalThis.Event>) => void;
-  secondaryTimeSlots?: string[];
+  secondaryTimeSlots?: Array<{ hour: number; minute: number } | null>;
   handleCreateStart?: (
     e: MouseEvent | TouchEvent,
     dayIndex: number,
@@ -341,20 +342,35 @@ export const TimeGrid = ({
                 {/* Start-of-day label */}
                 <div className='df-time-column-tz-row df-time-column-tz-row-boundary'>
                   <span className='df-time-column-tz-value'>
-                    {showStartOfDayLabel ? (secondaryTimeSlots?.[0] ?? '') : ''}
+                    {showStartOfDayLabel && secondaryTimeSlots?.[0] ? (
+                      <TimeAxisLabel
+                        hour={secondaryTimeSlots[0].hour}
+                        minute={secondaryTimeSlots[0].minute}
+                        timeFormat={timeFormat}
+                      />
+                    ) : (
+                      ''
+                    )}
                   </span>
                   <span className='df-time-column-tz-value'>
-                    {showStartOfDayLabel
-                      ? formatTime(FIRST_HOUR, 0, timeFormat)
-                      : ''}
+                    {showStartOfDayLabel ? (
+                      <TimeAxisLabel
+                        hour={FIRST_HOUR}
+                        timeFormat={timeFormat}
+                      />
+                    ) : (
+                      ''
+                    )}
                   </span>
                 </div>
               </>
             ) : (
               <div className='df-time-column-boundary-label'>
-                {showStartOfDayLabel
-                  ? formatTime(FIRST_HOUR, 0, timeFormat)
-                  : ''}
+                {showStartOfDayLabel ? (
+                  <TimeAxisLabel hour={FIRST_HOUR} timeFormat={timeFormat} />
+                ) : (
+                  ''
+                )}
               </div>
             )}
           </div>
@@ -363,17 +379,33 @@ export const TimeGrid = ({
               {showSecondaryTz ? (
                 <div className='df-time-column-tz-row'>
                   <span className='df-time-column-tz-value'>
-                    {showStartOfDayLabel && slotIndex === 0
-                      ? ''
-                      : (secondaryTimeSlots?.[slotIndex] ?? '')}
+                    {showStartOfDayLabel && slotIndex === 0 ? (
+                      ''
+                    ) : secondaryTimeSlots?.[slotIndex] ? (
+                      <TimeAxisLabel
+                        hour={secondaryTimeSlots[slotIndex]!.hour}
+                        minute={secondaryTimeSlots[slotIndex]!.minute}
+                        timeFormat={timeFormat}
+                      />
+                    ) : (
+                      ''
+                    )}
                   </span>
                   <span className='df-time-column-tz-value'>
-                    {showStartOfDayLabel && slotIndex === 0 ? '' : slot.label}
+                    {showStartOfDayLabel && slotIndex === 0 ? (
+                      ''
+                    ) : (
+                      <TimeAxisLabel hour={slot.hour} timeFormat={timeFormat} />
+                    )}
                   </span>
                 </div>
               ) : (
                 <div className={timeLabel}>
-                  {showStartOfDayLabel && slotIndex === 0 ? '' : slot.label}
+                  {showStartOfDayLabel && slotIndex === 0 ? (
+                    ''
+                  ) : (
+                    <TimeAxisLabel hour={slot.hour} timeFormat={timeFormat} />
+                  )}
                 </div>
               )}
             </div>
@@ -382,14 +414,24 @@ export const TimeGrid = ({
             {showSecondaryTz ? (
               <div className='df-time-column-tz-row'>
                 <span className='df-time-column-tz-value'>
-                  {secondaryTimeSlots?.[0] ?? ''}
+                  {secondaryTimeSlots?.[0] ? (
+                    <TimeAxisLabel
+                      hour={secondaryTimeSlots[0].hour}
+                      minute={secondaryTimeSlots[0].minute}
+                      timeFormat={timeFormat}
+                    />
+                  ) : (
+                    ''
+                  )}
                 </span>
                 <span className='df-time-column-tz-value'>
-                  {formatTime(0, 0, timeFormat)}
+                  <TimeAxisLabel hour={0} timeFormat={timeFormat} />
                 </span>
               </div>
             ) : (
-              <div className={timeLabel}>{formatTime(0, 0, timeFormat)}</div>
+              <div className={timeLabel}>
+                <TimeAxisLabel hour={0} timeFormat={timeFormat} />
+              </div>
             )}
           </div>
           {/* Current Time Label */}
@@ -411,7 +453,13 @@ export const TimeGrid = ({
                   }}
                 >
                   <div className={currentTimeLabel}>
-                    {formatTime(hours, 0, timeFormat, false)}
+                    {formatTime(
+                      now.getHours(),
+                      now.getMinutes(),
+                      timeFormat,
+                      false,
+                      true
+                    )}
                   </div>
                 </div>
               );
@@ -681,6 +729,7 @@ export const TimeGrid = ({
                           isSlidingView={isSlidingView}
                           enableTouch={isTouch}
                           appTimeZone={appTimeZone}
+                          timeFormat={timeFormat}
                         />
                       );
                     })}

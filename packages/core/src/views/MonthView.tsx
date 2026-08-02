@@ -137,6 +137,7 @@ const MonthView = ({
   const currentDate = app.getCurrentDate();
   const rawEvents = app.getEvents();
   const startOfWeek = config.startOfWeek ?? 1;
+  const timeFormat = app.state.timeFormat ?? config.timeFormat ?? '24h';
   const appTimeZone = app.timeZone;
 
   const scrollDisabled = config.scroll?.disabled === true;
@@ -949,6 +950,7 @@ const MonthView = ({
                   app={app}
                   enableTouch={isTouch}
                   appTimeZone={appTimeZone}
+                  timeFormat={timeFormat}
                 />
               );
             })}
@@ -1019,6 +1021,7 @@ const MonthView = ({
                 app={app}
                 enableTouch={isTouch}
                 appTimeZone={appTimeZone}
+                timeFormat={timeFormat}
               />
             );
           })}

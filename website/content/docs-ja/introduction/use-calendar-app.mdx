@@ -108,6 +108,7 @@
 | `defaultView`          | `ViewType`                  | 任意 | `ViewType.WEEK`                          | 最初に表示するビュー。`views` に含まれている必要あり。                                                                                       |
 | `initialDate`          | `Date`                      | 任意 | `new Date()`                             | フォーカスする基準日。ルーティングの状態などから差し替え可能。                                                                               |
 | `timeZone`             | `string`                    | 任意 | ユーザーのシステムタイムゾーン           | 全ビュー共通の表示 / 編集タイムゾーン。                                                                                                      |
+| `timeFormat`           | `'12h' \| '24h'`            | 任意 | —                                        | すべてのビュー、検索、コンポーネントにおけるグローバル時間表示形式。最高優先度を持ち、各ビューや検索設定の timeFormat を上書きします。       |
 | `switcherMode`         | `'buttons' \| 'select'`     | 任意 | `'buttons'`                              | ビルトインビュースイッチャーの表示方法。                                                                                                     |
 | `calendars`            | `CalendarType[]`            | 任意 | `[]`                                     | カテゴリや色の定義。`calendarId` と連携。                                                                                                    |
 | `defaultCalendar`      | `string`                    | 任意 | 最初の可視カレンダー                     | 新規イベント作成時の既定カレンダー ID。                                                                                                      |

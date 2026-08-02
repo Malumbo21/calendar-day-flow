@@ -61,7 +61,7 @@ interface AllDayRowProps {
   isDragging: boolean;
   primaryTzLabel?: string;
   secondaryTzLabel?: string;
-  secondaryTimeSlots?: string[];
+  secondaryTimeSlots?: Array<{ hour: number; minute: number } | null>;
   handleMoveStart: (e: MouseEvent | TouchEvent, event: Event) => void;
   handleResizeStart: (
     e: MouseEvent | TouchEvent,

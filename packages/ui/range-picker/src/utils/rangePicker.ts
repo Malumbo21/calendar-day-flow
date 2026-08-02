@@ -22,7 +22,7 @@ interface TemporalLike extends TemporalZoneShape {
   toZonedDateTime?: (zone: string) => Temporal.ZonedDateTime;
 }
 
-const TOKEN_REGEX = /(YYYY|YY|MM|DD|HH|mm)/g;
+const TOKEN_REGEX = /(YYYY|YY|MM|DD|HH|hh|h|mm|A|a)/g;
 
 export const pad = (input: number) => input.toString().padStart(2, '0');
 
@@ -53,8 +53,14 @@ export const buildParseRegExp = (template: string): RegExp => {
   while ((match = TOKEN_REGEX.exec(template)) !== null) {
     pattern += escapeRegExp(template.slice(lastIndex, match.index));
     const token = match[0];
-    const length = token === 'YYYY' ? 4 : 2;
-    pattern += `(?<${token}>\\d{${length}})`;
+    if (token === 'A' || token === 'a') {
+      pattern += `(?<${token}>AM|PM|am|pm)`;
+    } else if (token === 'h') {
+      pattern += `(?<${token}>\\d{1,2})`;
+    } else {
+      const length = token === 'YYYY' ? 4 : 2;
+      pattern += `(?<${token}>\\d{${length}})`;
+    }
     lastIndex = match.index + token.length;
   }
 
@@ -85,7 +91,16 @@ export const parseTemporalString = (
 
   const resolvedMonth = groups.MM ? Number(groups.MM) : reference.month;
   const resolvedDay = groups.DD ? Number(groups.DD) : reference.day;
-  const resolvedHour = groups.HH ? Number(groups.HH) : reference.hour;
+  let resolvedHour = groups.HH ? Number(groups.HH) : reference.hour;
+  if (groups.hh || groups.h) {
+    const rawH = Number(groups.hh || groups.h);
+    const isPM = (groups.A || groups.a || '').toUpperCase() === 'PM';
+    if (isPM) {
+      resolvedHour = rawH === 12 ? 12 : rawH + 12;
+    } else {
+      resolvedHour = rawH === 12 ? 0 : rawH;
+    }
+  }
   const resolvedMinute = groups.mm ? Number(groups.mm) : reference.minute;
 
   try {
@@ -207,13 +222,20 @@ export const formatTemporal = (
 ): string => {
   const template = mergeFormatTemplate(format, timeFormat);
 
+  const hour12 = value.hour % 12 || 12;
+  const periodLower = value.hour >= 12 ? 'pm' : 'am';
+
   const replacements: Record<string, string> = {
     YYYY: value.year.toString(),
     YY: pad(value.year % 100),
     MM: pad(value.month),
     DD: pad(value.day),
     HH: pad(value.hour),
+    hh: pad(hour12),
+    h: hour12.toString(),
     mm: pad(value.minute),
+    A: periodLower,
+    a: periodLower,
   };
 
   return template.replace(TOKEN_REGEX, token => replacements[token] ?? token);

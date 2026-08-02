@@ -51,4 +51,9 @@ export interface CalendarSearchProps {
     defaultAction: () => void;
     closeSearch: () => void;
   }) => void | Promise<void>;
+
+  /**
+   * Time format for search results display ('12h' or '24h')
+   */
+  timeFormat?: '12h' | '24h';
 }

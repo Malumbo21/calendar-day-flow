@@ -80,7 +80,7 @@ function makeMockSync(
 /** Drain microtasks and one event-loop tick to allow async listeners to complete. */
 async function flush() {
   await new Promise(resolve => {
-    setImmediate(resolve);
+    setTimeout(resolve, 0);
   });
 }
 

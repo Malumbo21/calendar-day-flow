@@ -70,6 +70,7 @@ interface WeekDayCellProps {
   totalSlotsNeeded: number;
   weekHeightPx: string;
   eventHeight?: number;
+  timeFormat?: '12h' | '24h';
 }
 
 const WeekDayCell = ({
@@ -113,6 +114,7 @@ const WeekDayCell = ({
   totalSlotsNeeded,
   weekHeightPx,
   eventHeight = 16,
+  timeFormat = '24h',
 }: WeekDayCellProps) => {
   const rowSpacing = eventHeight + 1;
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -272,6 +274,7 @@ const WeekDayCell = ({
           enableTouch={enableTouch}
           appTimeZone={appTimeZone}
           monthEventHeight={eventHeight}
+          timeFormat={timeFormat}
         />
       );
       timedEventIndex++;

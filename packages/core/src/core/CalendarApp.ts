@@ -73,6 +73,7 @@ export class CalendarApp implements ICalendarApp {
       overrides: [],
       allDaySortComparator: config.allDaySortComparator,
       timeZone: resolvedTimeZone,
+      timeFormat: config.timeFormat,
     };
 
     this.callbacks = config.callbacks || {};
@@ -483,6 +484,13 @@ export class CalendarApp implements ICalendarApp {
         this.state.timeZone = newTz;
         hasChanged = true;
       }
+    }
+    if (
+      config.timeFormat !== undefined &&
+      config.timeFormat !== this.state.timeFormat
+    ) {
+      this.state.timeFormat = config.timeFormat;
+      hasChanged = true;
     }
     if (config.views !== undefined) {
       const newViews = new Map<CalendarViewType, CalendarView>();
