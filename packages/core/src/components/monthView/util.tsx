@@ -512,7 +512,7 @@ export const createDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-type RegularEventSegment = {
+export type RegularEventSegment = {
   dayIndex: number;
   startHour: number;
   endHour: number;

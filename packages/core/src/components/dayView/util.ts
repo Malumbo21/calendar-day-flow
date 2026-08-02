@@ -1,7 +1,12 @@
 import { EventLayoutCalculator } from '@/components/eventLayout';
+import { analyzeMultiDayRegularEvent } from '@/components/monthView/util';
 import { Event, EventLayout } from '@/types';
 import { createAllDayDisplayComparator } from '@/utils/allDaySort';
-import { extractHourFromDate, getEventEndHour } from '@/utils/helpers';
+import {
+  createDateWithHour,
+  extractHourFromDate,
+  getEventEndHour,
+} from '@/utils/helpers';
 import {
   dateToZonedDateTime,
   temporalToDate,
@@ -63,8 +68,6 @@ export const normalizeLayoutEvents = (
 ): Event[] => {
   const dayStart = new Date(currentDate);
   dayStart.setHours(0, 0, 0, 0);
-  const nextDay = new Date(dayStart);
-  nextDay.setDate(nextDay.getDate() + 1);
 
   const toVisual = (t: Event['start']) =>
     appTimeZone ? temporalToVisualDate(t, appTimeZone) : temporalToDate(t);
@@ -72,24 +75,43 @@ export const normalizeLayoutEvents = (
   return currentDayEvents
     .filter(e => !e.allDay)
     .map(event => {
+      const multiDaySegs = analyzeMultiDayRegularEvent(
+        event,
+        currentDate,
+        1,
+        appTimeZone
+      );
+      const seg = multiDaySegs.find(s => s.dayIndex === 0);
+
+      if (seg) {
+        const segmentEndHour = seg.endHour >= 24 ? 23.99 : seg.endHour;
+        const newStart = dateToZonedDateTime(
+          createDateWithHour(dayStart, seg.startHour) as Date,
+          appTimeZone
+        );
+        const newEnd = dateToZonedDateTime(
+          createDateWithHour(dayStart, segmentEndHour) as Date,
+          appTimeZone
+        );
+
+        return {
+          ...event,
+          start: newStart,
+          end: newEnd,
+          day: 0,
+          _originalStartHour: seg.startHour,
+          _originalEndHour: seg.endHour,
+        };
+      }
+
       const eventStart = toVisual(event.start);
       const eventEnd = toVisual(event.end ?? event.start);
-      let newStart = dateToZonedDateTime(eventStart, appTimeZone);
-      let newEnd = dateToZonedDateTime(eventEnd, appTimeZone);
-
-      if (eventStart < dayStart) {
-        newStart = dateToZonedDateTime(dayStart, appTimeZone);
-      }
-
-      if (eventEnd > nextDay) {
-        newEnd = dateToZonedDateTime(nextDay, appTimeZone);
-      }
 
       return {
         ...event,
-        start: newStart,
-        end: newEnd,
-        day: 0, // Force all events to same day index for collision detection
+        start: dateToZonedDateTime(eventStart, appTimeZone),
+        end: dateToZonedDateTime(eventEnd, appTimeZone),
+        day: 0,
         _originalStartHour: extractHourFromDate(event.start),
         _originalEndHour: getEventEndHour(event),
       };
