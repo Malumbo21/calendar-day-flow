@@ -5,6 +5,7 @@ import CalendarEventComponent from '@/components/calendarEvent';
 import { TimeAxisLabel } from '@/components/common/TimeAxisLabel';
 import ViewHeader from '@/components/common/ViewHeader';
 import { GridContextMenu } from '@/components/contextMenu';
+import { analyzeMultiDayRegularEvent } from '@/components/monthView/util';
 import { useLocale } from '@/locale';
 import {
   allDayRow,
@@ -625,11 +626,23 @@ export const DayContent = ({
                     .filter(event => !event.allDay)
                     .map(event => {
                       const eventLayout = eventLayouts.get(event.id);
+                      const multiDaySegs = analyzeMultiDayRegularEvent(
+                        event,
+                        currentDate,
+                        1,
+                        app.timeZone
+                      );
+                      const seg = multiDaySegs.find(s => s.dayIndex === 0);
+                      const segmentInfo = seg
+                        ? { ...seg, dayIndex: 0 }
+                        : undefined;
+
                       return (
                         <CalendarEventComponent
                           key={event.id}
                           event={event}
                           layout={eventLayout}
+                          multiDaySegmentInfo={segmentInfo}
                           viewType={ViewType.DAY}
                           calendarRef={calendarRef}
                           isBeingDragged={

@@ -8,6 +8,7 @@ import {
   getStartHour,
   getEndHour,
   shouldBeParallel,
+  eventsOverlap,
 } from '@/components/eventLayout/utils';
 import { EventLayout } from '@/types';
 
@@ -40,6 +41,100 @@ function shouldChildrenBeParallel(childEvents: LayoutWeekEvent[]): boolean {
     }
   }
   return false;
+}
+
+function partitionIntoOverlappingClusters(nodes: LayoutNode[]): LayoutNode[][] {
+  if (nodes.length === 0) return [];
+  const clusters: LayoutNode[][] = [];
+  const visited = new Set<string>();
+
+  for (const node of nodes) {
+    if (visited.has(node.event.id)) continue;
+
+    const cluster: LayoutNode[] = [node];
+    const queue: LayoutNode[] = [node];
+    visited.add(node.event.id);
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const other of nodes) {
+        if (visited.has(other.event.id)) continue;
+        if (eventsOverlap(current.event, other.event)) {
+          cluster.push(other);
+          queue.push(other);
+          visited.add(other.event.id);
+        }
+      }
+    }
+
+    clusters.push(cluster);
+  }
+
+  return clusters;
+}
+
+function processChildrenLayout(
+  children: LayoutNode[],
+  parentLeft: number,
+  parentWidth: number,
+  layoutMap: Map<string, EventLayout>,
+  params: LayoutCalculationParams = {}
+): void {
+  if (children.length === 0) return;
+
+  const sortedChildren = [...children].toSorted(
+    (a, b) =>
+      getEndHour(b.event) -
+      getStartHour(b.event) -
+      (getEndHour(a.event) - getStartHour(a.event))
+  );
+
+  if (sortedChildren.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    calculateNodeLayoutWithVirtualParallel(
+      sortedChildren[0],
+      parentLeft,
+      parentWidth,
+      layoutMap,
+      params
+    );
+    return;
+  }
+
+  const clusters = partitionIntoOverlappingClusters(sortedChildren);
+
+  for (const cluster of clusters) {
+    if (cluster.length === 1) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      calculateNodeLayoutWithVirtualParallel(
+        cluster[0],
+        parentLeft,
+        parentWidth,
+        layoutMap,
+        params
+      );
+    } else if (shouldChildrenBeParallel(cluster.map(c => c.event))) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      calculateParallelChildrenLayout(
+        cluster,
+        parentLeft,
+        parentWidth,
+        layoutMap,
+        params
+      );
+    } else {
+      cluster.forEach(child =>
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        calculateNodeLayoutWithVirtualParallel(
+          child,
+          parentLeft,
+          parentWidth,
+          layoutMap,
+          params
+        )
+      );
+    }
+  }
 }
 
 function calculateNodeLayoutWithVirtualParallel(
@@ -78,41 +173,13 @@ function calculateNodeLayoutWithVirtualParallel(
     importance: calculateEventImportance(node.event),
   });
 
-  if (node.children.length === 0) return;
-
-  const sortedChildren = [...node.children].toSorted(
-    (a, b) =>
-      getEndHour(b.event) -
-      getStartHour(b.event) -
-      (getEndHour(a.event) - getStartHour(a.event))
-  );
-
-  if (sortedChildren.length === 1) {
-    calculateNodeLayoutWithVirtualParallel(
-      sortedChildren[0],
+  if (node.children.length > 0) {
+    processChildrenLayout(
+      node.children,
       nodeLeft,
       nodeWidth,
       layoutMap,
       params
-    );
-  } else if (shouldChildrenBeParallel(sortedChildren.map(c => c.event))) {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    calculateParallelChildrenLayout(
-      sortedChildren,
-      nodeLeft,
-      nodeWidth,
-      layoutMap,
-      params
-    );
-  } else {
-    sortedChildren.forEach(child =>
-      calculateNodeLayoutWithVirtualParallel(
-        child,
-        nodeLeft,
-        nodeWidth,
-        layoutMap,
-        params
-      )
     );
   }
 }
@@ -146,7 +213,7 @@ function calculateParallelChildrenLayout(
     return;
   }
 
-  let adjustedMargin = LAYOUT_CONFIG.MARGIN_BETWEEN;
+  const adjustedMargin = LAYOUT_CONFIG.MARGIN_BETWEEN;
   const childWidth =
     (childrenAvailableWidth - adjustedMargin * (childCount - 1)) / childCount;
 
@@ -164,39 +231,13 @@ function calculateParallelChildrenLayout(
     });
 
     if (child.children.length > 0) {
-      const sorted = [...child.children].toSorted(
-        (a, b) =>
-          getEndHour(b.event) -
-          getStartHour(b.event) -
-          (getEndHour(a.event) - getStartHour(a.event))
+      processChildrenLayout(
+        child.children,
+        childLeft,
+        childWidth,
+        layoutMap,
+        params
       );
-      if (sorted.length === 1) {
-        calculateNodeLayoutWithVirtualParallel(
-          sorted[0],
-          childLeft,
-          childWidth,
-          layoutMap,
-          params
-        );
-      } else if (shouldChildrenBeParallel(sorted.map(c => c.event))) {
-        calculateParallelChildrenLayout(
-          sorted,
-          childLeft,
-          childWidth,
-          layoutMap,
-          params
-        );
-      } else {
-        sorted.forEach(gc =>
-          calculateNodeLayoutWithVirtualParallel(
-            gc,
-            childLeft,
-            childWidth,
-            layoutMap,
-            params
-          )
-        );
-      }
     }
   });
 }

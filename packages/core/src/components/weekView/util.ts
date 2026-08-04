@@ -58,8 +58,8 @@ const buildDayEventsForLayout = (
             ) as Date
           ),
           day: day,
-          _originalStartHour: extractHourFromDate(event.start),
-          _originalEndHour: getEventEndHour(event),
+          _originalStartHour: segment.startHour,
+          _originalEndHour: segment.endHour,
         };
         dayEventsForLayout.push(virtualEvent);
         sourceRefs.push(event);
