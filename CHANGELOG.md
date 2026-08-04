@@ -2,6 +2,79 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.7] - 2026-08-04
+
+### Enhancements
+
+- Refined 12-hour time-axis labels and made time ranges more compact by avoiding repeated meridiem text.
+
+### Fixed
+
+- Fixed multi-day event rendering and stacking in Day View, including timezone-aware layouts.
+- Fixed overlapping child events being grouped into the same stacking cluster when their time ranges do not overlap.
+
+## [3.6.6] - 2026-07-20
+
+### Enhancements
+
+- Added custom sidebar and sidebar-header content support to the Angular and Svelte adapters.
+
+### Fixed
+
+- Fixed runtime theme color updates and form focus colors in the event edit UI.
+
+## [3.6.5] - 2026-05-29
+
+### Enhancements
+
+- Added `eventDetailTrigger` to choose whether event details open on click or double-click.
+- Improved transitions between event detail panels and refined click-outside behavior.
+
+### Fixed
+
+- Fixed custom `gridPopupContent` rendering in Grid Year View across framework adapters.
+
+## [3.6.4] - 2026-05-22
+
+### Performance
+
+- Optimized Fixed Week and Year Canvas rendering, drag previews, and event layout in Year View.
+
+### Fixed
+
+- Made the event detail panel and dialog mutually exclusive to prevent duplicate detail views.
+
+## [3.6.3] - 2026-05-14
+
+### New Features & Enhancements
+
+- Added CalDAV and Google Calendar sync support, plus new Outlook Sync and shared Sync Core packages.
+- Added source-based calendar grouping and loading states to the sidebar.
+- Added `minDate` and `maxDate` constraints to the Range Picker.
+- Added the `monthDateNumberContent` slot for customizing Month View date cells.
+- Added runtime plugin configuration APIs with `getPluginConfig` and `updatePluginConfig`.
+
+## [3.6.2] - 2026-05-09
+
+### New Features & Enhancements
+
+- Added programmatic sidebar controls for collapsing, expanding, and reading the current state.
+- Added programmatic keyboard-shortcut controls for enabling, disabling, and reading the current state.
+
+## [3.6.1] - 2026-05-06
+
+### New Features & Enhancements
+
+- Added configurable `eventHeight` for Month View events.
+
+### Fixed
+
+- Fixed `hourHeight` not affecting Day and Week View grid rows.
+- Fixed reverse-drag creation anchors and drag calculations using custom hour settings.
+- Fixed multi-day timed event title overlap and refined Month View event layout.
+- Fixed Week View event drawers not opening on narrower desktop browsers.
+- Standardized empty-grid double-click behavior and refined drag interactions.
+
 ## [3.6.0] - 2026-05-03
 
 ### New Features & Enhancements
