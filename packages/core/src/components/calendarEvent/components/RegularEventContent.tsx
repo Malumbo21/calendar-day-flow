@@ -109,7 +109,21 @@ const RegularEventContent = ({
         {duration > 0.5 && (
           <div className={eventTime}>
             {multiDaySegmentInfo
-              ? formatTimeRangeFormatted(startHour, 0, endHour, 0, timeFormat)
+              ? (() => {
+                  let sH = Math.floor(startHour);
+                  let sM = Math.round((startHour - sH) * 60);
+                  if (sM >= 60) {
+                    sH += 1;
+                    sM = 0;
+                  }
+                  let eH = Math.floor(endHour);
+                  let eM = Math.round((endHour - eH) * 60);
+                  if (eM >= 60) {
+                    eH += 1;
+                    eM = 0;
+                  }
+                  return formatTimeRangeFormatted(sH, sM, eH, eM, timeFormat);
+                })()
               : formatEventTimeRange(event, timeFormat)}
           </div>
         )}

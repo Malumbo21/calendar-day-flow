@@ -41,4 +41,38 @@ describe('RegularEventContent', () => {
     expect(content).not.toBeNull();
     expect(content!.dataset.density).toBe('default');
   });
+
+  it('formats non-integer startHour and endHour correctly in multiDaySegmentInfo', () => {
+    const event = {
+      id: 'event-2',
+      title: 'Multi-day Timed Event',
+      start: Temporal.ZonedDateTime.from('2026-08-05T09:05:00+00:00[UTC]'),
+      end: Temporal.ZonedDateTime.from('2026-08-06T10:59:00+00:00[UTC]'),
+      calendarId: 'blue',
+      allDay: false,
+    };
+
+    // 09:05 -> 9 + 5/60 = 9.083333333333334
+    // 10:59 -> 10 + 59/60 = 10.983333333333333
+    const { container } = render(
+      <RegularEventContent
+        event={event}
+        isEditable={false}
+        isTouchEnabled={false}
+        isEventSelected={false}
+        multiDaySegmentInfo={{
+          startHour: 9 + 5 / 60,
+          endHour: 10 + 59 / 60,
+          isFirst: true,
+          isLast: true,
+          dayIndex: 0,
+        }}
+        timeFormat='24h'
+      />
+    );
+
+    const timeElement = container.querySelector('.df-event-time');
+    expect(timeElement).not.toBeNull();
+    expect(timeElement!.textContent).toBe('09:05 - 10:59');
+  });
 });
