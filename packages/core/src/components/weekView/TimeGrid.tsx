@@ -11,6 +11,7 @@ import CalendarEventComponent from '@/components/calendarEvent';
 import { TimeAxisLabel } from '@/components/common/TimeAxisLabel';
 import { GridContextMenu } from '@/components/contextMenu';
 import { analyzeMultiDayRegularEvent } from '@/components/monthView/util';
+import { TimeGridBackgroundLayer } from '@/components/weekView/TimeGridBackgroundLayer';
 import {
   timeSlot,
   timeLabel,
@@ -521,6 +522,15 @@ export const TimeGrid = ({
                 handleDrop(e, dropDate, dropHour);
               }}
             >
+              <TimeGridBackgroundLayer
+                app={app}
+                currentWeekStart={currentWeekStart}
+                dayCount={weekDaysLabels.length}
+                hourHeight={HOUR_HEIGHT}
+                firstHour={FIRST_HOUR}
+                lastHour={LAST_HOUR}
+              />
+
               {/* Current time line */}
               {isCurrentWeek &&
                 currentTime &&

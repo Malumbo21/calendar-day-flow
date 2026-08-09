@@ -37,6 +37,7 @@ export class PluginManager {
     const plugin = this.state.plugins.get(pluginName);
     if (plugin) {
       plugin.config = { ...plugin.config, ...config };
+      plugin.updateConfig?.(config);
       this.notify();
     }
   }

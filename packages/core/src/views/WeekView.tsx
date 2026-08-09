@@ -504,10 +504,13 @@ const WeekView = ({
 
   const allDayLabelText = useMemo(() => t('allDay'), [t]);
 
-  const timeSlots = Array.from({ length: 24 }, (_, i) => ({
-    hour: i + FIRST_HOUR,
-    label: formatTime(i + FIRST_HOUR, 0, timeFormat),
-  }));
+  const timeSlots = Array.from(
+    { length: Math.max(1, LAST_HOUR - FIRST_HOUR) },
+    (_, i) => ({
+      hour: i + FIRST_HOUR,
+      label: formatTime(i + FIRST_HOUR, 0, timeFormat),
+    })
+  );
 
   const secondaryTimeSlots = useMemo(
     () =>

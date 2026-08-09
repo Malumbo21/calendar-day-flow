@@ -77,6 +77,8 @@ export {
   AudioLines,
   Loader2,
   AlertCircle,
+  CalendarClock,
+  ListChecks,
 } from './components/common/Icons';
 
 // Sidebar classNames
