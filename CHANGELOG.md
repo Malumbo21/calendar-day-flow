@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.8] - 2026-08-10
+
+### Fixed
+
+- Fixed multi-day timed event labels so fractional segment hours are rendered with the correct hour and minute values.
+
 ## [3.6.7] - 2026-08-04
 
 ### Enhancements
