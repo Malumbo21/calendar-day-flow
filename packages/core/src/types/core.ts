@@ -1,6 +1,7 @@
 // oxlint-disable typescript/no-explicit-any
 // Core type definitions
 import { AnyComponent, ComponentChildren } from 'preact';
+import { Temporal } from 'temporal-polyfill';
 
 import { ViewSwitcherMode } from '@/components/common/ViewHeader';
 import { CalendarRegistry } from '@/core/calendarRegistry';
@@ -30,6 +31,95 @@ export enum ViewType {
 
 export type CalendarViewType = ViewType | string;
 
+/** A non-event range rendered behind events in a Day/Week time grid. */
+export type TimeGridBackgroundRange = {
+  id: string;
+  start: Temporal.ZonedDateTime;
+  end: Temporal.ZonedDateTime;
+  title?: string;
+  ariaLabel?: string;
+  editable?: boolean;
+  selected?: boolean;
+  invalid?: boolean;
+  /** Visual treatment for the range. `bar` keeps only a narrow leading marker. */
+  variant?: 'block' | 'bar';
+  /** Split a block into appointment-sized visual segments. */
+  segmentMinutes?: number;
+  /** Per-segment availability. `false` renders a released, non-interactive gap. */
+  segmentAvailability?: boolean[];
+  /** Optional hover/focus card, primarily used by compact bar ranges. */
+  hoverCard?: {
+    title: string;
+    detail: string;
+  };
+  /** Optional range fill, useful for compact bars associated with a calendar. */
+  backgroundColor?: string;
+  className?: string;
+  meta?: Record<string, unknown>;
+};
+
+export type TimeGridBackgroundContext = {
+  app: ICalendarApp;
+  rangeStart: Temporal.PlainDate;
+  rangeEnd: Temporal.PlainDate;
+  timeZone: string;
+};
+
+/** Stable geometry and date context for plugin-owned Day/Week grid layers. */
+export type TimeGridLayerContext = {
+  app: ICalendarApp;
+  view: ViewType.DAY | ViewType.WEEK;
+  /** Exact visible column dates, in display order. */
+  visibleDates: readonly Temporal.PlainDate[];
+  timeZone: string;
+  firstHour: number;
+  /** Exclusive end hour. */
+  lastHour: number;
+  hourHeight: number;
+};
+
+export type TimeGridBackgroundChangeReason =
+  | 'create'
+  | 'move'
+  | 'resize-start'
+  | 'resize-end'
+  | 'keyboard-move'
+  | 'keyboard-resize-start'
+  | 'keyboard-resize-end';
+
+/**
+ * Generic plugin capability for rendering and editing background time ranges.
+ * Ranges stay outside EventManager and are always rendered below calendar events.
+ */
+export type TimeGridBackgroundSource = {
+  id: string;
+  editable?: boolean;
+  snapMinutes?: number;
+  defaultCreateDurationMinutes?: number;
+  getRanges: (context: TimeGridBackgroundContext) => TimeGridBackgroundRange[];
+  onRangeSelect?: (range: TimeGridBackgroundRange) => void;
+  onRangeOpen?: (range: TimeGridBackgroundRange) => void;
+  onRangeCreate?: (
+    start: Temporal.ZonedDateTime,
+    end: Temporal.ZonedDateTime
+  ) => void;
+  onRangeChange?: (
+    range: TimeGridBackgroundRange,
+    start: Temporal.ZonedDateTime,
+    end: Temporal.ZonedDateTime,
+    reason: TimeGridBackgroundChangeReason
+  ) => void;
+  onRangeDelete?: (range: TimeGridBackgroundRange) => void;
+};
+
+/** Context passed to plugin content rendered above the quick-create form. */
+export interface QuickCreatePopupContext {
+  app: ICalendarApp;
+  close: () => void;
+  focusInput: () => void;
+  translate: (key: string, fallback: string) => string;
+}
+
 /**
  * Plugin interface
  * Defines the basic structure of calendar plugins
@@ -37,8 +127,20 @@ export type CalendarViewType = ViewType | string;
 export interface CalendarPlugin {
   name: string;
   install: (app: ICalendarApp) => void;
+  updateConfig?: (config: Record<string, unknown>) => void;
   config?: any;
   api?: unknown;
+  /** Optional Week/Day time-grid background capability. */
+  timeGridBackground?: TimeGridBackgroundSource;
+  /**
+   * Plugin-owned layer rendered inside the Day/Week time grid, below events.
+   * It runs in Core's internal Preact tree, independently of the host adapter.
+   */
+  renderTimeGridLayer?: (context: TimeGridLayerContext) => ComponentChildren;
+  /** Optional plugin-owned content rendered above the quick-create form. */
+  renderQuickCreateTopContent?: (
+    context: QuickCreatePopupContext
+  ) => ComponentChildren;
 }
 
 /**

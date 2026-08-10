@@ -48,6 +48,7 @@
     display: flex;
     height: 1.75rem;
     width: 1.75rem;
+    margin-left: 0.25rem;
     align-items: center;
     justify-content: center;
     border-radius: 0.25rem;
@@ -871,6 +872,7 @@
     pointer-events: none;
     position: absolute;
     inset: 0;
+    z-index: 2;
   }
 
   .df-right-panel {
@@ -1017,6 +1019,193 @@
     position: relative;
   }
 
+  .df-time-grid-background-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .df-time-grid-background-layer-editable {
+    pointer-events: auto;
+    touch-action: none;
+  }
+
+  .df-time-grid-background-range {
+    position: absolute;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid
+      color-mix(in srgb, var(--df-color-primary) 45%, transparent);
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--df-color-primary) 13%, transparent);
+    color: var(--df-color-foreground);
+    padding: 0.35rem 0.45rem;
+    pointer-events: auto;
+    text-align: left;
+  }
+
+  .df-time-grid-background-range-editable {
+    cursor: grab;
+  }
+
+  .df-time-grid-background-range:focus-visible,
+  .df-time-grid-background-range-selected {
+    outline: 2px solid var(--df-color-primary);
+    outline-offset: -2px;
+  }
+
+  .df-time-grid-background-range-invalid {
+    border-style: dashed;
+  }
+
+  .df-time-grid-background-range-invalid::after {
+    content: '!';
+    position: absolute;
+    top: 0.2rem;
+    right: 0.3rem;
+    font-weight: 700;
+  }
+
+  .df-time-grid-background-range-dragging,
+  .df-time-grid-background-range-creating {
+    cursor: grabbing;
+    opacity: 0.78;
+  }
+
+  .df-time-grid-background-range-title {
+    position: absolute;
+    z-index: 2;
+    top: 0.35rem;
+    left: 0.45rem;
+    right: 0.45rem;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .df-time-grid-background-range-segments {
+    position: absolute;
+    inset: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    pointer-events: none;
+  }
+
+  .df-time-grid-background-range-segment {
+    min-height: 0;
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--df-color-primary) 18%, transparent);
+  }
+
+  .df-time-grid-background-range-segment-unavailable {
+    background: transparent;
+    cursor: not-allowed;
+    pointer-events: auto;
+  }
+
+  .df-time-grid-background-range-bar {
+    overflow: visible;
+    border: 0;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--df-color-primary) 70%, transparent);
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .df-time-grid-background-range-bar .df-time-grid-background-range-title {
+    display: none;
+  }
+
+  .df-time-grid-background-hover-card {
+    position: absolute;
+    z-index: 10;
+    top: 0;
+    left: 0.65rem;
+    display: flex;
+    visibility: hidden;
+    min-width: 9rem;
+    max-width: 15rem;
+    flex-direction: column;
+    gap: 0.2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.45rem;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+    color: #0f172a;
+    opacity: 0;
+    padding: 0.55rem 0.65rem;
+    pointer-events: none;
+    transform: translateX(-0.2rem);
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease,
+      visibility 120ms ease;
+    white-space: nowrap;
+  }
+
+  .df-time-grid-background-hover-card strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+  }
+
+  .df-time-grid-background-hover-card span {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 500;
+  }
+
+  .df-time-grid-background-range-bar:hover,
+  .df-time-grid-background-range-bar:focus-visible {
+    z-index: 4;
+  }
+
+  .df-time-grid-background-range-bar:hover .df-time-grid-background-hover-card,
+  .df-time-grid-background-range-bar:focus-visible
+    .df-time-grid-background-hover-card {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .df-time-grid-background-layer:has(.df-time-grid-background-range-bar) {
+    z-index: 3;
+  }
+
+  .df-time-grid-background-resize-handle {
+    position: absolute;
+    left: 25%;
+    width: 50%;
+    height: 0.5rem;
+    cursor: ns-resize;
+  }
+
+  .df-time-grid-background-resize-handle::after {
+    content: '';
+    position: absolute;
+    left: 25%;
+    right: 25%;
+    top: 0.2rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .df-time-grid-background-resize-handle-start {
+    top: 0;
+  }
+
+  .df-time-grid-background-resize-handle-end {
+    bottom: 0;
+  }
+
   .df-week-time-grid-boundary-row {
     display: flex;
   }
@@ -1083,6 +1272,7 @@
     pointer-events: none;
     position: absolute;
     top: 0;
+    z-index: 2;
   }
 
   .df-week-all-day {

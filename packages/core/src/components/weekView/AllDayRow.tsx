@@ -189,10 +189,13 @@ export const AllDayRow = (props: AllDayRowProps) => {
         data-show-all-day={showAllDay ? 'true' : 'false'}
         onContextMenu={e => e.preventDefault()}
       >
-        {/* Left Frozen Column - outside scroll area, matching TimeGrid sidebar */}
-        {showAllDay && (
+        {/* Left Frozen Column - outside scroll area, matching TimeGrid sidebar.
+            Rendered even without the all-day row so the weekday header columns
+            stay aligned with the time-grid columns below. */}
+        {(showAllDay || !isSlidingView) && (
           <div
             className='df-week-all-day-side'
+            data-show-all-day={showAllDay ? 'true' : 'false'}
             onContextMenu={e => e.preventDefault()}
           >
             {/* Header spacer - flexes to match weekday header height */}
@@ -213,12 +216,14 @@ export const AllDayRow = (props: AllDayRowProps) => {
               )}
             </div>
             {/* All Day Label */}
-            <div
-              className={`${allDayLabel} df-week-all-day-label`}
-              style={{ minHeight: `${allDayAreaHeight}px` }}
-            >
-              {allDayLabelText}
-            </div>
+            {showAllDay && (
+              <div
+                className={`${allDayLabel} df-week-all-day-label`}
+                style={{ minHeight: `${allDayAreaHeight}px` }}
+              >
+                {allDayLabelText}
+              </div>
+            )}
           </div>
         )}
 

@@ -3,6 +3,10 @@ import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
 
 import CalendarEventComponent from '@/components/calendarEvent';
 import { TimeAxisLabel } from '@/components/common/TimeAxisLabel';
+import {
+  buildTimeGridVisibleDates,
+  TimeGridLayerSlot,
+} from '@/components/common/TimeGridLayerSlot';
 import ViewHeader from '@/components/common/ViewHeader';
 import { GridContextMenu } from '@/components/contextMenu';
 import { analyzeMultiDayRegularEvent } from '@/components/monthView/util';
@@ -532,6 +536,16 @@ export const DayContent = ({
                   handleDrop(e, currentDate, dropHour);
                 }}
               >
+                <TimeGridLayerSlot
+                  app={app}
+                  view={ViewType.DAY}
+                  visibleDates={buildTimeGridVisibleDates(currentDate, 1)}
+                  timeZone={app.timeZone}
+                  hourHeight={HOUR_HEIGHT}
+                  firstHour={FIRST_HOUR}
+                  lastHour={LAST_HOUR}
+                />
+
                 {timeSlots.map((_slot, slotIndex) => (
                   <div
                     key={slotIndex}

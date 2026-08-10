@@ -1,4 +1,4 @@
-import { RefObject } from 'preact';
+import { Fragment, RefObject } from 'preact';
 import { createPortal } from 'preact/compat';
 import {
   useState,
@@ -165,7 +165,7 @@ export const QuickCreateEventPopup = ({
     if (isOpen && anchorRef.current && popupRef.current) {
       const rect = anchorRef.current.getBoundingClientRect();
       const popupHeight = popupRef.current.offsetHeight;
-      const popupWidth = 340;
+      const popupWidth = popupRef.current.offsetWidth;
 
       let left = rect.left + rect.width / 2 - popupWidth / 2;
       const padding = 12;
@@ -245,7 +245,29 @@ export const QuickCreateEventPopup = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, suggestions, selectedIndex]);
 
+  const getTranslation = (key: string, fallback: string) => {
+    const val = (t as (k: string) => string)(key);
+    return val && val !== key ? val : fallback;
+  };
+
   if (!isOpen) return null;
+
+  const pluginTopContent = Array.from(app.state.plugins.values()).map(
+    plugin => {
+      const render = plugin.renderQuickCreateTopContent;
+      if (!render) return null;
+      return (
+        <Fragment key={plugin.name}>
+          {render({
+            app,
+            close: onClose,
+            focusInput: () => inputRef.current?.focus(),
+            translate: getTranslation,
+          })}
+        </Fragment>
+      );
+    }
+  );
 
   return createPortal(
     <div
@@ -258,6 +280,9 @@ export const QuickCreateEventPopup = ({
         visibility: isReady ? 'visible' : 'hidden',
       }}
     >
+      {pluginTopContent}
+
+      {/* Bottom Section: Create Quick Event Input */}
       <div className='df-quick-create-header'>
         <div className='df-quick-create-title'>
           {t('quickCreateEvent') || 'Quick Create Event'}
