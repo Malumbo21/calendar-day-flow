@@ -2,19 +2,14 @@ import { useRef, useState } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
 import type {
-  ICalendarApp,
   TimeGridBackgroundChangeReason,
   TimeGridBackgroundRange,
   TimeGridBackgroundSource,
+  TimeGridLayerContext,
 } from '@/types';
 
-type Props = {
-  app: ICalendarApp;
-  currentWeekStart: Date;
-  dayCount: number;
-  hourHeight: number;
-  firstHour: number;
-  lastHour: number;
+export type TimeGridBackgroundLayerProps = TimeGridLayerContext & {
+  sources: readonly TimeGridBackgroundSource[];
 };
 
 type PositionedRange = {
@@ -87,13 +82,6 @@ export function calculateAnchoredRange({
   };
 }
 
-const startDateFromJs = (date: Date) =>
-  Temporal.PlainDate.from({
-    year: date.getFullYear(),
-    month: date.getMonth() + 1,
-    day: date.getDate(),
-  });
-
 const minutesOfDay = (date: Temporal.ZonedDateTime) =>
   date.hour * 60 + date.minute + date.second / 60;
 
@@ -119,24 +107,27 @@ function atMinutes(
 
 export function TimeGridBackgroundLayer({
   app,
-  currentWeekStart,
-  dayCount,
+  visibleDates,
+  timeZone,
   hourHeight,
   firstHour,
   lastHour,
-}: Props) {
+  sources,
+}: TimeGridBackgroundLayerProps) {
   const [interaction, setInteraction] = useState<Interaction | null>(null);
   const interactionRef = useRef<Interaction | null>(null);
   const setActiveInteraction = (next: Interaction | null) => {
     interactionRef.current = next;
     setInteraction(next);
   };
-  const rangeStart = startDateFromJs(currentWeekStart);
-  const rangeEnd = rangeStart.add({ days: dayCount - 1 });
-  const timeZone = app.timeZone;
-  const sources = Array.from(app.state.plugins.values())
-    .map(plugin => plugin.timeGridBackground)
-    .filter(Boolean) as TimeGridBackgroundSource[];
+  const rangeStart = visibleDates[0];
+  const rangeEnd = visibleDates.at(-1);
+  const dayCount = visibleDates.length;
+  const dateIndexes = new Map(
+    visibleDates.map((date, index) => [date.toString(), index])
+  );
+
+  if (!rangeStart || !rangeEnd || sources.length === 0) return null;
 
   const positioned = (() => {
     const result: PositionedRange[] = [];
@@ -146,8 +137,8 @@ export function TimeGridBackgroundLayer({
         const start = range.start.withTimeZone(timeZone);
         const end = range.end.withTimeZone(timeZone);
         const date = start.toPlainDate();
-        const dayIndex = rangeStart.until(date, { largestUnit: 'day' }).days;
-        if (dayIndex < 0 || dayIndex >= dayCount) continue;
+        const dayIndex = dateIndexes.get(date.toString());
+        if (dayIndex === undefined) continue;
         result.push({
           source,
           range,
@@ -161,8 +152,6 @@ export function TimeGridBackgroundLayer({
     }
     return result;
   })();
-
-  if (sources.length === 0) return null;
 
   const gridStart = firstHour * 60;
   const gridEnd = lastHour * 60;
@@ -180,7 +169,8 @@ export function TimeGridBackgroundLayer({
     endMinutes: number,
     reason: TimeGridBackgroundChangeReason
   ) => {
-    const date = rangeStart.add({ days: current.dayIndex });
+    const date = visibleDates[current.dayIndex];
+    if (!date) return;
     const start = atMinutes(date, startMinutes, timeZone);
     const end = atMinutes(date, endMinutes, timeZone);
     if (current.mode === 'create') current.source.onRangeCreate?.(start, end);

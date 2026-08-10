@@ -2,7 +2,7 @@ import { CalendarApp } from '@/core/CalendarApp';
 import { createDayView } from '@/factories/createDayView';
 import { createWeekView } from '@/factories/createWeekView';
 import { CalendarRenderer } from '@/renderer/CalendarRenderer';
-import { ViewType } from '@/types';
+import { CalendarPlugin, ViewType } from '@/types';
 
 /**
  * The time axis used to always emit 24 rows starting at `firstHour`, so a
@@ -152,6 +152,73 @@ describe('week header alignment', () => {
 
     expect(host.querySelector('.df-week-all-day-side')).not.toBeNull();
     expect(host.querySelector('.df-week-all-day-label')).not.toBeNull();
+
+    cleanup();
+  });
+});
+
+describe('time-grid plugin layer slot', () => {
+  const layerPlugin: CalendarPlugin = {
+    name: 'test-time-grid-layer',
+    install: () => {
+      // No installation work is required for this renderer contract test.
+    },
+    renderTimeGridLayer: context => (
+      <div
+        data-testid='time-grid-plugin-layer'
+        data-view={context.view}
+        data-visible-dates={context.visibleDates
+          .map(date => date.toString())
+          .join(',')}
+        data-hours={`${context.firstHour}-${context.lastHour}`}
+      />
+    ),
+  };
+
+  it.each([
+    {
+      view: ViewType.DAY,
+      factory: () =>
+        createDayView({
+          firstHour: 7,
+          lastHour: 19,
+          showAllDay: false,
+          scrollToCurrentTime: false,
+        }),
+      visibleDateCount: 1,
+    },
+    {
+      view: ViewType.WEEK,
+      factory: () =>
+        createWeekView({
+          firstHour: 7,
+          lastHour: 19,
+          showAllDay: false,
+          scrollToCurrentTime: false,
+        }),
+      visibleDateCount: 7,
+    },
+  ])('renders plugin content inside the $view grid', entry => {
+    const app = new CalendarApp({
+      views: [entry.factory()],
+      plugins: [layerPlugin],
+      events: [],
+      defaultView: entry.view,
+      initialDate: new Date(2026, 7, 10),
+      timeZone: 'Australia/Sydney',
+      useCalendarHeader: false,
+    });
+
+    const { host, cleanup } = mountCalendar(app);
+    const layer = host.querySelector<HTMLElement>(
+      '[data-testid="time-grid-plugin-layer"]'
+    );
+
+    expect(layer?.dataset.view).toBe(entry.view);
+    expect(layer?.dataset.hours).toBe('7-19');
+    expect(layer?.dataset.visibleDates?.split(',')).toHaveLength(
+      entry.visibleDateCount
+    );
 
     cleanup();
   });

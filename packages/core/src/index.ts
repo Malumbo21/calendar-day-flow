@@ -61,6 +61,8 @@ export { CreateCalendarDialog } from './components/common/CreateCalendarDialog';
 export { default as DefaultEventDetailPanel } from './components/common/DefaultEventDetailPanel';
 export { default as DefaultEventDetailDialog } from './components/common/DefaultEventDetailDialog';
 export { ContentSlot } from './renderer/ContentSlot';
+export { TimeGridBackgroundLayer } from './components/weekView/TimeGridBackgroundLayer';
+export type { TimeGridBackgroundLayerProps } from './components/weekView/TimeGridBackgroundLayer';
 export { CalendarEvent } from './components/calendarEvent';
 export type { CalendarEventProps } from './components/calendarEvent/types';
 export { EventLayoutCalculator } from './components/eventLayout';

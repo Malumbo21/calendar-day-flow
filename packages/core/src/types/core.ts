@@ -65,6 +65,19 @@ export type TimeGridBackgroundContext = {
   timeZone: string;
 };
 
+/** Stable geometry and date context for plugin-owned Day/Week grid layers. */
+export type TimeGridLayerContext = {
+  app: ICalendarApp;
+  view: ViewType.DAY | ViewType.WEEK;
+  /** Exact visible column dates, in display order. */
+  visibleDates: readonly Temporal.PlainDate[];
+  timeZone: string;
+  firstHour: number;
+  /** Exclusive end hour. */
+  lastHour: number;
+  hourHeight: number;
+};
+
 export type TimeGridBackgroundChangeReason =
   | 'create'
   | 'move'
@@ -119,6 +132,11 @@ export interface CalendarPlugin {
   api?: unknown;
   /** Optional Week/Day time-grid background capability. */
   timeGridBackground?: TimeGridBackgroundSource;
+  /**
+   * Plugin-owned layer rendered inside the Day/Week time grid, below events.
+   * It runs in Core's internal Preact tree, independently of the host adapter.
+   */
+  renderTimeGridLayer?: (context: TimeGridLayerContext) => ComponentChildren;
   /** Optional plugin-owned content rendered above the quick-create form. */
   renderQuickCreateTopContent?: (
     context: QuickCreatePopupContext

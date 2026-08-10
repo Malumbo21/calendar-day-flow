@@ -5,6 +5,7 @@ import {
   calculateAnchoredRange,
   TimeGridBackgroundLayer,
 } from '@/components/weekView/TimeGridBackgroundLayer';
+import { ViewType } from '@/types';
 import type {
   CalendarPlugin,
   ICalendarApp,
@@ -52,11 +53,15 @@ function setup(sourceUpdates: Partial<TimeGridBackgroundSource> = {}) {
   render(
     <TimeGridBackgroundLayer
       app={app}
-      currentWeekStart={new Date(2026, 7, 3)}
-      dayCount={7}
+      view={ViewType.WEEK}
+      visibleDates={Array.from({ length: 7 }, (_, index) =>
+        Temporal.PlainDate.from('2026-08-03').add({ days: index })
+      )}
+      timeZone='Australia/Sydney'
       hourHeight={60}
       firstHour={0}
       lastHour={24}
+      sources={[source]}
     />
   );
   return { app, source };
