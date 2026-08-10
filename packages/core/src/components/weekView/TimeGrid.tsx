@@ -9,6 +9,10 @@ import {
 
 import CalendarEventComponent from '@/components/calendarEvent';
 import { TimeAxisLabel } from '@/components/common/TimeAxisLabel';
+import {
+  buildTimeGridVisibleDates,
+  TimeGridLayerSlot,
+} from '@/components/common/TimeGridLayerSlot';
 import { GridContextMenu } from '@/components/contextMenu';
 import { analyzeMultiDayRegularEvent } from '@/components/monthView/util';
 import {
@@ -521,6 +525,19 @@ export const TimeGrid = ({
                 handleDrop(e, dropDate, dropHour);
               }}
             >
+              <TimeGridLayerSlot
+                app={app}
+                view={ViewType.WEEK}
+                visibleDates={buildTimeGridVisibleDates(
+                  currentWeekStart,
+                  weekDaysLabels.length
+                )}
+                timeZone={app.timeZone}
+                hourHeight={HOUR_HEIGHT}
+                firstHour={FIRST_HOUR}
+                lastHour={LAST_HOUR}
+              />
+
               {/* Current time line */}
               {isCurrentWeek &&
                 currentTime &&
