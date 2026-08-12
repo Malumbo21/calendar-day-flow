@@ -78,6 +78,9 @@ const zh: DayflowLocale = {
     subscribe: '订阅',
     fetchingCalendar: '正在获取日历...',
     subscribeError: '获取日历失败。请检查地址并重试。',
+    appointmentScheduler: '预约日程',
+    newAppointmentSchedule: '新建预约日程',
+    editAppointmentSchedule: '编辑预约日程',
   },
   packages: {
     scheduler: {

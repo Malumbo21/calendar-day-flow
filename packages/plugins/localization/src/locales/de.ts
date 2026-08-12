@@ -83,6 +83,9 @@ const de: DayflowLocale = {
     fetchingCalendar: 'Kalender wird abgerufen...',
     subscribeError:
       'Kalender konnte nicht abgerufen werden. Bitte überprüfen Sie die URL und versuchen Sie es erneut.',
+    appointmentScheduler: 'Terminplan',
+    newAppointmentSchedule: 'Neuer Terminplan',
+    editAppointmentSchedule: 'Terminplan bearbeiten',
   },
   packages: {
     scheduler: {

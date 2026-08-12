@@ -83,6 +83,9 @@ const es: DayflowLocale = {
     fetchingCalendar: 'Obteniendo calendario...',
     subscribeError:
       'No se pudo obtener el calendario. Comprueba la URL e inténtalo de nuevo.',
+    appointmentScheduler: 'Horario de citas',
+    newAppointmentSchedule: 'Nuevo horario de citas',
+    editAppointmentSchedule: 'Editar horario de citas',
   },
   packages: {
     scheduler: {
