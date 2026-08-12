@@ -65,6 +65,8 @@ export { TimeGridBackgroundLayer } from './components/weekView/TimeGridBackgroun
 export type { TimeGridBackgroundLayerProps } from './components/weekView/TimeGridBackgroundLayer';
 export { CalendarEvent } from './components/calendarEvent';
 export type { CalendarEventProps } from './components/calendarEvent/types';
+export { EventDetailPanelHost } from './components/calendarEvent/components/EventDetailPanelHost';
+export type { EventDetailPanelHostProps } from './components/calendarEvent/components/EventDetailPanelHost';
 export { EventLayoutCalculator } from './components/eventLayout';
 
 // Icons

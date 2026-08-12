@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
@@ -381,119 +382,157 @@ export function TimeGridBackgroundLayer({
         const editable = Boolean(item.source.editable && item.range.editable);
         const isBar = item.range.variant === 'bar';
         const dayLeft = (100 / dayCount) * item.dayIndex;
+        const dayWidth = 100 / dayCount;
+        const top = ((clippedStart - gridStart) / 60) * hourHeight;
+        const canDelete = Boolean(
+          editable && item.range.title && item.source.onRangeDelete
+        );
         return (
-          <button
-            key={`${item.source.id}:${item.range.id}`}
-            type='button'
-            className={[
-              'df-time-grid-background-range',
-              editable && 'df-time-grid-background-range-editable',
-              item.range.selected && 'df-time-grid-background-range-selected',
-              item.range.invalid && 'df-time-grid-background-range-invalid',
-              item.range.variant === 'bar' &&
-                'df-time-grid-background-range-bar',
-              item.range.segmentMinutes &&
-                'df-time-grid-background-range-segmented',
-              preview && 'df-time-grid-background-range-dragging',
-              item.range.className,
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            style={{
-              left: isBar ? `calc(${dayLeft}% - 1.6px)` : `${dayLeft}%`,
-              width: isBar ? '3px' : `${100 / dayCount}%`,
-              top: `${((clippedStart - gridStart) / 60) * hourHeight}px`,
-              height: `${((clippedEnd - clippedStart) / 60) * hourHeight}px`,
-              backgroundColor: item.range.backgroundColor,
-            }}
-            tabIndex={0}
-            aria-label={
-              item.range.ariaLabel ??
-              item.range.title ??
-              'Background time range'
-            }
-            aria-pressed={item.range.selected}
-            onClick={event => {
-              item.source.onRangeSelect?.(item.range);
-              event.stopPropagation();
-            }}
-            onDblClick={event => {
-              item.source.onRangeOpen?.(item.range);
-              event.stopPropagation();
-            }}
-            onKeyDown={event => keyboardChange(event, item)}
-            onPointerDown={event => beginRangeInteraction(event, item, 'move')}
-          >
-            {item.range.segmentMinutes && item.range.segmentMinutes > 0 && (
-              <span
-                className='df-time-grid-background-range-segments'
-                aria-hidden='true'
-              >
-                {Array.from({
-                  length: Math.ceil(
-                    (endMinutes - startMinutes) / item.range.segmentMinutes
-                  ),
-                }).map((_, index) => {
-                  const segmentStart =
-                    startMinutes + index * item.range.segmentMinutes!;
-                  const segmentDuration = Math.min(
-                    item.range.segmentMinutes!,
-                    endMinutes - segmentStart
-                  );
-                  const available =
-                    item.range.segmentAvailability?.[index] !== false;
-                  return (
-                    <span
-                      key={index}
-                      className={`df-time-grid-background-range-segment ${available ? '' : 'df-time-grid-background-range-segment-unavailable'}`}
-                      style={{ flexGrow: segmentDuration }}
-                      onPointerDown={
-                        available
-                          ? undefined
-                          : event => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                            }
-                      }
-                      onClick={
-                        available ? undefined : event => event.stopPropagation()
-                      }
-                    />
-                  );
-                })}
+          <Fragment key={`${item.source.id}:${item.range.id}`}>
+            <button
+              type='button'
+              className={[
+                'df-time-grid-background-range',
+                editable && 'df-time-grid-background-range-editable',
+                item.range.selected && 'df-time-grid-background-range-selected',
+                item.range.invalid && 'df-time-grid-background-range-invalid',
+                item.range.variant === 'bar' &&
+                  'df-time-grid-background-range-bar',
+                item.range.segmentMinutes &&
+                  'df-time-grid-background-range-segmented',
+                preview && 'df-time-grid-background-range-dragging',
+                item.range.className,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              style={{
+                left: `${dayLeft}%`,
+                width: isBar ? '3px' : `${dayWidth}%`,
+                transform:
+                  isBar && item.dayIndex > 0 ? 'translateX(-50%)' : undefined,
+                top: `${top}px`,
+                height: `${((clippedEnd - clippedStart) / 60) * hourHeight}px`,
+                backgroundColor: item.range.backgroundColor,
+              }}
+              tabIndex={0}
+              aria-label={
+                item.range.ariaLabel ??
+                item.range.title ??
+                'Background time range'
+              }
+              aria-pressed={item.range.selected}
+              onClick={event => {
+                item.source.onRangeSelect?.(item.range);
+                event.stopPropagation();
+              }}
+              onDblClick={event => {
+                item.source.onRangeOpen?.(item.range);
+                event.stopPropagation();
+              }}
+              onKeyDown={event => keyboardChange(event, item)}
+              onPointerDown={event =>
+                beginRangeInteraction(event, item, 'move')
+              }
+            >
+              {item.range.segmentMinutes && item.range.segmentMinutes > 0 && (
+                <span
+                  className='df-time-grid-background-range-segments'
+                  aria-hidden='true'
+                >
+                  {Array.from({
+                    length: Math.ceil(
+                      (endMinutes - startMinutes) / item.range.segmentMinutes
+                    ),
+                  }).map((_, index) => {
+                    const segmentStart =
+                      startMinutes + index * item.range.segmentMinutes!;
+                    const segmentDuration = Math.min(
+                      item.range.segmentMinutes!,
+                      endMinutes - segmentStart
+                    );
+                    const available =
+                      item.range.segmentAvailability?.[index] !== false;
+                    return (
+                      <span
+                        key={index}
+                        className={`df-time-grid-background-range-segment ${available ? '' : 'df-time-grid-background-range-segment-unavailable'}`}
+                        style={{ flexGrow: segmentDuration }}
+                        onPointerDown={
+                          available
+                            ? undefined
+                            : event => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                              }
+                        }
+                        onClick={
+                          available
+                            ? undefined
+                            : event => event.stopPropagation()
+                        }
+                      />
+                    );
+                  })}
+                </span>
+              )}
+              {editable && (
+                <span
+                  className='df-time-grid-background-resize-handle df-time-grid-background-resize-handle-start'
+                  aria-hidden='true'
+                  onPointerDown={event =>
+                    beginRangeInteraction(event, item, 'resize-start')
+                  }
+                />
+              )}
+              <span className='df-time-grid-background-range-title'>
+                {item.range.title}
               </span>
-            )}
-            {editable && (
-              <span
-                className='df-time-grid-background-resize-handle df-time-grid-background-resize-handle-start'
-                aria-hidden='true'
-                onPointerDown={event =>
-                  beginRangeInteraction(event, item, 'resize-start')
-                }
-              />
-            )}
-            <span className='df-time-grid-background-range-title'>
-              {item.range.title}
-            </span>
-            {item.range.hoverCard && (
-              <span
-                className='df-time-grid-background-hover-card'
-                role='tooltip'
+              {item.range.hoverCard && (
+                <span
+                  className='df-time-grid-background-hover-card'
+                  role='tooltip'
+                >
+                  <strong>{item.range.hoverCard.title}</strong>
+                  <span>{item.range.hoverCard.detail}</span>
+                </span>
+              )}
+              {editable && (
+                <span
+                  className='df-time-grid-background-resize-handle df-time-grid-background-resize-handle-end'
+                  aria-hidden='true'
+                  onPointerDown={event =>
+                    beginRangeInteraction(event, item, 'resize-end')
+                  }
+                />
+              )}
+            </button>
+            {canDelete && (
+              <button
+                type='button'
+                className='df-time-grid-background-range-delete'
+                style={{
+                  left: `calc(${dayLeft + dayWidth}% - 1.9rem)`,
+                  top: `${top + 4}px`,
+                }}
+                aria-label={`Remove ${item.range.title} slot`}
+                title='Remove slot'
+                onPointerDown={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onClick={event => {
+                  item.source.onRangeDelete?.(item.range);
+                  app.triggerRender();
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
               >
-                <strong>{item.range.hoverCard.title}</strong>
-                <span>{item.range.hoverCard.detail}</span>
-              </span>
+                <svg viewBox='0 0 20 20' aria-hidden='true'>
+                  <path d='M6 6l8 8M14 6l-8 8' />
+                </svg>
+              </button>
             )}
-            {editable && (
-              <span
-                className='df-time-grid-background-resize-handle df-time-grid-background-resize-handle-end'
-                aria-hidden='true'
-                onPointerDown={event =>
-                  beginRangeInteraction(event, item, 'resize-end')
-                }
-              />
-            )}
-          </button>
+          </Fragment>
         );
       })}
       {interaction?.mode === 'create' && (
