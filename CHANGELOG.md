@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.0] - 2026-08-13
+
+### New Features & Enhancements
+
+- **Appointment Schedule Plugin**: Introduced the `@dayflow-pro/appointment-schedule` plugin for booking availability management and schedule windows. Includes comprehensive multi-language documentation (EN/ZH/JA) and interactive video demos.
+- **Time Grid Background Layer APIs**: Added time grid background layer slots and extension APIs (`time-grid background` & `quick-create`), allowing plugins to inject background availability layers, interactive deletion actions, and custom grid UI with accessibility support.
+- **Native `MouseEvent` in Event Callbacks**: Passed the native triggering `MouseEvent` to event callbacks (`onEventClick`, `onEventContextMenu`, etc.) and context menu slots for precise mouse coordinate and modifier key access.
+- **Scheduling i18n**: Added multi-language translation support for scheduling labels, appointment statuses, and time slot indicators.
+
 ## [3.6.8] - 2026-08-10
 
 ### Fixed
