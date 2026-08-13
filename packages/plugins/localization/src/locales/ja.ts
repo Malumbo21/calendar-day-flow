@@ -82,6 +82,9 @@ const ja: DayflowLocale = {
     fetchingCalendar: 'カレンダーを取得中...',
     subscribeError:
       'カレンダーの取得に失敗しました。URLを確認して再試行してください。',
+    appointmentScheduler: '予約スケジュール',
+    newAppointmentSchedule: '新しい予約スケジュール',
+    editAppointmentSchedule: '予約スケジュールを編集',
   },
   packages: {
     scheduler: {

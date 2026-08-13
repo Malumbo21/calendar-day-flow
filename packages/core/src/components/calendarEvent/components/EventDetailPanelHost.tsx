@@ -26,7 +26,7 @@ const PLACEHOLDER_POSITION: EventDetailPosition = {
   isSunday: false,
 };
 
-interface EventDetailPanelHostProps {
+export interface EventDetailPanelHostProps {
   detailPanelEventId: string | null;
   events: Event[];
   calendarRef: RefObject<HTMLDivElement>;

@@ -14,6 +14,7 @@ interface GridContextMenuProps {
   app: ICalendarApp;
   onCreateEvent: () => void;
   viewType?: ViewType;
+  triggerEvent?: MouseEvent | TouchEvent;
 }
 
 const GridContextMenu = ({
@@ -24,6 +25,7 @@ const GridContextMenu = ({
   app,
   onCreateEvent,
   viewType,
+  triggerEvent,
 }: GridContextMenuProps) => {
   const { t } = useLocale();
   if (!app.canMutateFromUI()) return null;
@@ -55,7 +57,7 @@ const GridContextMenu = ({
     <ContextMenu x={x} y={y} onClose={onClose} className='df-context-menu'>
       <ContentSlot
         generatorName='gridContextMenu'
-        generatorArgs={{ date, viewType, onClose }}
+        generatorArgs={{ date, viewType, onClose, triggerEvent }}
         defaultContent={defaultContent}
       />
     </ContextMenu>

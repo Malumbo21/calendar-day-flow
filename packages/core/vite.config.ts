@@ -83,10 +83,6 @@ export default defineConfig({
         find: '@dayflow/plugin-localization',
         replacement: resolve(__dirname, '../plugins/localization/src/index.ts'),
       },
-      {
-        find: '@dayflow-pro/appointment-schedule',
-        replacement: resolve(__dirname, '../appointment-schedule/src/index.ts'),
-      },
       // specific CSS aliases FIRST
       {
         find: '@dayflow/resource-grid/dist/styles.css',

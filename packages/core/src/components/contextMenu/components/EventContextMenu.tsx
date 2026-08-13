@@ -21,6 +21,7 @@ interface EventContextMenuProps {
   app: ICalendarApp;
   onDetailPanelToggle?: (id: string | null) => void;
   detailPanelKey: string;
+  triggerEvent?: MouseEvent | TouchEvent;
 }
 
 const EventContextMenu = ({
@@ -29,6 +30,7 @@ const EventContextMenu = ({
   y,
   onClose,
   app,
+  triggerEvent,
 }: EventContextMenuProps) => {
   const { t } = useLocale();
   if (!app.canMutateFromUI(event.id)) return null;
@@ -125,7 +127,7 @@ const EventContextMenu = ({
     <ContextMenu x={x} y={y} onClose={onClose}>
       <ContentSlot
         generatorName='eventContextMenu'
-        generatorArgs={{ event, onClose }}
+        generatorArgs={{ event, onClose, triggerEvent }}
         defaultContent={defaultContent}
       />
     </ContextMenu>

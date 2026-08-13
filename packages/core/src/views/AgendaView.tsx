@@ -423,14 +423,14 @@ const AgendaView = ({
   ]);
 
   const handleEventClick = useCallback(
-    (event: Event) => {
+    (event: Event, nativeEvent?: MouseEvent) => {
       if (clickTimerRef.current) {
         clearTimeout(clickTimerRef.current);
         clickTimerRef.current = null;
       }
 
       if (isMobile) {
-        app.onEventClick(event);
+        app.onEventClick(event, nativeEvent);
         onEventSelect?.(event.id);
         if (app.getReadOnlyConfig(event.id).viewable !== false) {
           onDetailPanelToggle?.(event.id);
@@ -439,7 +439,7 @@ const AgendaView = ({
       }
 
       clickTimerRef.current = setTimeout(() => {
-        app.onEventClick(event);
+        app.onEventClick(event, nativeEvent);
         onEventSelect?.(event.id);
         if (app.getEventDetailEnabled()) {
           onDetailPanelToggle?.(null);
@@ -534,12 +534,12 @@ const AgendaView = ({
   );
 
   const handleGridDateClick = useCallback(
-    (date: Date, dayEvents: Event[]) => {
+    (date: Date, dayEvents: Event[], e?: MouseEvent) => {
       const clickAction = config?.gridDateClick;
       if (!clickAction) return;
 
       if (typeof clickAction === 'function') {
-        clickAction(date, dayEvents);
+        clickAction(date, dayEvents, e);
         return;
       }
 
@@ -552,11 +552,11 @@ const AgendaView = ({
   );
 
   const handleGridDateDoubleClick = useCallback(
-    (date: Date, dayEvents: Event[]) => {
+    (date: Date, dayEvents: Event[], e?: MouseEvent) => {
       const dblClickAction = config?.gridDateDoubleClick ?? 'day-view';
 
       if (typeof dblClickAction === 'function') {
-        dblClickAction(date, dayEvents);
+        dblClickAction(date, dayEvents, e);
         return;
       }
 
@@ -575,7 +575,7 @@ const AgendaView = ({
       data-selected={selectedEventId === entry.event.id ? 'true' : 'false'}
       onClick={e => {
         e.stopPropagation();
-        handleEventClick(entry.event);
+        handleEventClick(entry.event, e as unknown as MouseEvent);
       }}
       onDblClick={e => {
         e.stopPropagation();

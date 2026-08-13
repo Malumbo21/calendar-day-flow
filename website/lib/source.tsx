@@ -21,8 +21,16 @@ const renderProBadge = (status: string) => {
   return null;
 };
 
+// Each locale needs its own page tree `idPrefix`. The root node id defaults to
+// `root` for every loader, and fumadocs-ui caches derived data (e.g. the
+// prev/next footer list in `useFooterItems`) in a module-level Map keyed by it.
+// Without distinct prefixes the three trees share one cache entry, so whichever
+// locale a server process renders first wins and the others get a footer list
+// that doesn't contain their pages — an empty prev/next footer, plus a
+// hydration mismatch in dev.
 export const source = loader({
   baseUrl: '/docs',
+  pageTree: { idPrefix: 'docs' },
   source: docs.toFumadocsSource(),
   plugins: [
     lucideIconsPlugin(),
@@ -34,6 +42,7 @@ export const source = loader({
 
 export const sourceJa = loader({
   baseUrl: '/docs-ja',
+  pageTree: { idPrefix: 'docs-ja' },
   source: docsJa.toFumadocsSource(),
   plugins: [
     lucideIconsPlugin(),
@@ -45,6 +54,7 @@ export const sourceJa = loader({
 
 export const sourceZh = loader({
   baseUrl: '/docs-zh',
+  pageTree: { idPrefix: 'docs-zh' },
   source: docsZh.toFumadocsSource(),
   plugins: [
     lucideIconsPlugin(),

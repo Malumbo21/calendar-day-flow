@@ -169,7 +169,7 @@ interface YearRowComponentProps {
   selectedEventId: string | null;
   onSelectEvent: (eventId: string, segmentId: string) => void;
   onContextMenuEvent?: (e: MouseEvent, event: Event) => void;
-  onMoreEventsClick?: (date: Date) => void;
+  onMoreEventsClick?: (date: Date, e?: MouseEvent) => void;
   onContextMenu: (menu: { x: number; y: number; date: Date } | null) => void;
   appTimeZone?: string;
   dragPreviewEvent?: Event | null;

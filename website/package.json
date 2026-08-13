@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev --disable-source-maps",
+    "dev:source-maps": "next dev",
     "format": "prettier --write \"**/*.{ts,tsx,mdx,css}\"",
     "lint": "oxlint .",
     "postinstall": "fumadocs-mdx",

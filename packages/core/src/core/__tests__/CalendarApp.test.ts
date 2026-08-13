@@ -638,5 +638,60 @@ describe('CalendarApp', () => {
 
       expect(onEventClick).toHaveBeenCalledTimes(1);
     });
+
+    it('passes the triggering MouseEvent to onEventClick when provided', () => {
+      const onEventClick = jest.fn();
+      const app = new CalendarApp({
+        views: [],
+        plugins: [],
+        events: [],
+        callbacks: { onEventClick },
+      });
+      const event = {
+        id: 'callback-event',
+        title: 'Callback Event',
+        start: Temporal.Now.plainDateISO(),
+        end: Temporal.Now.plainDateISO(),
+      };
+      const dummyMouseEvent = {
+        clientX: 100,
+        clientY: 200,
+      } as unknown as MouseEvent;
+
+      app.onEventClick(event, dummyMouseEvent);
+      expect(onEventClick).toHaveBeenCalledWith(event, dummyMouseEvent);
+    });
+
+    it('passes the triggering MouseEvent to onMoreEventsClick when provided', () => {
+      const onMoreEventsClick = jest.fn();
+      const app = new CalendarApp({
+        views: [],
+        plugins: [],
+        events: [],
+        callbacks: { onMoreEventsClick },
+      });
+      const date = new Date('2026-04-01');
+      const dummyMouseEvent = {
+        clientX: 150,
+        clientY: 250,
+      } as unknown as MouseEvent;
+
+      app.onMoreEventsClick(date, dummyMouseEvent);
+      expect(onMoreEventsClick).toHaveBeenCalledWith(date, dummyMouseEvent);
+    });
+
+    it('passes the triggering event to onDismissUI when provided', () => {
+      const onDismissUI = jest.fn();
+      const app = new CalendarApp({
+        views: [],
+        plugins: [],
+        events: [],
+        callbacks: { onDismissUI },
+      });
+      const dummyMouseEvent = { type: 'click' } as unknown as MouseEvent;
+
+      app.dismissUI(dummyMouseEvent);
+      expect(onDismissUI).toHaveBeenCalledWith(dummyMouseEvent);
+    });
   });
 });

@@ -214,13 +214,15 @@ export interface CalendarCallbacks {
     fromIndex: number,
     toIndex: number
   ) => void | Promise<void>;
-  onEventClick?: (event: Event) => void | Promise<void>;
+  onEventClick?: (event: Event, e?: MouseEvent) => void | Promise<void>;
   onEventDoubleClick?: (
     event: Event,
     e: MouseEvent
   ) => boolean | undefined | Promise<boolean | undefined>;
-  onMoreEventsClick?: (date: Date) => void | Promise<void>;
-  onDismissUI?: () => void | Promise<void>;
+  onMoreEventsClick?: (date: Date, e?: MouseEvent) => void | Promise<void>;
+  onDismissUI?: (
+    e?: MouseEvent | TouchEvent | KeyboardEvent | Event
+  ) => void | Promise<void>;
   /**
    * Toggle event detail panel or dialog.
    * If eventId is null, closes the detail UI.
@@ -262,6 +264,7 @@ export interface EventContentSlotArgs {
 export interface EventContextMenuSlotArgs {
   event: Event;
   onClose: () => void;
+  triggerEvent?: MouseEvent | TouchEvent;
 }
 
 /** Args passed to the gridContextMenu slot renderer. */
@@ -269,6 +272,7 @@ export interface GridContextMenuSlotArgs {
   date: Date;
   viewType?: ViewType;
   onClose: () => void;
+  triggerEvent?: MouseEvent | TouchEvent;
 }
 
 /** Args passed to the gridPopupContent slot renderer (Year view grid mode). */
@@ -439,12 +443,12 @@ export interface ICalendarApp {
   deleteEvent: (id: string) => Promise<void>;
   getEvents: () => Event[];
   getAllEvents: () => Event[];
-  onEventClick: (event: Event) => void;
+  onEventClick: (event: Event, e?: MouseEvent) => void;
   onEventDoubleClick: (
     event: Event,
     e: MouseEvent
   ) => boolean | undefined | Promise<boolean | undefined>;
-  onMoreEventsClick: (date: Date) => void;
+  onMoreEventsClick: (date: Date, e?: MouseEvent) => void;
   onEventDetailToggle: (eventId: string | null) => void;
   onMobileEventDetailToggle: (event: Event | null) => void;
   highlightEvent: (eventId: string | null) => void;

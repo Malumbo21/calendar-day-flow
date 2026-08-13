@@ -81,6 +81,9 @@ const ko: DayflowLocale = {
     fetchingCalendar: '캘린더를 가져오는 중...',
     subscribeError:
       '캘린더를 가져오지 못했습니다. URL을 확인하고 다시 시도하세요.',
+    appointmentScheduler: '예약 일정',
+    newAppointmentSchedule: '새 예약 일정',
+    editAppointmentSchedule: '예약 일정 편집',
   },
   packages: {
     scheduler: {

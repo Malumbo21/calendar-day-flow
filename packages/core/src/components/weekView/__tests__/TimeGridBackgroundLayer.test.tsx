@@ -92,7 +92,21 @@ describe('TimeGridBackgroundLayer', () => {
   it('deletes the focused range without involving EventManager', () => {
     const onRangeDelete = jest.fn();
     setup({ onRangeDelete });
-    fireEvent.keyDown(screen.getByRole('button'), { key: 'Delete' });
+    fireEvent.keyDown(
+      screen.getByRole('button', { name: 'Monday availability' }),
+      { key: 'Delete' }
+    );
+    expect(onRangeDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'range-1' })
+    );
+  });
+
+  it('deletes a titled editable range from its visible close button', () => {
+    const onRangeDelete = jest.fn();
+    setup({ onRangeDelete });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remove 09:00 · Available slot' })
+    );
     expect(onRangeDelete).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'range-1' })
     );
@@ -149,11 +163,29 @@ describe('TimeGridBackgroundLayer', () => {
     });
     const range = screen.getByRole('button');
     expect(range.style.width).toBe('3px');
-    expect(range.style.left).toContain('- 1.6px');
+    expect(range.style.left).toBe('0%');
+    expect(range.style.transform).toBe('');
     expect(range.style.backgroundColor).toBe('rgb(124, 58, 237)');
     expect(screen.getByRole('tooltip')).toHaveTextContent(
       'Product demo09:00–10:00'
     );
+  });
+
+  it('centres later compact bars without clipping the first day bar', () => {
+    setup({
+      editable: false,
+      getRanges: () => [
+        {
+          id: 'range-1',
+          start: start.add({ days: 1 }),
+          end: end.add({ days: 1 }),
+          variant: 'bar',
+        },
+      ],
+    });
+    const range = screen.getByRole('button');
+    expect(range.style.left).toBe(`${100 / 7}%`);
+    expect(range.style.transform).toBe('translateX(-50%)');
   });
 
   it('resizes from the original pointer anchor without accumulating movement', () => {

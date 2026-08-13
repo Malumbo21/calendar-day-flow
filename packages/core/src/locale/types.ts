@@ -74,7 +74,10 @@ export type TranslationKey =
   | 'subscribe'
   | 'fetchingCalendar'
   | 'subscribeError'
-  | 'calendarAlreadySubscribed';
+  | 'calendarAlreadySubscribed'
+  | 'appointmentScheduler'
+  | 'newAppointmentSchedule'
+  | 'editAppointmentSchedule';
 
 export type LocaleDict = Partial<Record<TranslationKey, string>>;
 export type LocaleMessages = Partial<Record<TranslationKey, string>>;

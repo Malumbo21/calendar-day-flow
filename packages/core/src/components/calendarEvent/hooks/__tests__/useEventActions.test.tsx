@@ -235,7 +235,10 @@ describe('useEventActions', () => {
     act(() => {
       jest.advanceTimersByTime(1);
     });
-    expect(app.onEventClick).toHaveBeenCalledWith(baseEvent);
+    expect(app.onEventClick).toHaveBeenCalledWith(
+      baseEvent,
+      expect.objectContaining({ type: 'click' })
+    );
     expect(onDetailPanelToggle).toHaveBeenCalledWith(null);
   });
 
@@ -690,7 +693,7 @@ describe('useEventActions', () => {
       await Promise.resolve();
     });
 
-    expect(app.onEventClick).toHaveBeenCalledWith(baseEvent);
+    expect(app.onEventClick).toHaveBeenCalledWith(baseEvent, expect.anything());
     expect(onEventSelect).toHaveBeenCalledWith('event-1');
     expect(setIsSelected).toHaveBeenCalledWith(true);
     expect(onDetailPanelToggle).toHaveBeenCalledWith('event-1');

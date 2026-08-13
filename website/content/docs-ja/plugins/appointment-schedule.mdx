@@ -1,0 +1,1055 @@
+---
+title: 予約スケジュール
+description: DayFlow Pro の予約可能時間エディターとスタンドアロン予約 UI。週次の空き時間、ヘッドレスコントローラー、3 種類の参加者向けレイアウト、React・Vue・Svelte・Angular アダプターを提供します。
+status: pro
+---
+
+# 予約スケジュール
+
+`@dayflow-pro/appointment-schedule` が行うのは次の 2 点だけです。
+
+1. 主催者が DayFlow の週ビュー上で**予約可能な時間**を直接定義できるようにする。
+2. その定義を参加者が**選択できるスロット**に変換する（`CalendarApp` は不要）。
+
+予約プラットフォームではありません。バックエンド、予約ライフサイクル、通知、決済はいずれも含まれません。スロットを選択するとコールバックが発火し、その後の処理はアプリケーション側に委ねられます。
+
+## インストール
+
+<PackageTabs pkg='@dayflow-pro/appointment-schedule' />
+
+インストール手順は [Pro インストールガイド](/docs/introduction/pro-installation) を参照してください。
+
+`temporal-polyfill` は必須です。`@dayflow/core` が必要なのは主催者プラグインと week-overlay レイアウトだけです。React・Vue・Svelte・Angular は任意の peer dependency であり、利用するアダプターのフレームワークだけをインストールしてください。
+
+```ts
+import '@dayflow-pro/appointment-schedule/styles.css';
+// または、コアテーマを読み込み済みの Tailwind プロジェクトの場合：
+import '@dayflow-pro/appointment-schedule/styles.components.css';
+```
+
+## 主催者プラグイン
+
+```ts title="appointmentPlugin.ts"
+import { createAppointmentSchedulePlugin } from '@dayflow-pro/appointment-schedule/plugin';
+import type { AppointmentSchedule } from '@dayflow-pro/appointment-schedule/engine';
+import '@dayflow-pro/appointment-schedule/styles.css';
+
+let schedules: AppointmentSchedule[] = [];
+
+const upsertSchedule = (schedule: AppointmentSchedule) => {
+  schedules = [
+    ...schedules.filter(current => current.id !== schedule.id),
+    schedule,
+  ];
+  appointmentPlugin.updateConfig?.({ schedules });
+};
+
+export const appointmentPlugin = createAppointmentSchedulePlugin({
+  schedules,
+  drawerPlacement: 'calendar',
+  drawerWidth: 420,
+  onCreateSchedule: upsertSchedule,
+  onUpdateSchedule: upsertSchedule,
+});
+```
+
+各フレームワークの週ビューに同じ plugin インスタンスを追加します。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { createWeekView } from '@dayflow/core';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    export function App() {
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      });
+
+      return (
+        <>
+          <button onClick={() => appointmentPlugin.api.openCreate()}>
+            予約スケジュールを作成
+          </button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <script setup lang="ts">
+    import { createWeekView } from '@dayflow/core';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      plugins: [appointmentPlugin],
+    });
+    </script>
+
+    <template>
+      <button @click="appointmentPlugin.api.openCreate()">
+        予約スケジュールを作成
+      </button>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createWeekView } from '@dayflow/core';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <button (click)="appointmentPlugin.api.openCreate()">
+          予約スケジュールを作成
+        </button>
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `,
+    })
+    export class AppComponent {
+      readonly appointmentPlugin = appointmentPlugin;
+      readonly calendar = {
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { createWeekView } from '@dayflow/core';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { appointmentPlugin } from './appointmentPlugin';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      });
+    </script>
+
+    <button onclick={() => appointmentPlugin.api.openCreate()}>
+      予約スケジュールを作成
+    </button>
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`schedules` は制御データであり、プラグインは何も永続化しません。予約可能時間はイベントの下の背景レイヤーとして描画されるため、`getEvents()`、検索、印刷、リモート同期には現れません。
+
+### Schedule データモデル
+
+`AppointmentSchedule` は、主催者、予約コンポーネント、ヘッドレスエンジンで共有するデータ契約です。
+
+| プロパティ              | 型                           | 用途                                                 |
+| ----------------------- | ---------------------------- | ---------------------------------------------------- |
+| `id`                    | `string`                     | 安定したスケジュール ID。                            |
+| `title`                 | `string`                     | 主催者画面と予約画面に表示する名前。                 |
+| `durationMinutes`       | `number`                     | 1 件の予約時間。                                     |
+| `slotIntervalMinutes?`  | `number`                     | スロット開始時刻の間隔。既定値は予約時間。           |
+| `beforeBufferMinutes?`  | `number`                     | 予約前のビジー時間。既定値は `0`。                   |
+| `afterBufferMinutes?`   | `number`                     | 予約後のビジー時間。既定値は `0`。                   |
+| `timeZone`              | `string`                     | 予約可能時間を定義する IANA タイムゾーン。           |
+| `calendarId?`           | `string`                     | 色と作成イベントに使うホストカレンダーとの関連付け。 |
+| `recurrence?`           | `AppointmentRecurrence`      | 毎週、単発、N 週ごとの繰り返しルール。               |
+| `availability`          | `WeeklyAvailability[]`       | 曜日ごとの予約可能範囲。必須。                       |
+| `unavailableIntervals?` | `WeeklyAvailability[]`       | 表示はするがスロットを生成しない定期休憩。           |
+| `dateOverrides?`        | `DateAvailabilityOverride[]` | 週次ルールを置き換える日付別範囲。                   |
+| `location?`             | `AppointmentLocationConfig`  | 固定リンク、会議サービス、住所、電話。               |
+| `meta?`                 | `Record<string, unknown>`    | アプリケーション所有のシリアライズ可能なメタデータ。 |
+
+`WeeklyAvailability` は `dayOfWeek`（`0` が日曜、`6` が土曜）と `intervals` を持ちます。各 `AvailabilityInterval` は `id`、`startTime`、`endTime` を `HH:mm` 形式で保持します。`DateAvailabilityOverride` は ISO `date` と置換用 `intervals` を持ち、空配列ならその日を終日閉じます。
+
+独自の UI からエディターを開く：
+
+```ts
+appointmentPlugin.api.openCreate();
+appointmentPlugin.api.openEdit('product-demo');
+```
+
+このプラグインはカレンダーのクイック作成ポップアップにも項目を追加します。プラグイン未導入のカレンダーは従来のクイック作成レイアウトのままです。
+
+### 主なオプション
+
+これらの項目が `AppointmentSchedulePluginConfig` を構成します。
+
+| オプション                 | 既定値             | 用途                                             |
+| -------------------------- | ------------------ | ------------------------------------------------ |
+| `schedules`                | 必須               | アプリケーションが管理する予約スケジュール。     |
+| `activeScheduleId`         | なし               | エディターを開くときに特定の予定を選択。         |
+| `availabilitySnapMinutes`  | `15`               | 予約可能時間を編集するときの分単位の間隔。       |
+| `drawerPlacement`          | `'viewport'`       | エディターをビューポートまたはカレンダーに配置。 |
+| `drawerWidth`              | `420`              | ピクセル値または CSS 長さで指定する幅。          |
+| `drawerTarget`             | 最初のカレンダー   | `calendar` 配置で使う要素または selector。       |
+| `drawerRenderer`           | 組み込み drawer    | 主催者エディター全体を置き換えます。             |
+| `timeFormat`               | 現在のビューの形式 | 12 時間表記または 24 時間表記。                  |
+| `conferenceProviders`      | `[]`               | 場所ピッカーに Web 会議サービスを追加。          |
+| `onCreateSchedule`         | なし               | 新しいスケジュールをアプリ側で永続化。           |
+| `onUpdateSchedule`         | なし               | 既存スケジュールの変更をアプリ側で永続化。       |
+| `onDeleteScheduleRequest`  | なし               | ホストに確認と削除を依頼。                       |
+| `onExternalUpdateConflict` | なし               | 編集中の外部制御更新を競合として通知。           |
+
+### Plugin API
+
+`appointmentPlugin.api` は `AppointmentScheduleApi` を提供します。
+
+| メソッド                          | 用途                                                 |
+| --------------------------------- | ---------------------------------------------------- |
+| `openCreate(initial?)`            | 任意の初期値で新しい draft を開きます。              |
+| `openEdit(scheduleId)`            | 既存の制御スケジュールを開きます。                   |
+| `closeEditor()` / `cancelDraft()` | 現在の draft を破棄して drawer を閉じます。          |
+| `saveDraft()`                     | 作成または更新 callback を実行し、成功後に閉じます。 |
+| `setActiveSchedule(scheduleId)`   | エディターを開かず現在のスケジュールを変更します。   |
+| `getActiveSchedule()`             | 現在の制御スケジュールを返します。                   |
+| `getDraft()`                      | 編集中の可変 draft を返します。                      |
+| `draftManager`                    | フィールドと予約可能時間の編集操作を提供します。     |
+| `subscribeDraft(listener)`        | draft 更新を購読し、解除関数を返します。             |
+
+### 主催者エディターのカスタマイズ
+
+`drawerRenderer` を使用すると、主催者 drawer 全体を置き換えられます。プラグインは配置、現在の draft、カレンダー上の予約可能時間編集、保存、キャンセルを引き続き管理し、アプリケーションは指定された host 内に通常のフレームワークコンポーネントを描画します。
+
+Renderer は `AppointmentScheduleDrawerRenderArgs` を受け取ります。
+
+| プロパティ              | 用途                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `draft`                 | 現在の `AppointmentSchedule` draft。                                                                      |
+| `isCreating`            | 新規作成と編集を区別します。                                                                              |
+| `draftManager`          | フィールド更新と `toggleDay`、`addInterval`、`updateInterval`、`removeInterval`、コピー操作を提供します。 |
+| `calendars`             | 選択可能な `{ id, name, color? }` カレンダー。                                                            |
+| `conferenceProviders`   | 登録済みの `{ id, name, icon? }` 会議サービス。                                                           |
+| `placement`             | 解決済みの `'calendar'` または `'viewport'` 配置。                                                        |
+| `drawerWidth`           | 解決済みの CSS 幅文字列。                                                                                 |
+| `timeFormat` / `locale` | 設定とカレンダーから継承した表示設定。                                                                    |
+| `translate`             | fallback 付きでパッケージ翻訳を取得します。                                                               |
+| `save()`                | ホストの作成または更新 callback を実行し、成功後に閉じます。                                              |
+| `cancel()`              | draft を破棄してエディターを閉じます。                                                                    |
+
+この callback はフレームワークの mount 境界であり、DOM API でフォームを組み立てるためのものではありません。次の例は、同じタイトル、保存、キャンセル操作を各フレームワークのコンポーネントとして実装します。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx title="organiserDrawer.tsx"
+    import { createRoot } from 'react-dom/client';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+
+    function OrganiserDrawer({
+      args,
+    }: {
+      args: AppointmentScheduleDrawerRenderArgs;
+    }) {
+      return (
+        <form onSubmit={event => { event.preventDefault(); void args.save(); }}>
+          <input
+            value={args.draft.title}
+            onChange={event =>
+              args.draftManager.updateDraft({ title: event.target.value })
+            }
+          />
+          <button type="submit">保存</button>
+          <button type="button" onClick={args.cancel}>キャンセル</button>
+        </form>
+      );
+    }
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const root = createRoot(host);
+        const render = (args: AppointmentScheduleDrawerRenderArgs) =>
+          root.render(<OrganiserDrawer args={args} />);
+
+        render(initial);
+        // React の effect から drawer を閉じる場合（`drawerRenderer` の切り替えなど）、
+        // React がレンダリング中に `destroy` が呼ばれ、そこで root を unmount すると
+        // そのレンダリングと競合します。マイクロタスクで後ろにずらします。
+        return {
+          update: render,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        };
+      };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue title="OrganiserDrawer.vue"
+    <script setup lang="ts">
+    import type { AppointmentScheduleDrawerRenderArgs } from '@dayflow-pro/appointment-schedule/plugin';
+
+    const props = defineProps<{ args: AppointmentScheduleDrawerRenderArgs }>();
+    const updateTitle = (event: Event) => {
+      props.args.draftManager.updateDraft({
+        title: (event.target as HTMLInputElement).value,
+      });
+    };
+    </script>
+
+    <template>
+      <form @submit.prevent="args.save()">
+        <input :value="args.draft.title" @input="updateTitle" />
+        <button type="submit">保存</button>
+        <button type="button" @click="args.cancel()">キャンセル</button>
+      </form>
+    </template>
+    ```
+
+    ```ts title="organiserDrawerRenderer.ts"
+    import { createApp, h, reactive } from 'vue';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+    import OrganiserDrawer from './OrganiserDrawer.vue';
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const state = reactive({ args: initial });
+        const app = createApp({
+          render: () => h(OrganiserDrawer, { args: state.args }),
+        });
+        app.mount(host);
+
+        return {
+          update: (args: AppointmentScheduleDrawerRenderArgs) => {
+            state.args = args;
+          },
+          destroy: () => app.unmount(),
+        };
+      };
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts title="organiser-drawer.ts"
+    import {
+      ApplicationRef,
+      Component,
+      EnvironmentInjector,
+      Input,
+      createComponent,
+    } from '@angular/core';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+
+    @Component({
+      selector: 'app-organiser-drawer',
+      standalone: true,
+      template: `
+        <input [value]="args.draft.title" (input)="updateTitle($event)" />
+        <button type="button" (click)="args.save()">保存</button>
+        <button type="button" (click)="args.cancel()">キャンセル</button>
+      `,
+    })
+    export class OrganiserDrawerComponent {
+      @Input({ required: true }) args!: AppointmentScheduleDrawerRenderArgs;
+
+      updateTitle(event: Event) {
+        this.args.draftManager.updateDraft({
+          title: (event.target as HTMLInputElement).value,
+        });
+      }
+    }
+
+    export const createDrawerRenderer = (
+      appRef: ApplicationRef,
+      environmentInjector: EnvironmentInjector
+    ): AppointmentScheduleDrawerRenderer => (initial, host) => {
+      const component = createComponent(OrganiserDrawerComponent, {
+        hostElement: host,
+        environmentInjector,
+      });
+      appRef.attachView(component.hostView);
+      const update = (args: AppointmentScheduleDrawerRenderArgs) => {
+        component.setInput('args', args);
+        component.changeDetectorRef.detectChanges();
+      };
+      update(initial);
+
+      return {
+        update,
+        destroy: () => {
+          appRef.detachView(component.hostView);
+          component.destroy();
+        },
+      };
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte title="OrganiserDrawer.svelte"
+    <script lang="ts">
+      import type { Readable } from 'svelte/store';
+      import type { AppointmentScheduleDrawerRenderArgs } from '@dayflow-pro/appointment-schedule/plugin';
+
+      let { state }: { state: Readable<AppointmentScheduleDrawerRenderArgs> } = $props();
+      const updateTitle = (event: Event) => {
+        $state.draftManager.updateDraft({
+          title: (event.target as HTMLInputElement).value,
+        });
+      };
+    </script>
+
+    <form onsubmit={(event) => { event.preventDefault(); void $state.save(); }}>
+      <input value={$state.draft.title} oninput={updateTitle} />
+      <button type="submit">保存</button>
+      <button type="button" onclick={$state.cancel}>キャンセル</button>
+    </form>
+    ```
+
+    ```ts title="organiserDrawerRenderer.ts"
+    import { mount, unmount } from 'svelte';
+    import { writable } from 'svelte/store';
+    import type { AppointmentScheduleDrawerRenderer } from '@dayflow-pro/appointment-schedule/plugin';
+    import OrganiserDrawer from './OrganiserDrawer.svelte';
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const state = writable(initial);
+        const component = mount(OrganiserDrawer, {
+          target: host,
+          props: { state },
+        });
+
+        return {
+          update: next => state.set(next),
+          destroy: () => void unmount(component),
+        };
+      };
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+作成した renderer を `createAppointmentSchedulePlugin({ drawerRenderer })` に渡します。Draft の変更時に `update` が呼ばれ、drawer を閉じたときや renderer を置き換えたときに `destroy` が呼ばれます。引数にはカレンダーと会議サービスのメタデータ、locale、`timeFormat`、`translate`、`isCreating`、`save()`、`cancel()` も含まれます。
+
+### Drawer のホスト要素、モーション、重なり順
+
+renderer に渡されるホスト要素はプラグインが管理します。`df-appointment-custom-drawer-host` と `--calendar` または `--viewport` の修飾クラスを持ち、位置・幅・重なり順はプラグインがインラインスタイルで設定します。スタイルはこれらのクラスから当ててください。DOM 上で移動させたり position を書き換えたりしないでください。プラグインはレンダリングのたびに両方を再適用します。
+
+差し替えた drawer にも表示・退出のアニメーションが付きます。閉じるときプラグインはホストに `data-df-drawer-exiting` を付け、keyframe アニメーションの終了を待ってから `destroy` を呼び、ホストを削除します。つまり drawer は中身を保ったままスライドアウトし、いきなり消えることはありません。
+
+```css
+/* パッケージ同梱のデフォルト。上書きするとモーションを変更できます。 */
+.df-appointment-custom-drawer-host {
+  animation: df-slide-in-left 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.df-appointment-custom-drawer-host[data-df-drawer-exiting] {
+  animation: df-slide-out-left 180ms cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+```
+
+注意点が 3 つあります。待機するのは keyframe アニメーションだけなので、フレームワークが hover やフォーカスリングに付ける CSS transition が drawer を遅らせることはありません。無限に続くアニメーションは無視され、さらにアニメーション自身の再生時間を上限とするタイマーが待機を打ち切ります。そのため drawer 内のスピナーや、アニメーションフレームが止まるバックグラウンドタブでも、ホストがドキュメントに残り続けることはありません。アニメーションを外した場合、あるいは `prefers-reduced-motion: reduce` に一致する場合は、閉じたのと同じフレームでホストが削除されます。後者はパッケージ側で既にそう動作します。
+
+Drawer の `z-index` は `900` で、カレンダーのクイック作成ポップアップやダイアログ（`1000`）より下です。そのためエディターを開いたまま追加メニューを開いても隠れません。drawer を `1000` より上げると関係が逆転します。drawer をそれらより前面に出したい場合は、drawer だけでなく相手側も一緒に引き上げてください。
+
+### 繰り返し
+
+予約可能時間は既定で毎週繰り返します。ドロワーでは「繰り返さない」と「N 週間ごと」のカスタムルールも選べます。
+
+```ts
+type AppointmentRecurrence = {
+  frequency: 'weekly' | 'none' | 'custom';
+  startDate?: string; // YYYY-MM-DD anchor
+  intervalWeeks?: number; // custom: every N weeks
+  endsOnDate?: string;
+  endsAfterOccurrences?: number;
+};
+```
+
+`frequency: 'none'` は、選択した Weekly hours をアンカー日を含む月曜日から日曜日までの週だけに適用します。アンカー日だけに限定する指定ではありません。
+
+より複雑なルール（毎月、第 N 週の曜日、RRULE）はアプリケーション側のロジックです。繰り返しルールより常に優先される `dateOverrides` で表現してください。
+
+## 開催場所と Web 会議
+
+スケジュールには**どこで会うか**を持たせられます。これは設定であって、予約済みの会議そのものではありません。1 つのスケジュールは何度も予約されるため、予約ごとの参加 URL は保存しません。
+
+```ts
+type AppointmentLocationConfig =
+  | { type: 'custom-link'; url: string; label?: string }
+  | { type: 'conference'; providerId: string }
+  | { type: 'in-person'; address: string }
+  | { type: 'phone'; phone?: string };
+```
+
+ドロワーの **Location** ピッカーには常に「Custom meeting link」「In person」「Phone call」が並びます。名前付きの Web 会議サービスは、登録して初めて表示されます。
+
+```ts
+createAppointmentSchedulePlugin({
+  schedules,
+  conferenceProviders: [googleMeet, zoom], // ← ピッカーの先頭に並ぶ
+});
+```
+
+### Conference Provider
+
+DayFlow が Google・Zoom・Microsoft を直接呼ぶことはありません。1 メソッドだけのインターフェースを定義して呼び出すだけで、OAuth トークン・API シークレット・各ベンダーの SDK はすべてホスト側のバックエンドに残ります。
+
+```ts
+import type { ConferenceProvider } from '@dayflow-pro/appointment-schedule/engine';
+
+const googleMeet: ConferenceProvider = {
+  id: 'google-meet',
+  name: 'Google Meet',
+  icon: '/icons/meet.svg',
+  createConference: input =>
+    fetch('/api/dayflow/google-meet', {
+      method: 'POST',
+      body: JSON.stringify({ ...input, start: input.start.toString() }),
+    }).then(response => response.json()),
+};
+// → { provider, joinUrl, meetingId?, hostUrl?, password?, meta? }
+```
+
+`createConference` は `CreateConferenceInput` を受け取ります。必須項目は `scheduleId`、`title`、Temporal の `start` と `end`、`timeZone` で、`host` と `attendees` は任意です。返す `Conference` では `provider` と `joinUrl` が必須、`meetingId`、`hostUrl`、`password`、`meta` は任意です。
+
+同じ provider を予約コンポーネントにも渡すと、開催場所の行にサービス名とアイコンが表示されます。
+
+```tsx
+<AppointmentBooking schedule={schedule} conferenceProviders={[googleMeet]} />
+```
+
+### 会議を作成する
+
+会議はスロットを選んだ時点ではなく、参加者が**確定**した時点で作成してください。10:00 を選んだだけで離脱した人のために会議が残るべきではありません。
+
+```ts
+import {
+  createBookingEvent,
+  createConferenceForBooking,
+} from '@dayflow-pro/appointment-schedule/engine';
+
+const conference = await createConferenceForBooking({
+  slot,
+  schedule,
+  providers: [googleMeet],
+  attendees: [{ name: 'Ada Lovelace', email: 'ada@example.com' }],
+});
+
+const draft = createBookingEvent({ slot, schedule, conference });
+// draft.location  → 'https://meet.google.com/abc-defg-hij'
+// draft.conference → { provider: 'google-meet', joinUrl, meetingId }
+```
+
+`custom-link` は主催者の固定ルームをそのまま返し、ネットワークアクセスは発生しません。`in-person` と `phone` は `undefined` になります。登録されていない `providerId` の場合は例外を投げます。予約が会議リンクを黙って失うほうが、確定に失敗するより悪いからです。
+
+<Callout title='固定リンクではだめなのか'>
+  Google Meet・Zoom・Teams では `custom-link` ではなく `conference`
+  を推奨します。Google は [イベントごとに個別の conference
+  を作成すること](https://developers.google.com/workspace/calendar/api/v3/reference/events)
+  を明示的に推奨しており、conference
+  データを使い回すとアクセスとプライバシーの問題が生じます。
+</Callout>
+
+メールや確認ページなど他の場所で開催場所を表示したい場合は、会議情報の行が使っているのと同じ純粋関数を利用できます。
+
+```ts
+import { resolveLocation } from '@dayflow-pro/appointment-schedule/engine';
+
+resolveLocation(schedule.location, { providers: [googleMeet] });
+// → { kind: 'video', label: 'Google Meet', icon: '/icons/meet.svg', config }
+```
+
+場所が設定されている場合、resolver は `ResolvedLocation` を返します。
+
+## 参加者向け予約コンポーネント
+
+```tsx
+import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/booking';
+
+<AppointmentBooking
+  schedule={schedule}
+  presentation={{ organiserName: 'Alex Morgan', locationLabel: 'Zoom meeting' }}
+  busyIntervals={busyIntervals}
+  layout='calendar-day-slots'
+  onSelectSlot={slot => console.log(slot.start.toString())}
+/>;
+```
+
+`presentation` は会議情報パネルに表示する任意の内容だけを保持します。予約可能時間と予約動作は引き続き `schedule` から決まります。
+
+| プロパティ        | 型       | 用途                                                                                                     |
+| ----------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| `organiserName`   | `string` | 主催者名を表示します。アバターがない場合は先頭文字のアバターにも使用します。                             |
+| `organiserAvatar` | `string` | 主催者アバターの画像 URL。                                                                               |
+| `organiserUrl`    | `string` | 主催者アバターから開くプロフィール URL。                                                                 |
+| `title`           | `string` | 所要時間、場所、タイムゾーンの上に表示する見出し。`schedule.title` を渡すと同じタイトルを使用できます。  |
+| `description`     | `string` | 会議メタデータの下に表示する補足説明。                                                                   |
+| `locationLabel`   | `string` | `schedule.location` から解決した場所テキストを上書きします。通常は schedule 側の場所を優先してください。 |
+
+### 予約コンポーネントのオプション
+
+すべてのフレームワークアダプターは最終的に `AppointmentBookingProps` を受け取ります。Vue、Angular、Svelte は各エントリーポイントで同等の mount 型を提供します。
+
+| プロパティグループ                                                | 用途                                                                       |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `schedule`                                                        | スロット生成に使う必須の `AppointmentSchedule`。                           |
+| `calendarApp`                                                     | DayFlow イベントを主催者のビジー時間として読み取り購読します。             |
+| `presentation`                                                    | 上表の任意 `AppointmentPresentation` コンテンツ。                          |
+| `conferenceProviders`                                             | 会議場所のサービス名とアイコンを解決します。                               |
+| `busyIntervals` / `attendeeBusyIntervals`                         | 主催者スロットの除外または参加者競合表示に使う Temporal 範囲。             |
+| `layout`                                                          | `BookingLayout`：`calendar-day-slots`、`multi-day-slots`、`week-overlay`。 |
+| `renderWeekOverlay` / `weekOverlayOptions`                        | `WeekOverlayRenderArgs` と `WeekOverlayOptions` で週表示を有効化・調整。   |
+| `availableLayouts` / `onLayoutChange`                             | 組み込み切替に表示するレイアウトを制御します。                             |
+| `displayTimeZone` / `timeZoneOptions` / `onDisplayTimeZoneChange` | 参加者の表示タイムゾーンと選択肢を制御します。                             |
+| `timeFormat` / `onTimeFormatChange`                               | `TimeFormat`（`12h` または `24h`）を制御します。                           |
+| `theme` / `locale` / `startOfWeek`                                | 週テーマ、locale、`StartOfWeek`（`0`、`1`、`6`）を設定します。             |
+| `multiDayCount` / `skipEmptyDays`                                 | 複数日レイアウトを調整します。                                             |
+| `now` / `rangeStart` / `rangeEnd`                                 | 現在時刻とスロット生成範囲を上書きします。                                 |
+| `selectedDate` / `onSelectDate`                                   | 制御されたフォーカス日付。                                                 |
+| `selectedSlotId` / `onSelectSlot`                                 | 制御されたスロット選択と選択 callback。                                    |
+| `loading` / `disabled`                                            | 読み込み UI の表示または操作の無効化。                                     |
+| `onError` / `onRetry`                                             | エラー報告と再試行動作を接続します。                                       |
+| `className` / `style`                                             | ルートのスタイルを追加します。                                             |
+| `labels`                                                          | ユーザー表示文字列の任意部分を上書きします。                               |
+| `slots`                                                           | 下記の領域を置換または拡張します。                                         |
+| `onAnalyticsEvent`                                                | `AppointmentBookingAnalyticsEvent` と非個人情報 payload を受け取ります。   |
+
+表示する予約可能時間に合わせてレイアウトを選択します。
+
+| レイアウト           | 用途                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| `calendar-day-slots` | 月選択と、選択中の日の予約可能時間リスト。                   |
+| `multi-day-slots`    | 複数日の予約可能時間を列で比較。                             |
+| `week-overlay`       | 週タイムライン上に予約可能時間を表示。下記 renderer が必要。 |
+
+週レイアウトはオプトインです。`@dayflow/core` を必要とする唯一のレイアウトだからです。
+
+```tsx
+import { renderWeekOverlay } from '@dayflow-pro/appointment-schedule/booking/week-overlay';
+
+<AppointmentBooking
+  layout='week-overlay'
+  renderWeekOverlay={renderWeekOverlay}
+/>;
+```
+
+## フレームワークアダプター
+
+予約ページを管理するフレームワークに対応したアダプターを使用します。各アダプターは同じ予約 options を受け取り、mount・リアクティブ更新・cleanup を管理します。1 つのアダプターをインポートしても、他のフレームワークランタイムがバンドルに含まれることはありません。
+
+まず、すべてのアダプターで共有できるシリアライズ可能な schedule を作成します。
+
+```ts title="schedule.ts"
+import type { AppointmentSchedule } from '@dayflow-pro/appointment-schedule/engine';
+
+export const schedule: AppointmentSchedule = {
+  id: 'product-demo',
+  title: 'Product demo',
+  durationMinutes: 30,
+  slotIntervalMinutes: 30,
+  timeZone: 'Europe/London',
+  recurrence: { frequency: 'weekly' },
+  availability: [
+    {
+      dayOfWeek: 1,
+      intervals: [{ id: 'monday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 2,
+      intervals: [{ id: 'tuesday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 3,
+      intervals: [{ id: 'wednesday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 4,
+      intervals: [{ id: 'thursday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 5,
+      intervals: [{ id: 'friday', startTime: '09:00', endTime: '17:00' }],
+    },
+  ],
+  location: {
+    type: 'custom-link',
+    url: 'https://zoom.us/j/1234567890',
+    label: 'Zoom meeting',
+  },
+};
+```
+
+アプリケーションのエントリーで `styles.components.css` を一度インポートし、対応するアダプターを使用します。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/react';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    export function BookingPage() {
+      return (
+        <AppointmentBooking
+          schedule={schedule}
+          presentation={{
+            organiserName: 'Alex Morgan',
+            locationLabel: 'Zoom meeting',
+          }}
+          layout='calendar-day-slots'
+          onSelectSlot={slot => console.log(slot.start.toString())}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <script setup lang="ts">
+    import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/vue';
+    import type { MountAppointmentBookingProps } from '@dayflow-pro/appointment-schedule/vue';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    const bookingOptions: MountAppointmentBookingProps = {
+      schedule,
+      presentation: {
+        organiserName: 'Alex Morgan',
+        locationLabel: 'Zoom meeting',
+      },
+      layout: 'calendar-day-slots',
+      onSelectSlot: slot => console.log(slot.start.toString()),
+    };
+    </script>
+
+    <template>
+      <AppointmentBooking :options="bookingOptions" />
+    </template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import { Component } from '@angular/core';
+    import {
+      AppointmentBookingDirective,
+      type MountAppointmentBookingProps,
+    } from '@dayflow-pro/appointment-schedule/angular';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    @Component({
+      standalone: true,
+      imports: [AppointmentBookingDirective],
+      template: '<div [dfAppointmentBooking]="bookingOptions"></div>',
+    })
+    export class BookingPage {
+      readonly bookingOptions: MountAppointmentBookingProps = {
+        schedule,
+        presentation: {
+          organiserName: 'Alex Morgan',
+          locationLabel: 'Zoom meeting',
+        },
+        layout: 'calendar-day-slots',
+        onSelectSlot: slot => console.log(slot.start.toString()),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { appointmentBooking } from '@dayflow-pro/appointment-schedule/svelte';
+      import type { SvelteAppointmentBookingOptions } from '@dayflow-pro/appointment-schedule/svelte';
+      import '@dayflow-pro/appointment-schedule/styles.components.css';
+      import { schedule } from './schedule';
+
+      const options: SvelteAppointmentBookingOptions = {
+        schedule,
+        presentation: {
+          organiserName: 'Alex Morgan',
+          locationLabel: 'Zoom meeting',
+        },
+        layout: 'calendar-day-slots',
+        onSelectSlot: slot => console.log(slot.start.toString()),
+      };
+    </script>
+
+    <div use:appointmentBooking={options}></div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+options オブジェクトを受け取るアダプターではカスタム領域を `options.slots` で指定し、コンポーネント props では同じ `slots` 契約を直接使用します。options オブジェクトを置き換えると予約 UI が更新されます。slot renderer の集合が変わると安全に再 mount され、ホストの unmount 時には予約インスタンスも破棄されます。
+
+## 統合 API
+
+### Plain mount API
+
+予約 UI を自分で mount する場合は `createAppointmentBooking` を使用します。他のフレームワークとフレームワークなしのページのどちらでも利用できます。
+
+```ts
+import { createAppointmentBooking } from '@dayflow-pro/appointment-schedule/booking';
+
+const booking = createAppointmentBooking('#booking', {
+  schedule,
+  onSelectSlot: slot => console.log(slot.start.toString()),
+});
+
+booking.update({ disabled: true });
+booking.destroy();
+```
+
+ターゲットに既にある子要素は変更されません。Mount API は 1 つの子要素を作成・所有し、`destroy()` 時に削除します。
+
+DOM slot は現在の引数と renderer が所有するコンテナーを受け取ります。
+
+```ts
+createAppointmentBooking('#booking', {
+  schedule,
+  slots: {
+    slotButton: (args, host) => {
+      host.textContent = `${args.formattedTime} · ${price(args.slot)}`;
+    },
+  },
+});
+```
+
+Renderer は何も返さないか、cleanup 関数、または `{ update, destroy }` を返せます。Handle 形式は、patch ではなく append を行うフレームワークの mount API に適しています。
+
+### ヘッドレス予約コントローラー
+
+組み込みの予約動作を保ちながら独自のマークアップを使う場合は `createBookingController` を利用します。選択中の日付と slot、タイムゾーン、時刻形式、参加者の busy 表示、slot のグループ化を管理しますが、DOM には一切触れません。
+
+```ts
+import { createBookingController } from '@dayflow-pro/appointment-schedule/controller';
+
+const booking = createBookingController({ schedule });
+const unsubscribe = booking.subscribe(() => render(booking.getState()));
+
+booking.getState().selectSlot(slot);
+booking.setOptions({ schedule, disabled: true });
+
+unsubscribe();
+booking.destroy();
+```
+
+## カスタマイズ
+
+### デザイントークン
+
+`.df-appointment-booking` は参加者向け予約コンポーネントのテーマスコープであり、唯一のデザイントークンではありません。package は次の CSS カスタムプロパティに対応します。package stylesheet の後で上書き用 CSS を読み込み、`.df-appointment-booking` に設定してください。独自の `className` を渡して両方の class を指定することもできます。
+
+```css
+.df-appointment-booking.my-booking-theme {
+  --df-ap-accent: #2563eb;
+  --df-ap-radius: 6px;
+  --df-ap-sidebar-width: 320px;
+}
+```
+
+| トークン                     | 既定値                   | 対象                         |
+| ---------------------------- | ------------------------ | ---------------------------- |
+| `--df-ap-surface`            | Core background          | メインサーフェス             |
+| `--df-ap-surface-sunken`     | Core muted               | 沈み込みサーフェス           |
+| `--df-ap-fill`               | `#e8eaef`                | 中立の塗り                   |
+| `--df-ap-border`             | Core border              | 境界線と区切り線             |
+| `--df-ap-fg`                 | Core foreground          | 主テキスト                   |
+| `--df-ap-fg-muted`           | Core muted foreground    | 補助テキスト                 |
+| `--df-ap-fg-subtle`          | `#9ca3af`                | 弱調テキスト                 |
+| `--df-ap-accent`             | Core primary             | 選択されたコントロール       |
+| `--df-ap-accent-fg`          | Core primary foreground  | アクセント面上のテキスト     |
+| `--df-ap-accent-soft`        | アクセントから派生       | 柔らかな hover 背景          |
+| `--df-ap-accent-ring`        | アクセントから派生       | フォーカスと選択リング       |
+| `--df-ap-available`          | `#22c55e`                | 予約可能インジケーター       |
+| `--df-ap-radius`             | `14px`                   | カードの角丸                 |
+| `--df-ap-radius-md`          | `9px`                    | コントロールの角丸           |
+| `--df-ap-radius-sm`          | `7px`                    | コンパクトな項目の角丸       |
+| `--df-ap-max-width`          | `1440px`                 | 予約コンポーネントの最大幅   |
+| `--df-ap-sidebar-width`      | `296px`                  | サイドバーの幅               |
+| `--df-ap-slots-width`        | `320px`                  | 当日時間列の幅               |
+| `--df-ap-week-height`        | `620px`                  | 週タイムラインの高さ         |
+| `--df-ap-slot-scroll-height` | `none`                   | 当日時間一覧の高さ           |
+| `--df-ap-pad`                | `1.5rem`                 | 主要な内側余白               |
+| `--df-ap-font`               | システムフォントスタック | 予約コンポーネントのフォント |
+
+ホバー、選択、フォーカスの色は `--df-ap-accent` から派生します。高度なテーマでは `--df-ap-accent-soft` と `--df-ap-accent-ring` も直接上書きできます。
+
+主催者 drawer は DayFlow カレンダーの一部であり、参加者向けトークンではなく core テーマを使用します。
+
+```css
+:root {
+  --df-color-background: #ffffff;
+  --df-color-card: #ffffff;
+  --df-color-foreground: #172033;
+  --df-color-muted: #f4f6f8;
+  --df-color-muted-foreground: #667085;
+  --df-color-border: #d0d5dd;
+  --df-color-primary: #7c3aed;
+  --df-color-primary-foreground: #ffffff;
+  --df-color-destructive: #dc2626;
+  --df-color-ring: #7c3aed;
+}
+```
+
+`drawerPlacement` が `viewport` の場合、drawer はカレンダー要素の外側に mount されるため、変数を `:root` に設定してください。`calendar` の場合はカレンダーコンテナーにも設定できます。
+
+### スロット
+
+すべてのアダプターが slot に対応しますが、renderer のシグネチャは異なります。
+
+- React slot は React コンテンツを返します。`slotButton` と `dayCell` は `defaultContent` も受け取るため、組み込み内容を包んで拡張できます。
+- Vue、Angular、Svelte は `options.slots` を使用します。各 renderer は `(args, host)` を受け取り、指定された DOM 要素へ描画します。フレームワーク API でコンポーネントを mount する場合は、cleanup 関数または `{ update, destroy }` handle を返せます。
+
+次の例は、同じ `slotButton` 領域を各フレームワークで正しくカスタマイズします。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    <AppointmentBooking
+      schedule={schedule}
+      slots={{
+        slotButton: ({ defaultContent }) => (
+          <>
+            {defaultContent}
+            <span>$120</span>
+          </>
+        ),
+      }}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/vue';
+
+    const slots: DomBookingSlots = {
+      slotButton: ({ formattedTime }, host) => {
+        host.textContent = `${formattedTime} · $120`;
+      },
+    };
+
+    const bookingOptions = { schedule, slots };
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/angular';
+
+    const slots: DomBookingSlots = {
+      slotButton: ({ formattedTime }, host) => {
+        host.textContent = `${formattedTime} · $120`;
+      },
+    };
+
+    export class BookingPage {
+      readonly bookingOptions = { schedule, slots };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/svelte';
+
+      const slots: DomBookingSlots = {
+        slotButton: ({ formattedTime }, host) => {
+          host.textContent = `${formattedTime} · $120`;
+        },
+      };
+
+      const options = { schedule, slots };
+    </script>
+
+    <div use:appointmentBooking={options}></div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`AppointmentBookingSlots` が下表の領域を定義します。公開引数型には `SidebarSlotArgs`、`MeetingInfoSlotArgs`、`MonthPickerSlotArgs`、`SlotListSlotArgs`、`ToolbarSlotArgs`、`SlotButtonSlotArgs`、`DayCellSlotArgs`、`SelectedSummarySlotArgs` があります。
+
+| スロット            | 用途                                                             | 主な引数                                                                      |
+| ------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `sidebar`           | 会議情報とミニカレンダーを含むサイドカラム全体を置き換えます。   | `schedule`、`presentation`、`location`、`layout`、`defaultContent`            |
+| `meetingInfo`       | 会議情報パネルを置き換えます。                                   | `schedule`、`presentation`、`location`、`timeZone`、`defaultContent`          |
+| `meetingInfoFooter` | 会議情報パネルの下にコンテンツを追加します。                     | `schedule`、`presentation`、`location`、`timeZone`                            |
+| `monthPicker`       | メイン領域とサイドバーの月選択を置き換えます。                   | `selectedDate`、`availableDates`、`onSelectDate`、`compact`、`defaultContent` |
+| `slotList`          | `calendar-day-slots` で選択中の日の時間一覧を置き換えます。      | `date`、`slots`、`selectedSlotId`、`onSelectSlot`、`defaultContent`           |
+| `toolbar`           | `multi-day-slots` と `week-overlay` のツールバーを置き換えます。 | `layout`、`timeZone`、`timeFormat`、`rangeLabel`、`defaultContent`            |
+| `toolbarExtra`      | ツールバーコントロールの右側にコンテンツを追加します。           | `layout`、`timeZone`、`timeFormat`、`rangeLabel`                              |
+| `slotButton`        | 各予約可能時間ボタンの内容を置き換えます。                       | `slot`、`formattedTime`、`isSelected`、`disabled`、`defaultContent`           |
+| `dayCell`           | 月選択にある各日付セルの内容を置き換えます。                     | `date`、月/空き/選択状態、`defaultContent`                                    |
+| `emptyDay`          | 選択中の日に予約可能時間がない場合に表示します。                 | `date`                                                                        |
+| `emptyRange`        | 現在の日付範囲に予約可能時間がない場合に表示します。             | なし                                                                          |
+| `loading`           | 読み込み状態を置き換えます。                                     | なし                                                                          |
+| `error`             | エラー状態を置き換え、エラーと任意の再試行操作を受け取ります。   | `error`、`retry`                                                              |
+| `selectedSummary`   | 時間選択後に予約コンテンツの下へ概要を追加します。               | `slot`、`formattedDate`、`formattedRange`、`timeZone`                         |
+
+## ヘッドレス：独自 UI の構築
+
+どのレイアウトも合わない場合は、コンポーネントを完全に省略できます。エンジンは純粋関数（スケジュールを渡すとスロットが返る）で、パッケージの他のコードはバンドルに含まれません。
+
+```ts
+import { generateSlots } from '@dayflow-pro/appointment-schedule/engine';
+import { Temporal } from 'temporal-polyfill';
+
+const slots = generateSlots({
+  schedule,
+  rangeStart: Temporal.PlainDate.from('2026-08-03'),
+  rangeEnd: Temporal.PlainDate.from('2026-08-09'),
+  busyIntervals,
+  displayTimeZone: 'Europe/London',
+  now: Temporal.Now.zonedDateTimeISO('Australia/Sydney'),
+});
+// slots: { id, scheduleId, start, end, displayTimeZone }[]
+```
+
+入力は `SlotQuery` です。`rangeStart` と `rangeEnd` は境界を含む `Temporal.PlainDate` です。`busyIntervals` と `attendeeBusyIntervals` は Temporal の `start` と `end` を持つ `BusyInterval` を受け取り、結果は `AppointmentSlot[]` です。
+
+エンジンは `window`、`document`、システムタイムゾーンに一切触れないため、サーバー側でも安全にインポートできます。構成要素である `expandAvailability`、`recurrenceAppliesOn`、`sortBusyIntervals`、`mergeBusyIntervals`、`hasConflict`、`eventsToBusyIntervals` も公開しているので、独自のパイプラインを組み立てられます。
+
+## 予約をイベントに変換する
+
+モジュールはイベントを書き込みません。代わりに純粋なマッピング関数を提供します。
+
+```ts
+import { createBookingEvent } from '@dayflow-pro/appointment-schedule/engine';
+
+const draft = createBookingEvent({
+  slot,
+  schedule, // schedule.calendarId が対象カレンダー（と色）を決定
+  attendee: { name: 'Ada Lovelace' }, // 収集はホスト側、モジュールは保存しない
+  conference, // 任意。「開催場所と Web 会議」を参照
+  // titleTemplate: ({ attendee }) => `1:1 · ${attendee?.name}`,
+});
+// → { id, title: 'Meeting with Ada Lovelace', start, end, calendarId, location?, conference?, meta }
+
+calendar.addEvent(draft);
+```
+
+`meta` には `appointmentScheduleId` と `appointmentSlotId` が含まれるため、イベントから元のスロットを辿れます。スケジュールに開催場所が設定されている場合は `appointmentLocation` と `appointmentConference` も含まれます。
+
+## アクセシビリティ
+
+WCAG 2.2 AA を目標としています。月選択は実際の `role="grid"` で、矢印キー・Home・End・PageUp・PageDown による移動に対応します。スロットボタンは `aria-pressed` と、日付・時刻・タイムゾーンを含むアクセシブル名を提供します。利用可能・利用不可・選択中の状態を色だけで伝えることはありません。

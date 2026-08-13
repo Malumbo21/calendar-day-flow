@@ -84,6 +84,9 @@ const fr: DayflowLocale = {
     fetchingCalendar: 'Récupération du calendrier...',
     subscribeError:
       "Impossible de récupérer le calendrier. Vérifiez l'URL et réessayez.",
+    appointmentScheduler: 'Planning des rendez-vous',
+    newAppointmentSchedule: 'Nouveau planning des rendez-vous',
+    editAppointmentSchedule: 'Modifier le planning des rendez-vous',
   },
   packages: {
     scheduler: {

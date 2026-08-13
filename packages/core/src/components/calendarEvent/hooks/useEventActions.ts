@@ -343,14 +343,17 @@ export const useEventActions = ({
     ]
   );
 
-  const emitSingleClick = useCallback(() => {
-    app?.onEventClick(event);
-  }, [app, event]);
+  const emitSingleClick = useCallback(
+    (e?: MouseEvent) => {
+      app?.onEventClick(event, e);
+    },
+    [app, event]
+  );
 
   const performSingleClick = useCallback(
-    (clientX: number) => {
+    (clientX: number, e?: MouseEvent) => {
       applySingleClickSelection(clientX);
-      emitSingleClick();
+      emitSingleClick(e);
     },
     [applySingleClickSelection, emitSingleClick]
   );
@@ -486,7 +489,7 @@ export const useEventActions = ({
       if (trigger === 'click' && !isMobile && canOpenDetail) {
         clearPendingClick();
         applyDetailSelection(e);
-        emitSingleClick();
+        emitSingleClick(e);
         openDetailPanel();
         return;
       }
@@ -503,14 +506,14 @@ export const useEventActions = ({
           } else if (!app || app.getEventDetailEnabled()) {
             dismissDetailPanel();
           }
-          emitSingleClick();
+          emitSingleClick(e);
           clickTimeoutRef.current = null;
           setHasPendingSelection(false);
         }, SINGLE_CLICK_DELAY_MS);
         return;
       }
 
-      performSingleClick(clientX);
+      performSingleClick(clientX, e);
     },
     [
       app,
