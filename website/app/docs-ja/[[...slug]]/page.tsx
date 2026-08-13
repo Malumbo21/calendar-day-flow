@@ -11,13 +11,13 @@ export default async function Page(props: PageProps<'/docs-ja/[[...slug]]'>) {
   const page = sourceJa.getPage(params.slug);
   if (!page) notFound();
 
-  const MDX = page.data.body;
+  const { body: MDX, toc } = await page.data.load();
 
   const full = page.data.full ?? params.slug?.[0] === 'features';
 
   return (
     <DocsPage
-      toc={page.data.toc}
+      toc={toc}
       full={full}
       breadcrumb={{ enabled: false }}
       tableOfContent={{ style: 'clerk' }}

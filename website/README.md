@@ -15,6 +15,22 @@ yarn dev
 
 Open http://localhost:3000 with your browser to see the result.
 
+### Why `dev` runs with `--disable-source-maps`
+
+Some docs pages compile to very large modules (`appointment-schedule.mdx` and
+`content-slots.mdx` are over 1 MB of generated JSX each). In dev, React attaches
+the module's **entire** source map — inlined as a base64 `data:` URL — to every
+server-component stack frame it reconstructs, and Node keeps each one in its
+source-map cache. On these pages that is a few MB per frame across hundreds of
+frames, which took ~50 s per request and exhausted the V8 heap after two or
+three page loads (`FATAL ERROR: Reached heap limit`).
+
+`--disable-source-maps` removes the inlined maps: the same pages render in
+about a second and the dev server stays around 1 GB. The cost is that
+server-side stack traces in dev point at compiled output instead of the
+original source — run `npm run dev:source-maps` when you need them, and prefer
+a narrow page to debug on.
+
 ## Explore
 
 In the project, you can see:

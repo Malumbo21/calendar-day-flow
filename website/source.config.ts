@@ -15,6 +15,11 @@ const customPageSchema = frontmatterSchema.extend({
 const docsOptions = {
   docs: {
     schema: customPageSchema,
+    // Load compiled MDX bodies lazily. Without this, the generated
+    // `.source/server.ts` statically imports every MDX file of every locale,
+    // so rendering a single page pulls all of them into the server module
+    // graph — several MB of compiled JS each in dev, which exhausts the heap.
+    async: true,
     postprocess: {
       includeProcessedMarkdown: true,
     },

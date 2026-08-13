@@ -1,0 +1,1050 @@
+---
+title: 预约排期
+description: DayFlow Pro 可预约时间编辑器与独立预约 UI，包含每周可用时间、无头控制器、三种参与者布局，以及 React、Vue、Svelte、Angular adapter。
+status: pro
+---
+
+# 预约排期
+
+`@dayflow-pro/appointment-schedule` 只做两件事：
+
+1. 让组织者在 DayFlow 周视图中直接定义**什么时候可以被预约**；
+2. 把这份定义转换成参与者可以**直接选择的时间段**，且不依赖 `CalendarApp`。
+
+它不是预约平台：没有后端、没有预约生命周期、没有通知、没有支付。选择时间段只会触发回调，后续流程完全交给你的应用。
+
+## 安装
+
+<PackageTabs pkg='@dayflow-pro/appointment-schedule' />
+
+安装步骤请参考 [Pro 安装指南](/docs/introduction/pro-installation)。
+
+`temporal-polyfill` 是必需依赖。只有组织者插件和 week-overlay 布局需要 `@dayflow/core`。React、Vue、Svelte、Angular 都是可选 peer dependency，只需安装当前 adapter 对应的框架。
+
+```ts
+import '@dayflow-pro/appointment-schedule/styles.css';
+// 或者，Tailwind 项目若已加载核心主题：
+import '@dayflow-pro/appointment-schedule/styles.components.css';
+```
+
+## 组织者插件
+
+```ts title="appointmentPlugin.ts"
+import { createAppointmentSchedulePlugin } from '@dayflow-pro/appointment-schedule/plugin';
+import type { AppointmentSchedule } from '@dayflow-pro/appointment-schedule/engine';
+import '@dayflow-pro/appointment-schedule/styles.css';
+
+let schedules: AppointmentSchedule[] = [];
+
+const upsertSchedule = (schedule: AppointmentSchedule) => {
+  schedules = [
+    ...schedules.filter(current => current.id !== schedule.id),
+    schedule,
+  ];
+  appointmentPlugin.updateConfig?.({ schedules });
+};
+
+export const appointmentPlugin = createAppointmentSchedulePlugin({
+  schedules,
+  drawerPlacement: 'calendar',
+  drawerWidth: 420,
+  onCreateSchedule: upsertSchedule,
+  onUpdateSchedule: upsertSchedule,
+});
+```
+
+在对应框架的周视图中加入同一个 plugin 实例：
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { createWeekView } from '@dayflow/core';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    export function App() {
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      });
+
+      return (
+        <>
+          <button onClick={() => appointmentPlugin.api.openCreate()}>
+            新建预约排期
+          </button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <script setup lang="ts">
+    import { createWeekView } from '@dayflow/core';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      plugins: [appointmentPlugin],
+    });
+    </script>
+
+    <template>
+      <button @click="appointmentPlugin.api.openCreate()">新建预约排期</button>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createWeekView } from '@dayflow/core';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <button (click)="appointmentPlugin.api.openCreate()">新建预约排期</button>
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `,
+    })
+    export class AppComponent {
+      readonly appointmentPlugin = appointmentPlugin;
+      readonly calendar = {
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { createWeekView } from '@dayflow/core';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { appointmentPlugin } from './appointmentPlugin';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      });
+    </script>
+
+    <button onclick={() => appointmentPlugin.api.openCreate()}>
+      新建预约排期
+    </button>
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`schedules` 是受控数据。插件不持久化任何内容。可用时间以背景层绘制在事件下方，因此不会进入 `getEvents()`、搜索、打印或远程同步。
+
+### Schedule 数据模型
+
+`AppointmentSchedule` 是组织者、预约组件和 headless 引擎共用的数据契约。
+
+| 参数                    | 类型                         | 作用                                         |
+| ----------------------- | ---------------------------- | -------------------------------------------- |
+| `id`                    | `string`                     | 稳定的排期 ID。                              |
+| `title`                 | `string`                     | 组织者和预约界面显示的名称。                 |
+| `durationMinutes`       | `number`                     | 每次预约的时长。                             |
+| `slotIntervalMinutes?`  | `number`                     | 相邻 slot 开始时间的间隔，默认等于预约时长。 |
+| `beforeBufferMinutes?`  | `number`                     | 预约前的忙碌缓冲，默认 `0`。                 |
+| `afterBufferMinutes?`   | `number`                     | 预约后的忙碌缓冲，默认 `0`。                 |
+| `timeZone`              | `string`                     | 定义可用时间所用的 IANA 时区。               |
+| `calendarId?`           | `string`                     | 用于颜色和新建事件的宿主日历关联。           |
+| `recurrence?`           | `AppointmentRecurrence`      | 每周、单次或每 N 周重复规则。                |
+| `availability`          | `WeeklyAvailability[]`       | 按星期分组的循环可预约范围，必填。           |
+| `unavailableIntervals?` | `WeeklyAvailability[]`       | 可见但不会生成 slot 的循环休息时间。         |
+| `dateOverrides?`        | `DateAvailabilityOverride[]` | 覆盖每周规则的指定日期范围。                 |
+| `location?`             | `AppointmentLocationConfig`  | 固定链接、会议服务、地址或电话。             |
+| `meta?`                 | `Record<string, unknown>`    | 应用自行保存的可序列化元数据。               |
+
+`WeeklyAvailability` 包含 `dayOfWeek`（`0` 为周日，`6` 为周六）和 `intervals`。每个 `AvailabilityInterval` 包含 `id`、`startTime` 与 `endTime`，时间格式为 `HH:mm`。`DateAvailabilityOverride` 包含 ISO `date` 和替代用的 `intervals`；空数组表示该日期全天关闭。
+
+从你自己的 UI 打开编辑器：
+
+```ts
+appointmentPlugin.api.openCreate();
+appointmentPlugin.api.openEdit('product-demo');
+```
+
+插件还会向日历的快速创建弹层贡献一个入口。未安装该插件的日历保持原有的纯快速创建布局。
+
+### 常用配置
+
+这些参数构成 `AppointmentSchedulePluginConfig`。
+
+| 配置项                     | 默认值         | 用途                                   |
+| -------------------------- | -------------- | -------------------------------------- |
+| `schedules`                | 必填           | 由应用控制的预约排期列表。             |
+| `activeScheduleId`         | 无             | 打开编辑器时选中指定排期。             |
+| `availabilitySnapMinutes`  | `15`           | 编辑可用时间时采用的分钟间隔。         |
+| `drawerPlacement`          | `'viewport'`   | 将编辑器挂载到视口或日历。             |
+| `drawerWidth`              | `420`          | 抽屉宽度，可传像素值或 CSS 长度。      |
+| `drawerTarget`             | 第一个日历     | `calendar` 模式使用的元素或 selector。 |
+| `drawerRenderer`           | 内置 drawer    | 替换完整的组织者编辑器。               |
+| `timeFormat`               | 当前视图的格式 | 使用 12 小时制或 24 小时制。           |
+| `conferenceProviders`      | `[]`           | 在地点选择器中加入具名会议服务。       |
+| `onCreateSchedule`         | 无             | 在你的应用中持久化新建的排期。         |
+| `onUpdateSchedule`         | 无             | 在你的应用中持久化已有排期的修改。     |
+| `onDeleteScheduleRequest`  | 无             | 请求宿主确认并删除排期。               |
+| `onExternalUpdateConflict` | 无             | 编辑期间收到外部受控更新时报告冲突。   |
+
+### Plugin API
+
+`appointmentPlugin.api` 提供 `AppointmentScheduleApi`。
+
+| 方法                              | 作用                                  |
+| --------------------------------- | ------------------------------------- |
+| `openCreate(initial?)`            | 使用可选初始字段打开新 draft。        |
+| `openEdit(scheduleId)`            | 打开已有的受控排期。                  |
+| `closeEditor()` / `cancelDraft()` | 丢弃当前 draft 并关闭 drawer。        |
+| `saveDraft()`                     | 调用新建或更新 callback，成功后关闭。 |
+| `setActiveSchedule(scheduleId)`   | 不打开编辑器，仅切换当前排期。        |
+| `getActiveSchedule()`             | 返回当前受控排期。                    |
+| `getDraft()`                      | 编辑时返回当前可变 draft。            |
+| `draftManager`                    | 提供字段和可用时间编辑操作。          |
+| `subscribeDraft(listener)`        | 订阅 draft 更新并返回取消订阅函数。   |
+
+### 自定义组织者编辑器
+
+使用 `drawerRenderer` 可以替换完整的组织者 drawer。插件仍然负责定位、当前 draft、日历中的可用时间编辑、保存和取消；应用则在指定的 host 中渲染正常的框架组件。
+
+Renderer 会收到 `AppointmentScheduleDrawerRenderArgs`：
+
+| 参数                    | 作用                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| `draft`                 | 当前 `AppointmentSchedule` draft。                                                           |
+| `isCreating`            | 区分新建和编辑。                                                                             |
+| `draftManager`          | 更新字段，并提供 `toggleDay`、`addInterval`、`updateInterval`、`removeInterval` 与复制操作。 |
+| `calendars`             | 可选的 `{ id, name, color? }` 日历。                                                         |
+| `conferenceProviders`   | 已注册的 `{ id, name, icon? }` 会议服务。                                                    |
+| `placement`             | 最终使用的 `'calendar'` 或 `'viewport'` 位置。                                               |
+| `drawerWidth`           | 解析后的 CSS 宽度字符串。                                                                    |
+| `timeFormat` / `locale` | 来自配置和日历的显示偏好。                                                                   |
+| `translate`             | 使用 fallback 查询包内翻译。                                                                 |
+| `save()`                | 调用宿主的新建或更新 callback，成功后关闭。                                                  |
+| `cancel()`              | 丢弃 draft 并关闭编辑器。                                                                    |
+
+这个 callback 是框架的挂载边界，并不表示需要用原生 DOM API 编写表单。下面分别用各框架的组件实现相同的标题、保存和取消控件：
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx title="organiserDrawer.tsx"
+    import { createRoot } from 'react-dom/client';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+
+    function OrganiserDrawer({
+      args,
+    }: {
+      args: AppointmentScheduleDrawerRenderArgs;
+    }) {
+      return (
+        <form onSubmit={event => { event.preventDefault(); void args.save(); }}>
+          <input
+            value={args.draft.title}
+            onChange={event =>
+              args.draftManager.updateDraft({ title: event.target.value })
+            }
+          />
+          <button type="submit">保存</button>
+          <button type="button" onClick={args.cancel}>取消</button>
+        </form>
+      );
+    }
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const root = createRoot(host);
+        const render = (args: AppointmentScheduleDrawerRenderArgs) =>
+          root.render(<OrganiserDrawer args={args} />);
+
+        render(initial);
+        // 在 React effect 中关闭 drawer（例如切换 `drawerRenderer`）会在 React
+        // 仍在渲染时调用 `destroy`，此时卸载 root 会与该次渲染产生竞态。
+        // 用一个微任务把它推迟到渲染结束之后。
+        return {
+          update: render,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        };
+      };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue title="OrganiserDrawer.vue"
+    <script setup lang="ts">
+    import type { AppointmentScheduleDrawerRenderArgs } from '@dayflow-pro/appointment-schedule/plugin';
+
+    const props = defineProps<{ args: AppointmentScheduleDrawerRenderArgs }>();
+    const updateTitle = (event: Event) => {
+      props.args.draftManager.updateDraft({
+        title: (event.target as HTMLInputElement).value,
+      });
+    };
+    </script>
+
+    <template>
+      <form @submit.prevent="args.save()">
+        <input :value="args.draft.title" @input="updateTitle" />
+        <button type="submit">保存</button>
+        <button type="button" @click="args.cancel()">取消</button>
+      </form>
+    </template>
+    ```
+
+    ```ts title="organiserDrawerRenderer.ts"
+    import { createApp, h, reactive } from 'vue';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+    import OrganiserDrawer from './OrganiserDrawer.vue';
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const state = reactive({ args: initial });
+        const app = createApp({
+          render: () => h(OrganiserDrawer, { args: state.args }),
+        });
+        app.mount(host);
+
+        return {
+          update: (args: AppointmentScheduleDrawerRenderArgs) => {
+            state.args = args;
+          },
+          destroy: () => app.unmount(),
+        };
+      };
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts title="organiser-drawer.ts"
+    import {
+      ApplicationRef,
+      Component,
+      EnvironmentInjector,
+      Input,
+      createComponent,
+    } from '@angular/core';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+
+    @Component({
+      selector: 'app-organiser-drawer',
+      standalone: true,
+      template: `
+        <input [value]="args.draft.title" (input)="updateTitle($event)" />
+        <button type="button" (click)="args.save()">保存</button>
+        <button type="button" (click)="args.cancel()">取消</button>
+      `,
+    })
+    export class OrganiserDrawerComponent {
+      @Input({ required: true }) args!: AppointmentScheduleDrawerRenderArgs;
+
+      updateTitle(event: Event) {
+        this.args.draftManager.updateDraft({
+          title: (event.target as HTMLInputElement).value,
+        });
+      }
+    }
+
+    export const createDrawerRenderer = (
+      appRef: ApplicationRef,
+      environmentInjector: EnvironmentInjector
+    ): AppointmentScheduleDrawerRenderer => (initial, host) => {
+      const component = createComponent(OrganiserDrawerComponent, {
+        hostElement: host,
+        environmentInjector,
+      });
+      appRef.attachView(component.hostView);
+      const update = (args: AppointmentScheduleDrawerRenderArgs) => {
+        component.setInput('args', args);
+        component.changeDetectorRef.detectChanges();
+      };
+      update(initial);
+
+      return {
+        update,
+        destroy: () => {
+          appRef.detachView(component.hostView);
+          component.destroy();
+        },
+      };
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte title="OrganiserDrawer.svelte"
+    <script lang="ts">
+      import type { Readable } from 'svelte/store';
+      import type { AppointmentScheduleDrawerRenderArgs } from '@dayflow-pro/appointment-schedule/plugin';
+
+      let { state }: { state: Readable<AppointmentScheduleDrawerRenderArgs> } = $props();
+      const updateTitle = (event: Event) => {
+        $state.draftManager.updateDraft({
+          title: (event.target as HTMLInputElement).value,
+        });
+      };
+    </script>
+
+    <form onsubmit={(event) => { event.preventDefault(); void $state.save(); }}>
+      <input value={$state.draft.title} oninput={updateTitle} />
+      <button type="submit">保存</button>
+      <button type="button" onclick={$state.cancel}>取消</button>
+    </form>
+    ```
+
+    ```ts title="organiserDrawerRenderer.ts"
+    import { mount, unmount } from 'svelte';
+    import { writable } from 'svelte/store';
+    import type { AppointmentScheduleDrawerRenderer } from '@dayflow-pro/appointment-schedule/plugin';
+    import OrganiserDrawer from './OrganiserDrawer.svelte';
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const state = writable(initial);
+        const component = mount(OrganiserDrawer, {
+          target: host,
+          props: { state },
+        });
+
+        return {
+          update: next => state.set(next),
+          destroy: () => void unmount(component),
+        };
+      };
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+把得到的 renderer 传给 `createAppointmentSchedulePlugin({ drawerRenderer })`。Draft 变化时会调用 `update`；drawer 关闭或 renderer 被替换时会调用 `destroy`。参数中还包含日历及会议服务元数据、locale、`timeFormat`、`translate`、`isCreating`、`save()` 和 `cancel()`。
+
+### Drawer host、动画与层级
+
+传给 renderer 的 host 元素由插件管理。它带有 `df-appointment-custom-drawer-host` 以及 `--calendar` 或 `--viewport` 修饰类，定位、宽度和层级由插件以 inline style 设置。请通过这些 class 添加样式，不要移动它在 DOM 中的位置或改写 position —— 插件在每次渲染时都会重新写入这两项。
+
+替换后的 drawer 同样有进出场动画。关闭时插件会给 host 加上 `data-df-drawer-exiting`，等它的 keyframe 动画播放完，才调用 `destroy` 并移除 host —— 因此 drawer 是带着内容滑出，而不是直接消失：
+
+```css
+/* 包内默认样式；覆盖它即可改变动画。 */
+.df-appointment-custom-drawer-host {
+  animation: df-slide-in-left 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.df-appointment-custom-drawer-host[data-df-drawer-exiting] {
+  animation: df-slide-out-left 180ms cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+```
+
+有三点需要留意。插件只等待 keyframe 动画，框架挂在 hover、focus 上的 CSS transition 不会拖慢关闭。无限循环的动画会被跳过，并且等待还有一个以动画自身时长为上限的定时器兜底 —— 这样 drawer 里的 loading 动画，或者标签页切到后台（动画帧会停止）时，都不会让 host 永远留在文档里。如果移除动画，或用户的系统设置匹配 `prefers-reduced-motion: reduce`，host 会在关闭的同一帧移除；后者正是包内已有的行为。
+
+Drawer 的 `z-index` 是 `900`，位于日历 quick-create 弹层与对话框（`1000`）之下，因此打开「新建」菜单时不会被展开的编辑器盖住。把 drawer 提到 `1000` 以上会反过来盖住它们。如果确实需要 drawer 盖住这些浮层，请把它们一起提高，而不是只提高 drawer。
+
+### 重复规则
+
+可用时间默认按周重复。抽屉中还提供「不重复」和「每 N 周」的自定义规则：
+
+```ts
+type AppointmentRecurrence = {
+  frequency: 'weekly' | 'none' | 'custom';
+  startDate?: string; // YYYY-MM-DD anchor
+  intervalWeeks?: number; // custom: every N weeks
+  endsOnDate?: string;
+  endsAfterOccurrences?: number;
+};
+```
+
+`frequency: 'none'` 表示 Weekly hours 仅在锚点日期所在的周一至周日生效，并不是只让锚点当天可用。
+
+按月、第几个周几或 RRULE 等复杂规则属于业务逻辑。请通过 `dateOverrides` 表达，它的优先级始终高于重复规则。
+
+## 会议地点与会议服务
+
+Schedule 可以描述**在哪里开会**。这里保存的是配置，而不是某一次已预订的会议。同一个 Schedule 会被预约很多次，所以它不会保存单次预约的入会链接：
+
+```ts
+type AppointmentLocationConfig =
+  | { type: 'custom-link'; url: string; label?: string }
+  | { type: 'conference'; providerId: string }
+  | { type: 'in-person'; address: string }
+  | { type: 'phone'; phone?: string };
+```
+
+抽屉里的 **Location** 选择器始终提供「Custom meeting link」「In person」「Phone call」。只有在你注册之后，具名的会议服务才会出现：
+
+```ts
+createAppointmentSchedulePlugin({
+  schedules,
+  conferenceProviders: [googleMeet, zoom], // ← 选择器会把它们排在最前面
+});
+```
+
+### Conference Provider
+
+DayFlow 从不直接调用 Google、Zoom 或 Microsoft。它只定义一个单方法接口并调用它；OAuth Token、API Secret 和厂商 SDK 全部留在你的后端：
+
+```ts
+import type { ConferenceProvider } from '@dayflow-pro/appointment-schedule/engine';
+
+const googleMeet: ConferenceProvider = {
+  id: 'google-meet',
+  name: 'Google Meet',
+  icon: '/icons/meet.svg',
+  createConference: input =>
+    fetch('/api/dayflow/google-meet', {
+      method: 'POST',
+      body: JSON.stringify({ ...input, start: input.start.toString() }),
+    }).then(response => response.json()),
+};
+// → { provider, joinUrl, meetingId?, hostUrl?, password?, meta? }
+```
+
+`createConference` 接收 `CreateConferenceInput`：`scheduleId`、`title`、Temporal `start` 与 `end`、`timeZone`，以及可选的 `host` 和 `attendees`。它返回 `Conference`，其中 `provider` 与 `joinUrl` 必填，`meetingId`、`hostUrl`、`password` 与 `meta` 可选。
+
+把同一批 provider 传给预约组件，就能在会议信息中显示服务名称和图标：
+
+```tsx
+<AppointmentBooking schedule={schedule} conferenceProviders={[googleMeet]} />
+```
+
+### 创建会议
+
+请在参与者**确认**时创建会议，而不是在他选中某个时间段时。点了 10:00 又离开的人不该留下一个会议。
+
+```ts
+import {
+  createBookingEvent,
+  createConferenceForBooking,
+} from '@dayflow-pro/appointment-schedule/engine';
+
+const conference = await createConferenceForBooking({
+  slot,
+  schedule,
+  providers: [googleMeet],
+  attendees: [{ name: 'Ada Lovelace', email: 'ada@example.com' }],
+});
+
+const draft = createBookingEvent({ slot, schedule, conference });
+// draft.location  → 'https://meet.google.com/abc-defg-hij'
+// draft.conference → { provider: 'google-meet', joinUrl, meetingId }
+```
+
+`custom-link` 会直接返回主办方的固定会议室，不发起任何网络请求；`in-person` 与 `phone` 返回 `undefined`。如果 `providerId` 没有对应的已注册 provider，函数会抛错，避免预约悄悄丢失会议链接。
+
+<Callout title='为什么不用一个固定链接？'>
+  Google Meet、Zoom 和 Teams 建议使用 `conference` 而不是 `custom-link`。Google
+  [明确建议每个 Event 创建独立的
+  conference](https://developers.google.com/workspace/calendar/api/v3/reference/events)，因为跨事件复用
+  conference 会带来访问和隐私问题。
+</Callout>
+
+要在别处（邮件、确认页）渲染地点，可以复用会议信息行使用的同一个纯函数：
+
+```ts
+import { resolveLocation } from '@dayflow-pro/appointment-schedule/engine';
+
+resolveLocation(schedule.location, { providers: [googleMeet] });
+// → { kind: 'video', label: 'Google Meet', icon: '/icons/meet.svg', config }
+```
+
+配置了地点时，resolver 返回 `ResolvedLocation`。
+
+## 参与者预约组件
+
+```tsx
+import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/booking';
+
+<AppointmentBooking
+  schedule={schedule}
+  presentation={{ organiserName: 'Alex Morgan', locationLabel: 'Zoom meeting' }}
+  busyIntervals={busyIntervals}
+  layout='calendar-day-slots'
+  onSelectSlot={slot => console.log(slot.start.toString())}
+/>;
+```
+
+`presentation` 只包含会议信息区域使用的可选展示内容。可用时间和预约行为仍然由 `schedule` 决定。
+
+| 参数              | 类型     | 作用                                                                                |
+| ----------------- | -------- | ----------------------------------------------------------------------------------- |
+| `organiserName`   | `string` | 显示组织者姓名；未提供头像时也用它生成首字母头像。                                  |
+| `organiserAvatar` | `string` | 组织者头像的图片 URL。                                                              |
+| `organiserUrl`    | `string` | 点击组织者头像时打开的个人资料 URL。                                                |
+| `title`           | `string` | 显示在时长、地点和时区上方的标题；传入 `schedule.title` 可以复用排期标题。          |
+| `description`     | `string` | 显示在会议信息下方的补充说明。                                                      |
+| `locationLabel`   | `string` | 覆盖从 `schedule.location` 解析出的地点文本；通常应优先配置 schedule 中的地点字段。 |
+
+### 预约组件参数
+
+所有框架 adapter 最终都接受 `AppointmentBookingProps`；Vue、Angular 和 Svelte 会在各自入口中提供等价的 mount 类型。
+
+| 参数组                                                            | 作用                                                                         |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `schedule`                                                        | 用来生成 slot 的必填 `AppointmentSchedule`。                                 |
+| `calendarApp`                                                     | 把 DayFlow 事件读取并订阅为组织者忙碌时间。                                  |
+| `presentation`                                                    | 上表所述的可选 `AppointmentPresentation` 内容。                              |
+| `conferenceProviders`                                             | 解析会议地点的服务名称和图标。                                               |
+| `busyIntervals` / `attendeeBusyIntervals`                         | 移除组织者 slot 或叠加参与者冲突的 Temporal 范围。                           |
+| `layout`                                                          | `BookingLayout`：`calendar-day-slots`、`multi-day-slots` 或 `week-overlay`。 |
+| `renderWeekOverlay` / `weekOverlayOptions`                        | 使用 `WeekOverlayRenderArgs` 与 `WeekOverlayOptions` 启用和调整周布局。      |
+| `availableLayouts` / `onLayoutChange`                             | 控制内置布局切换器提供的布局。                                               |
+| `displayTimeZone` / `timeZoneOptions` / `onDisplayTimeZoneChange` | 控制参与者显示时区和时区选择器。                                             |
+| `timeFormat` / `onTimeFormatChange`                               | 控制 `TimeFormat`，可选 `12h` 或 `24h`。                                     |
+| `theme` / `locale` / `startOfWeek`                                | 设置周主题、locale 和 `StartOfWeek`（`0`、`1` 或 `6`）。                     |
+| `multiDayCount` / `skipEmptyDays`                                 | 调整多日布局。                                                               |
+| `now` / `rangeStart` / `rangeEnd`                                 | 覆盖当前时间和 slot 生成范围。                                               |
+| `selectedDate` / `onSelectDate`                                   | 受控的当前日期。                                                             |
+| `selectedSlotId` / `onSelectSlot`                                 | 受控的 slot 选择与选择 callback。                                            |
+| `loading` / `disabled`                                            | 显示加载状态或禁用交互。                                                     |
+| `onError` / `onRetry`                                             | 接入错误上报和重试行为。                                                     |
+| `className` / `style`                                             | 添加根元素样式。                                                             |
+| `labels`                                                          | 覆盖任意一部分用户可见文本。                                                 |
+| `slots`                                                           | 替换或扩展下方列出的区域。                                                   |
+| `onAnalyticsEvent`                                                | 接收 `AppointmentBookingAnalyticsEvent` 及其非个人信息 payload。             |
+
+根据要展示的可预约时间范围选择布局：
+
+| 布局                 | 适用场景                                              |
+| -------------------- | ----------------------------------------------------- |
+| `calendar-day-slots` | 月历配合当前选中日期的可预约时间列表。                |
+| `multi-day-slots`    | 以多列方式比较连续几天的可预约时间。                  |
+| `week-overlay`       | 在周时间线上显示可预约时间，需要使用下方的 renderer。 |
+
+周视图需要显式启用，因为它是唯一依赖 `@dayflow/core` 的布局：
+
+```tsx
+import { renderWeekOverlay } from '@dayflow-pro/appointment-schedule/booking/week-overlay';
+
+<AppointmentBooking
+  layout='week-overlay'
+  renderWeekOverlay={renderWeekOverlay}
+/>;
+```
+
+## 框架 Adapter
+
+请选择预约页面所属框架对应的 adapter。每个 adapter 都接收同一套预约 options，并负责挂载、响应式更新和清理。导入某一个 adapter 不会把其他框架运行时带进 bundle。
+
+先创建一份可由任何 adapter 共用、可以直接序列化的 schedule：
+
+```ts title="schedule.ts"
+import type { AppointmentSchedule } from '@dayflow-pro/appointment-schedule/engine';
+
+export const schedule: AppointmentSchedule = {
+  id: 'product-demo',
+  title: 'Product demo',
+  durationMinutes: 30,
+  slotIntervalMinutes: 30,
+  timeZone: 'Europe/London',
+  recurrence: { frequency: 'weekly' },
+  availability: [
+    {
+      dayOfWeek: 1,
+      intervals: [{ id: 'monday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 2,
+      intervals: [{ id: 'tuesday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 3,
+      intervals: [{ id: 'wednesday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 4,
+      intervals: [{ id: 'thursday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 5,
+      intervals: [{ id: 'friday', startTime: '09:00', endTime: '17:00' }],
+    },
+  ],
+  location: {
+    type: 'custom-link',
+    url: 'https://zoom.us/j/1234567890',
+    label: 'Zoom meeting',
+  },
+};
+```
+
+在应用入口中导入一次 `styles.components.css`，然后使用对应框架的 adapter：
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/react';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    export function BookingPage() {
+      return (
+        <AppointmentBooking
+          schedule={schedule}
+          presentation={{
+            organiserName: 'Alex Morgan',
+            locationLabel: 'Zoom meeting',
+          }}
+          layout='calendar-day-slots'
+          onSelectSlot={slot => console.log(slot.start.toString())}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <script setup lang="ts">
+    import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/vue';
+    import type { MountAppointmentBookingProps } from '@dayflow-pro/appointment-schedule/vue';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    const bookingOptions: MountAppointmentBookingProps = {
+      schedule,
+      presentation: {
+        organiserName: 'Alex Morgan',
+        locationLabel: 'Zoom meeting',
+      },
+      layout: 'calendar-day-slots',
+      onSelectSlot: slot => console.log(slot.start.toString()),
+    };
+    </script>
+
+    <template>
+      <AppointmentBooking :options="bookingOptions" />
+    </template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import { Component } from '@angular/core';
+    import {
+      AppointmentBookingDirective,
+      type MountAppointmentBookingProps,
+    } from '@dayflow-pro/appointment-schedule/angular';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    @Component({
+      standalone: true,
+      imports: [AppointmentBookingDirective],
+      template: '<div [dfAppointmentBooking]="bookingOptions"></div>',
+    })
+    export class BookingPage {
+      readonly bookingOptions: MountAppointmentBookingProps = {
+        schedule,
+        presentation: {
+          organiserName: 'Alex Morgan',
+          locationLabel: 'Zoom meeting',
+        },
+        layout: 'calendar-day-slots',
+        onSelectSlot: slot => console.log(slot.start.toString()),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { appointmentBooking } from '@dayflow-pro/appointment-schedule/svelte';
+      import type { SvelteAppointmentBookingOptions } from '@dayflow-pro/appointment-schedule/svelte';
+      import '@dayflow-pro/appointment-schedule/styles.components.css';
+      import { schedule } from './schedule';
+
+      const options: SvelteAppointmentBookingOptions = {
+        schedule,
+        presentation: {
+          organiserName: 'Alex Morgan',
+          locationLabel: 'Zoom meeting',
+        },
+        layout: 'calendar-day-slots',
+        onSelectSlot: slot => console.log(slot.start.toString()),
+      };
+    </script>
+
+    <div use:appointmentBooking={options}></div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+接收 options 对象的 adapter 通过 `options.slots` 提供自定义区域；组件 props 则直接使用同一套 `slots` 契约。替换 options 对象会更新预约组件。slot renderer 集合变化时会安全地重新挂载，宿主卸载时则会销毁预约实例。
+
+## 集成 API
+
+### Plain mount API
+
+如果需要自行挂载预约 UI，可以使用 `createAppointmentBooking`。它既适用于其他框架，也适用于无框架页面：
+
+```ts
+import { createAppointmentBooking } from '@dayflow-pro/appointment-schedule/booking';
+
+const booking = createAppointmentBooking('#booking', {
+  schedule,
+  onSelectSlot: slot => console.log(slot.start.toString()),
+});
+
+booking.update({ disabled: true });
+booking.destroy();
+```
+
+目标元素原有的子节点不会被改动。Mount API 会创建并持有一个子元素，并在 `destroy()` 时将其移除。
+
+DOM slot 会收到当前参数和一个由 renderer 管理的容器：
+
+```ts
+createAppointmentBooking('#booking', {
+  schedule,
+  slots: {
+    slotButton: (args, host) => {
+      host.textContent = `${args.formattedTime} · ${price(args.slot)}`;
+    },
+  },
+});
+```
+
+Renderer 可以不返回内容，也可以返回 cleanup 函数或 `{ update, destroy }`。Handle 形式适合只会追加而不会 patch 的框架 mount API。
+
+### 无头预约控制器
+
+如果希望保留内置预约行为，但完全使用自己的 markup，可以使用 `createBookingController`。它管理选中日期与 slot、时区、时间格式、参与者忙碌状态和 slot 分组，但从不访问 DOM：
+
+```ts
+import { createBookingController } from '@dayflow-pro/appointment-schedule/controller';
+
+const booking = createBookingController({ schedule });
+const unsubscribe = booking.subscribe(() => render(booking.getState()));
+
+booking.getState().selectSlot(slot);
+booking.setOptions({ schedule, disabled: true });
+
+unsubscribe();
+booking.destroy();
+```
+
+## 自定义
+
+### 设计变量
+
+`.df-appointment-booking` 是参与者预约组件的主题作用域，并不是唯一的设计变量。package 支持下列 CSS 自定义属性。请在 package stylesheet 之后加载覆盖样式，并把变量设置在 `.df-appointment-booking` 上；也可以传入自定义 `className`，再同时匹配两个 class。
+
+```css
+.df-appointment-booking.my-booking-theme {
+  --df-ap-accent: #2563eb;
+  --df-ap-radius: 6px;
+  --df-ap-sidebar-width: 320px;
+}
+```
+
+| 变量                         | 默认值                  | 控制内容           |
+| ---------------------------- | ----------------------- | ------------------ |
+| `--df-ap-surface`            | Core background         | 主表面             |
+| `--df-ap-surface-sunken`     | Core muted              | 下沉表面           |
+| `--df-ap-fill`               | `#e8eaef`               | 中性色块           |
+| `--df-ap-border`             | Core border             | 边框和分隔线       |
+| `--df-ap-fg`                 | Core foreground         | 主要文字           |
+| `--df-ap-fg-muted`           | Core muted foreground   | 次要文字           |
+| `--df-ap-fg-subtle`          | `#9ca3af`               | 弱化文字           |
+| `--df-ap-accent`             | Core primary            | 选中的控件         |
+| `--df-ap-accent-fg`          | Core primary foreground | 强调色表面上的文字 |
+| `--df-ap-accent-soft`        | 根据强调色派生          | 柔和的 hover 背景  |
+| `--df-ap-accent-ring`        | 根据强调色派生          | 聚焦和选中环       |
+| `--df-ap-available`          | `#22c55e`               | 可预约状态指示器   |
+| `--df-ap-radius`             | `14px`                  | 卡片圆角           |
+| `--df-ap-radius-md`          | `9px`                   | 控件圆角           |
+| `--df-ap-radius-sm`          | `7px`                   | 紧凑内容项圆角     |
+| `--df-ap-max-width`          | `1440px`                | 预约组件最大宽度   |
+| `--df-ap-sidebar-width`      | `296px`                 | 侧栏宽度           |
+| `--df-ap-slots-width`        | `320px`                 | 当日时间列宽度     |
+| `--df-ap-week-height`        | `620px`                 | 周时间线高度       |
+| `--df-ap-slot-scroll-height` | `none`                  | 当日时间列表高度   |
+| `--df-ap-pad`                | `1.5rem`                | 主要内边距         |
+| `--df-ap-font`               | 系统字体栈              | 预约组件字体       |
+
+Hover、选中和聚焦颜色由 `--df-ap-accent` 自动派生。高级主题也可以直接覆盖 `--df-ap-accent-soft` 和 `--df-ap-accent-ring`。
+
+组织者 drawer 属于 DayFlow 日历，使用 core 主题变量，而不是参与者预约组件的变量：
+
+```css
+:root {
+  --df-color-background: #ffffff;
+  --df-color-card: #ffffff;
+  --df-color-foreground: #172033;
+  --df-color-muted: #f4f6f8;
+  --df-color-muted-foreground: #667085;
+  --df-color-border: #d0d5dd;
+  --df-color-primary: #7c3aed;
+  --df-color-primary-foreground: #ffffff;
+  --df-color-destructive: #dc2626;
+  --df-color-ring: #7c3aed;
+}
+```
+
+`drawerPlacement` 为 `viewport` 时请把变量设置在 `:root`，因为 drawer 挂载在日历元素之外。使用 `calendar` 时，也可以把变量设置在日历容器上。
+
+### 插槽
+
+所有 adapter 都支持插槽，但 renderer 签名并不相同：
+
+- React slot 返回 React 内容。`slotButton` 和 `dayCell` 还会收到 `defaultContent`，可以在内置内容外继续扩展。
+- Vue、Angular 和 Svelte 使用 `options.slots`。每个 renderer 接收 `(args, host)`，并把内容写入指定 DOM 元素。如果通过框架 API 挂载组件，可以返回 cleanup 函数或 `{ update, destroy }` handle。
+
+下面展示如何在每个框架中正确自定义同一个 `slotButton` 区域：
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    <AppointmentBooking
+      schedule={schedule}
+      slots={{
+        slotButton: ({ defaultContent }) => (
+          <>
+            {defaultContent}
+            <span>$120</span>
+          </>
+        ),
+      }}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/vue';
+
+    const slots: DomBookingSlots = {
+      slotButton: ({ formattedTime }, host) => {
+        host.textContent = `${formattedTime} · $120`;
+      },
+    };
+
+    const bookingOptions = { schedule, slots };
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/angular';
+
+    const slots: DomBookingSlots = {
+      slotButton: ({ formattedTime }, host) => {
+        host.textContent = `${formattedTime} · $120`;
+      },
+    };
+
+    export class BookingPage {
+      readonly bookingOptions = { schedule, slots };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/svelte';
+
+      const slots: DomBookingSlots = {
+        slotButton: ({ formattedTime }, host) => {
+          host.textContent = `${formattedTime} · $120`;
+        },
+      };
+
+      const options = { schedule, slots };
+    </script>
+
+    <div use:appointmentBooking={options}></div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`AppointmentBookingSlots` 定义下表中的区域。导出的参数类型包括 `SidebarSlotArgs`、`MeetingInfoSlotArgs`、`MonthPickerSlotArgs`、`SlotListSlotArgs`、`ToolbarSlotArgs`、`SlotButtonSlotArgs`、`DayCellSlotArgs` 与 `SelectedSummarySlotArgs`。
+
+| 插槽                | 用途                                                  | 主要参数                                                                      |
+| ------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `sidebar`           | 替换包含会议信息和迷你月历的完整侧栏。                | `schedule`、`presentation`、`location`、`layout`、`defaultContent`            |
+| `meetingInfo`       | 替换会议信息面板。                                    | `schedule`、`presentation`、`location`、`timeZone`、`defaultContent`          |
+| `meetingInfoFooter` | 在会议信息面板下方添加内容。                          | `schedule`、`presentation`、`location`、`timeZone`                            |
+| `monthPicker`       | 替换主区域和侧栏中的月份选择器。                      | `selectedDate`、`availableDates`、`onSelectDate`、`compact`、`defaultContent` |
+| `slotList`          | 替换 `calendar-day-slots` 中当前日期的时间列表。      | `date`、`slots`、`selectedSlotId`、`onSelectSlot`、`defaultContent`           |
+| `toolbar`           | 替换 `multi-day-slots` 和 `week-overlay` 中的工具栏。 | `layout`、`timeZone`、`timeFormat`、`rangeLabel`、`defaultContent`            |
+| `toolbarExtra`      | 在工具栏控件右侧添加内容。                            | `layout`、`timeZone`、`timeFormat`、`rangeLabel`                              |
+| `slotButton`        | 替换每个可预约时间按钮内部的内容。                    | `slot`、`formattedTime`、`isSelected`、`disabled`、`defaultContent`           |
+| `dayCell`           | 替换月份选择器中每个日期单元格的内容。                | `date`、月份/可用/选中状态、`defaultContent`                                  |
+| `emptyDay`          | 当前日期没有可预约时间时显示。                        | `date`                                                                        |
+| `emptyRange`        | 当前日期范围没有可预约时间时显示。                    | 无                                                                            |
+| `loading`           | 替换加载状态。                                        | 无                                                                            |
+| `error`             | 替换错误状态，并接收错误对象和可选的重试操作。        | `error`、`retry`                                                              |
+| `selectedSummary`   | 选择时间后，在预约内容下方添加摘要。                  | `slot`、`formattedDate`、`formattedRange`、`timeZone`                         |
+
+## Headless：自建 UI
+
+如果三种布局都不合适，可以完全跳过组件。引擎是一个接收 schedule 并返回 slots 的纯函数。包里的其他代码不会进入你的打包产物。
+
+```ts
+import { generateSlots } from '@dayflow-pro/appointment-schedule/engine';
+import { Temporal } from 'temporal-polyfill';
+
+const slots = generateSlots({
+  schedule,
+  rangeStart: Temporal.PlainDate.from('2026-08-03'),
+  rangeEnd: Temporal.PlainDate.from('2026-08-09'),
+  busyIntervals,
+  displayTimeZone: 'Europe/London',
+  now: Temporal.Now.zonedDateTimeISO('Australia/Sydney'),
+});
+// slots: { id, scheduleId, start, end, displayTimeZone }[]
+```
+
+输入类型是 `SlotQuery`；`rangeStart` 与 `rangeEnd` 是包含边界的 `Temporal.PlainDate`。`busyIntervals` 和 `attendeeBusyIntervals` 接收带 Temporal `start` 与 `end` 的 `BusyInterval`。返回值是 `AppointmentSlot[]`。
+
+引擎不会访问 `window`、`document` 或系统时区，可以安全地在服务端导入。它还导出了 `expandAvailability`、`recurrenceAppliesOn`、`sortBusyIntervals`、`mergeBusyIntervals`、`hasConflict` 和 `eventsToBusyIntervals` 等组成部分，你可以据此组合自己的流水线。
+
+## 把预约转换成事件
+
+模块不会写入事件，而是提供一个纯映射函数：
+
+```ts
+import { createBookingEvent } from '@dayflow-pro/appointment-schedule/engine';
+
+const draft = createBookingEvent({
+  slot,
+  schedule, // schedule.calendarId 决定归属日历（以及颜色）
+  attendee: { name: 'Ada Lovelace' }, // 由你收集，模块从不存储
+  conference, // 可选，见「会议地点与会议服务」
+  // titleTemplate: ({ attendee }) => `1:1 · ${attendee?.name}`,
+});
+// → { id, title: 'Meeting with Ada Lovelace', start, end, calendarId, location?, conference?, meta }
+
+calendar.addEvent(draft);
+```
+
+`meta` 中带有 `appointmentScheduleId` 和 `appointmentSlotId`，可以由事件反查它来自哪个时间段；当 Schedule 配置了地点时，还会带上 `appointmentLocation` 和 `appointmentConference`。
+
+## 可访问性
+
+目标为 WCAG 2.2 AA。月历是真正的 `role="grid"`，支持方向键、Home、End、PageUp 和 PageDown 导航；时间段按钮提供 `aria-pressed` 以及包含日期、时间和时区的无障碍名称；可用、不可用和选中状态从不只依赖颜色传达。

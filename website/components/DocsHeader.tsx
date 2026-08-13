@@ -69,8 +69,8 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
               <Image
                 src={`${BASE}/logo.png`}
                 alt='DayFlow logo'
-                width={28}
-                height={28}
+                width={486}
+                height={424}
                 className='h-7 w-auto'
               />
               DayFlow
@@ -93,8 +93,8 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
                 <Image
                   src={`${BASE}/pro-logo.png`}
                   alt='DayFlow Pro logo'
-                  width={66}
-                  height={16}
+                  width={1254}
+                  height={1254}
                   className='h-6 w-auto'
                 />
                 <Badge
@@ -163,8 +163,8 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
                 <Image
                   src={`${BASE}/pro-logo.png`}
                   alt='DayFlow Pro logo'
-                  width={50}
-                  height={12}
+                  width={1254}
+                  height={1254}
                   className='h-3 w-auto'
                 />
                 <Badge

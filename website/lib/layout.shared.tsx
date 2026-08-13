@@ -1,6 +1,11 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import type { SidebarTab } from 'fumadocs-ui/utils/get-sidebar-tabs';
 import Image from 'next/image';
 
+import {
+  HeaderSearchCompact,
+  HeaderSearchLarge,
+} from '@/components/HeaderSearch';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
 import { proUrl } from '@/lib/site';
@@ -14,39 +19,55 @@ export const gitConfig = {
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const PRO_URL = proUrl('nav');
 
-export const sidebarTabs = [
-  {
-    title: 'Calendar',
-    url: '/docs',
-    icon: (
-      <Image
-        src={`${BASE}/logo.png`}
-        alt='DayFlow logo'
-        width={16}
-        height={16}
-        className='size-4'
-      />
-    ),
-  },
-  {
-    title: 'Calendar Pro',
-    url: PRO_URL,
-    icon: (
-      <Image
-        src={`${BASE}/pro-logo.png`}
-        alt='DayFlow Pro logo'
-        width={16}
-        height={16}
-        className='size-4'
-      />
-    ),
-  },
-  {
-    title: 'Blossom Color Picker',
-    url: 'https://blossom.dayflow.studio/',
-    icon: <span className='flex size-4 items-center justify-center'>🌸</span>,
-  },
-];
+/**
+ * @param docsBaseUrl - base URL of the locale's docs section, e.g. `/docs-ja`
+ * @param docsUrls - every page URL in that section
+ */
+export function sidebarTabs(
+  docsBaseUrl: string,
+  docsUrls: Iterable<string>
+): SidebarTab[] {
+  return [
+    {
+      title: 'Calendar',
+      // `/docs` renders a blank page under `output: 'export'` — its `redirect()`
+      // is dropped at build time — so point the tab at the section's first page.
+      url: `${docsBaseUrl}/introduction`,
+      // Given only `url`, fumadocs marks a tab active by URL prefix, so a tab
+      // pointing at a single page would be inactive on every other docs page —
+      // and the switcher is hidden entirely when no tab matches. Match on the
+      // section's own page URLs instead, which also keeps it correct per locale.
+      urls: new Set(docsUrls),
+      icon: (
+        <Image
+          src={`${BASE}/logo.png`}
+          alt='DayFlow logo'
+          width={16}
+          height={16}
+          className='size-4'
+        />
+      ),
+    },
+    {
+      title: 'Calendar Pro',
+      url: PRO_URL,
+      icon: (
+        <Image
+          src={`${BASE}/pro-logo.png`}
+          alt='DayFlow Pro logo'
+          width={16}
+          height={16}
+          className='size-4'
+        />
+      ),
+    },
+    {
+      title: 'Blossom Color Picker',
+      url: 'https://blossom.dayflow.studio/',
+      icon: <span className='flex size-4 items-center justify-center'>🌸</span>,
+    },
+  ];
+}
 
 function DiscordIcon() {
   return (
@@ -81,8 +102,8 @@ const NavTitle = (
     <Image
       src={`${BASE}/logo.png`}
       alt='DayFlow logo'
-      width={28}
-      height={28}
+      width={486}
+      height={424}
       priority
       className='h-7 w-auto'
     />
@@ -162,5 +183,13 @@ export function homeOptions(): BaseLayoutProps {
         secondary: true,
       },
     ],
+    // Carries the "Documentation" entry so it renders directly left of the
+    // search box; see the note in components/HeaderSearch.tsx.
+    searchToggle: {
+      components: {
+        lg: <HeaderSearchLarge />,
+        sm: <HeaderSearchCompact />,
+      },
+    },
   };
 }

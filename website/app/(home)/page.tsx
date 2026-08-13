@@ -56,6 +56,24 @@ const mediaPath = '/images/landing/';
 
 const extensionCards = [
   {
+    title: 'Resource Timeline',
+    paragraphs: [
+      'Coordinate people, rooms, crews, or equipment along one shared time axis.',
+      'Resource Timeline makes workload, gaps, and conflicts easy to scan, then lets planners drag or resize work as schedules change.',
+    ],
+    video: 'timeline-drag-resize.mp4',
+    alt: 'Dragging and resizing events in the DayFlow resource timeline',
+  },
+  {
+    title: 'Print Calendar',
+    paragraphs: [
+      'Create clean calendar output for reports, customer handoff, internal planning, or offline review.',
+      'Print Calendar helps users turn calendar data into polished layouts that are easier to share, print, or archive.',
+    ],
+    video: 'print.mp4',
+    alt: 'Configuring and previewing a printable DayFlow calendar',
+  },
+  {
     title: 'Resource Grid',
     paragraphs: [
       'Plan events across people, rooms, equipment, teams, or any custom resource.',
@@ -65,13 +83,13 @@ const extensionCards = [
     alt: 'DayFlow resource grid view showing schedules by resource',
   },
   {
-    title: 'Print Calendar',
+    title: 'Appointment Schedule',
     paragraphs: [
-      'Create clean calendar output for reports, customer handoff, internal planning, or offline review.',
-      'Print Calendar helps users turn calendar data into polished layouts that are easier to share, print, or archive.',
+      "Turn your team's availability into a straightforward booking flow.",
+      'Appointment Schedule connects visual availability setup with self-service booking, keeping slots, buffers, and capacity aligned through confirmation.',
     ],
-    image: 'print-calendar.png',
-    alt: 'DayFlow print calendar settings and year preview',
+    video: 'appointment-schedule.mp4',
+    alt: 'Selecting an available time in the DayFlow appointment booking flow',
   },
 ];
 
@@ -470,13 +488,30 @@ export default function HomePage() {
                 key={card.title}
                 className='group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-slate-950'
               >
-                <Image
-                  src={`${mediaPath}${card.image}`}
-                  alt={card.alt}
-                  width={card.image === 'resource-grid.png' ? 2618 : 2284}
-                  height={card.image === 'resource-grid.png' ? 1510 : 1474}
-                  className='aspect-[16/9] w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.025]'
-                />
+                {'video' in card ? (
+                  <video
+                    aria-label={card.alt}
+                    autoPlay
+                    className='aspect-[16/9] w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.025]'
+                    loop
+                    muted
+                    playsInline
+                    preload='metadata'
+                  >
+                    <source
+                      src={`${mediaPath}${card.video}`}
+                      type='video/mp4'
+                    />
+                  </video>
+                ) : (
+                  <Image
+                    src={`${mediaPath}${card.image}`}
+                    alt={card.alt}
+                    width={2618}
+                    height={1510}
+                    className='aspect-[16/9] w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.025]'
+                  />
+                )}
                 <div className='p-6'>
                   <h3 className='text-xl font-semibold'>{card.title}</h3>
                   {card.paragraphs.map(paragraph => (
@@ -520,7 +555,7 @@ export default function HomePage() {
               <ArrowRight className='size-4' aria-hidden='true' />
             </Link>
             <Link
-              href='/docs'
+              href='/docs/introduction'
               className='inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-blue-300 hover:text-blue-600 dark:border-white/15 dark:text-white dark:hover:border-blue-300'
             >
               Read docs

@@ -20,7 +20,10 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
       }}
       sidebar={{
         collapsible: false,
-        tabs: sidebarTabs,
+        tabs: sidebarTabs(
+          '/docs',
+          source.getPages().map(page => page.url)
+        ),
       }}
       containerProps={{
         style: {

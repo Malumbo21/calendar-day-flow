@@ -6,8 +6,9 @@ import { baseOptions, gitConfig, sidebarTabs } from '@/lib/layout.shared';
 import { sourceZh } from '@/lib/source';
 
 export default function Layout({ children }: LayoutProps<'/docs-zh'>) {
-  const tabs = sidebarTabs.map(tab =>
-    tab.title === 'Calendar' ? { ...tab, url: '/docs-zh' } : tab
+  const tabs = sidebarTabs(
+    '/docs-zh',
+    sourceZh.getPages().map(page => page.url)
   );
 
   return (

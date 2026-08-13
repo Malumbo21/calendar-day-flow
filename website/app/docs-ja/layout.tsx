@@ -6,8 +6,9 @@ import { baseOptions, gitConfig, sidebarTabs } from '@/lib/layout.shared';
 import { sourceJa } from '@/lib/source';
 
 export default function Layout({ children }: LayoutProps<'/docs-ja'>) {
-  const tabs = sidebarTabs.map(tab =>
-    tab.title === 'Calendar' ? { ...tab, url: '/docs-ja' } : tab
+  const tabs = sidebarTabs(
+    '/docs-ja',
+    sourceJa.getPages().map(page => page.url)
   );
 
   return (
