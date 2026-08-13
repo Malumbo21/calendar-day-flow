@@ -379,8 +379,8 @@ export class EventManager {
     return filtered;
   }
 
-  onEventClick(event: Event): void {
-    this.getCallbacks().onEventClick?.(event);
+  onEventClick(event: Event, e?: MouseEvent): void {
+    this.getCallbacks().onEventClick?.(event, e);
   }
 
   onEventDoubleClick(
@@ -390,8 +390,8 @@ export class EventManager {
     return this.getCallbacks().onEventDoubleClick?.(event, e);
   }
 
-  onMoreEventsClick(date: Date): void {
-    this.getCallbacks().onMoreEventsClick?.(date);
+  onMoreEventsClick(date: Date, e?: MouseEvent): void {
+    this.getCallbacks().onMoreEventsClick?.(date, e);
   }
 
   onEventDetailToggle(eventId: string | null): void {
@@ -418,8 +418,8 @@ export class EventManager {
     this.notify();
   }
 
-  dismissUI(): void {
-    this.getCallbacks().onDismissUI?.();
+  dismissUI(e?: MouseEvent | TouchEvent | KeyboardEvent | Event): void {
+    this.getCallbacks().onDismissUI?.(e);
     this.notify();
   }
 }

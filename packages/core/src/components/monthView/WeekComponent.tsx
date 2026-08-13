@@ -44,10 +44,10 @@ interface WeekComponentProps {
     direction: string
   ) => void;
   onDetailPanelOpen: () => void;
-  onMoreEventsClick?: (date: Date) => void;
+  onMoreEventsClick?: (date: Date, e?: MouseEvent) => void;
   onChangeView?: (view: ViewType) => void;
   onSelectDate?: (date: Date) => void;
-  onGridDateClick?: (date: Date, events: Event[]) => void;
+  onGridDateClick?: (date: Date, events: Event[], e?: MouseEvent) => void;
   onGridDateDoubleClick?: (
     e: MouseEvent | TouchEvent,
     date: Date,

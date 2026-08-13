@@ -8,7 +8,7 @@ interface YearDayCellProps {
   locale: string;
   onSelectDate: (date: Date) => void;
   onCreateStart?: (e: MouseEvent | TouchEvent, targetDate: Date) => void;
-  onMoreEventsClick?: (date: Date) => void;
+  onMoreEventsClick?: (date: Date, e?: MouseEvent) => void;
   moreCount?: number;
   onContextMenu?: (e: MouseEvent, date: Date) => void;
 }
@@ -64,7 +64,7 @@ export const YearDayCell = memo(
               className='df-year-day-cell-more'
               onClick={e => {
                 e.stopPropagation();
-                onMoreEventsClick?.(date);
+                onMoreEventsClick?.(date, e as unknown as MouseEvent);
               }}
             >
               +{moreCount} {t('more')}

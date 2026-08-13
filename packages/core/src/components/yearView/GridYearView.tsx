@@ -214,7 +214,7 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
 
       if (typeof clickAction === 'function') {
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        clickAction(date, fullEventMap.get(key) ?? []);
+        clickAction(date, fullEventMap.get(key) ?? [], e);
         return;
       }
 
@@ -245,12 +245,12 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
   );
 
   const handleDateDoubleClick = useCallback(
-    (date: Date) => {
+    (e: MouseEvent, date: Date) => {
       const dblClickAction = config?.gridDateDoubleClick ?? 'create-event';
 
       if (typeof dblClickAction === 'function') {
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        dblClickAction(date, fullEventMap.get(key) ?? []);
+        dblClickAction(date, fullEventMap.get(key) ?? [], e);
         return;
       }
 
@@ -377,7 +377,9 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
                       data-current-month={isCurrentMonth ? 'true' : 'false'}
                       style={intensityStyle}
                       onClick={e => handleDateClick(e, date, month.monthIndex)}
-                      onDblClick={() => handleDateDoubleClick(date)}
+                      onDblClick={e =>
+                        handleDateDoubleClick(e as unknown as MouseEvent, date)
+                      }
                     >
                       <div className='df-year-grid-day-inner'>
                         <span

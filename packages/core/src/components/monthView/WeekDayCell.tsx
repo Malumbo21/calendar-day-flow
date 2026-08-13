@@ -48,7 +48,7 @@ interface WeekDayCellProps {
   onEventLongPress?: (eventId: string) => void;
   onEventSelect?: (eventId: string | null) => void;
   onEventUpdate: (updatedEvent: Event) => void;
-  onMoreEventsClick?: (date: Date) => void;
+  onMoreEventsClick?: (date: Date, e?: MouseEvent) => void;
   onMoveStart?: (e: MouseEvent | TouchEvent, event: Event) => void;
   onResizeStart?: (
     e: MouseEvent | TouchEvent,
@@ -56,7 +56,7 @@ interface WeekDayCellProps {
     direction: string
   ) => void;
   onSelectDate?: (date: Date) => void;
-  onGridDateClick?: (date: Date, dayEvents: Event[]) => void;
+  onGridDateClick?: (date: Date, dayEvents: Event[], e?: MouseEvent) => void;
   onGridDateDoubleClick?: (
     e: MouseEvent | TouchEvent,
     date: Date,
@@ -408,7 +408,7 @@ const WeekDayCell = ({
             onClick={event => {
               event.stopPropagation();
               if (onMoreEventsClick) {
-                onMoreEventsClick(day.date);
+                onMoreEventsClick(day.date, event as unknown as MouseEvent);
               } else {
                 onSelectDate?.(day.date);
                 onChangeView?.(ViewType.DAY);

@@ -176,7 +176,7 @@ export const useEventInteraction = ({
       suppressClickUntilRef.current = Date.now() + 400;
 
       if (app) {
-        app.onEventClick(event);
+        app.onEventClick(event, e as unknown as MouseEvent);
       }
 
       if (canOpenDetail) {

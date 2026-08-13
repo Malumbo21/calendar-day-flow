@@ -223,7 +223,8 @@ export class CalendarApp implements ICalendarApp {
   getAllEvents = (): Event[] => this.eventManager.getAllEvents();
   getEvents = (): Event[] => this.eventManager.getEvents();
 
-  onEventClick = (event: Event): void => this.eventManager.onEventClick(event);
+  onEventClick = (event: Event, e?: MouseEvent): void =>
+    this.eventManager.onEventClick(event, e);
 
   onEventDoubleClick = (
     event: Event,
@@ -231,8 +232,8 @@ export class CalendarApp implements ICalendarApp {
   ): boolean | undefined | Promise<boolean | undefined> =>
     this.eventManager.onEventDoubleClick(event, e);
 
-  onMoreEventsClick = (date: Date): void =>
-    this.eventManager.onMoreEventsClick(date);
+  onMoreEventsClick = (date: Date, e?: MouseEvent): void =>
+    this.eventManager.onMoreEventsClick(date, e);
 
   onEventDetailToggle = (eventId: string | null): void =>
     this.eventManager.onEventDetailToggle(eventId);
@@ -246,7 +247,8 @@ export class CalendarApp implements ICalendarApp {
   selectEvent = (eventId: string | null): void =>
     this.eventManager.selectEvent(eventId);
 
-  dismissUI = (): void => this.eventManager.dismissUI();
+  dismissUI = (e?: MouseEvent | TouchEvent | KeyboardEvent | Event): void =>
+    this.eventManager.dismissUI(e);
 
   // Permissions (pure functions)
 

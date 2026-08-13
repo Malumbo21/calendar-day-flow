@@ -786,7 +786,7 @@ const MonthView = ({
   };
 
   const handleGridDateClick = useCallback(
-    (date: Date, dayEvents: Event[]) => {
+    (date: Date, dayEvents: Event[], e?: MouseEvent) => {
       const clickAction = config?.gridDateClick;
       if (!clickAction) {
         app.selectDate(date);
@@ -794,7 +794,7 @@ const MonthView = ({
       }
 
       if (typeof clickAction === 'function') {
-        clickAction(date, dayEvents);
+        clickAction(date, dayEvents, e);
         return;
       }
 
@@ -815,7 +815,7 @@ const MonthView = ({
       const dblClickAction = config?.gridDateDoubleClick ?? 'create-event';
 
       if (typeof dblClickAction === 'function') {
-        dblClickAction(date, dayEvents);
+        dblClickAction(date, dayEvents, e as unknown as MouseEvent);
         return;
       }
 

@@ -599,7 +599,7 @@ const WeekView = ({
   }, [appTimeZone]);
 
   const handleGridDateClick = useCallback(
-    (date: Date, dayEvents: CalendarEvent[]) => {
+    (date: Date, dayEvents: CalendarEvent[], e?: MouseEvent) => {
       const clickAction = config?.gridDateClick;
       if (!clickAction) {
         onDateChange?.(date);
@@ -607,7 +607,7 @@ const WeekView = ({
       }
 
       if (typeof clickAction === 'function') {
-        clickAction(date, dayEvents);
+        clickAction(date, dayEvents, e);
         return;
       }
 
@@ -621,11 +621,11 @@ const WeekView = ({
   );
 
   const handleGridDateDoubleClick = useCallback(
-    (date: Date, dayEvents: CalendarEvent[]) => {
+    (date: Date, dayEvents: CalendarEvent[], e?: MouseEvent) => {
       const dblClickAction = config?.gridDateDoubleClick ?? 'create-event';
 
       if (typeof dblClickAction === 'function') {
-        dblClickAction(date, dayEvents);
+        dblClickAction(date, dayEvents, e);
         return;
       }
 

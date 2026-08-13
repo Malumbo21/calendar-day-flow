@@ -324,11 +324,11 @@ export const DefaultYearView = ({
   );
 
   const handleCellClick = useCallback(
-    (date: Date) => {
+    (date: Date, e?: MouseEvent) => {
       const clickAction = config?.gridDateClick;
 
       if (typeof clickAction === 'function') {
-        clickAction(date, getDayEvents(date));
+        clickAction(date, getDayEvents(date), e);
         return;
       }
 
@@ -354,7 +354,7 @@ export const DefaultYearView = ({
       const dblClickAction = config?.gridDateDoubleClick ?? 'create-event';
 
       if (typeof dblClickAction === 'function') {
-        dblClickAction(date, getDayEvents(date));
+        dblClickAction(date, getDayEvents(date), e as MouseEvent);
         return;
       }
 

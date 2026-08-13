@@ -106,7 +106,10 @@ export interface WeekViewConfig extends ViewFactoryConfig {
   /**
    * Action when a date cell is clicked.
    */
-  gridDateClick?: 'day-view' | 'none' | ((date: Date, events: Event[]) => void);
+  gridDateClick?:
+    | 'day-view'
+    | 'none'
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
   /**
    * Action when a date cell is double-clicked.
    * - 'create-event' (default): create a 1-hour timed event at the clicked position (hour)
@@ -118,7 +121,7 @@ export interface WeekViewConfig extends ViewFactoryConfig {
     | 'create-event'
     | 'day-view'
     | 'none'
-    | ((date: Date, events: Event[]) => void);
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
 }
 
 /**
@@ -155,7 +158,7 @@ export interface MonthViewConfig extends ViewFactoryConfig {
     | 'week-view'
     | 'day-view'
     | 'none'
-    | ((date: Date, events: Event[]) => void);
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
   /**
    * Action when a date cell is double-clicked.
    * - 'create-event' (default): create a timed event from 9:00 to 10:00 on the clicked date
@@ -169,7 +172,7 @@ export interface MonthViewConfig extends ViewFactoryConfig {
     | 'week-view'
     | 'day-view'
     | 'none'
-    | ((date: Date, events: Event[]) => void);
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
 }
 
 /**
@@ -183,7 +186,10 @@ export interface AgendaViewConfig extends ViewFactoryConfig {
   /**
    * Action when a date section is clicked.
    */
-  gridDateClick?: 'day-view' | 'none' | ((date: Date, events: Event[]) => void);
+  gridDateClick?:
+    | 'day-view'
+    | 'none'
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
   /**
    * Action when a date section is double-clicked.
    * - 'day-view' (default): navigate to the Day View
@@ -193,7 +199,7 @@ export interface AgendaViewConfig extends ViewFactoryConfig {
   gridDateDoubleClick?:
     | 'day-view'
     | 'none'
-    | ((date: Date, events: Event[]) => void);
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
 }
 
 /**
@@ -213,7 +219,7 @@ export interface YearViewConfig extends ViewFactoryConfig {
     | 'popup'
     | 'day-view'
     | 'none'
-    | ((date: Date, events: Event[]) => void);
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
   /**
    * Grid mode: action when a date cell is double-clicked.
    * - 'create-event' (default): create a timed event from 9:00 to 10:00 on the clicked date
@@ -225,7 +231,7 @@ export interface YearViewConfig extends ViewFactoryConfig {
     | 'create-event'
     | 'day-view'
     | 'none'
-    | ((date: Date, events: Event[]) => void);
+    | ((date: Date, events: Event[], e?: MouseEvent) => void);
   /**
    * Grid mode: number of heatmap intensity levels.
    * @default 5
