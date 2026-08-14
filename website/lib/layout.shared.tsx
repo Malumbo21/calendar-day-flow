@@ -8,7 +8,7 @@ import {
 } from '@/components/HeaderSearch';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
-import { proUrl } from '@/lib/site';
+import { proUrl, schedulerUrl } from '@/lib/site';
 
 export const gitConfig = {
   user: 'dayflow-js',
@@ -18,6 +18,8 @@ export const gitConfig = {
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const PRO_URL = proUrl('nav');
+const SCHEDULER_URL = schedulerUrl('nav');
+const SCHEDULER_SIDEBAR_URL = schedulerUrl('docs_sidebar');
 
 /**
  * @param docsBaseUrl - base URL of the locale's docs section, e.g. `/docs-ja`
@@ -55,6 +57,19 @@ export function sidebarTabs(
         <Image
           src={`${BASE}/pro-logo.png`}
           alt='DayFlow Pro logo'
+          width={16}
+          height={16}
+          className='size-4'
+        />
+      ),
+    },
+    {
+      title: 'Scheduler',
+      url: SCHEDULER_SIDEBAR_URL,
+      icon: (
+        <Image
+          src={`${BASE}/schedule-logo.png`}
+          alt='Dayflow Scheduler logo'
           width={16}
           height={16}
           className='size-4'
@@ -111,6 +126,23 @@ const NavTitle = (
   </span>
 );
 
+const BlossomLink = (
+  <a
+    href='https://blossom.dayflow.studio'
+    target='_blank'
+    rel='noopener noreferrer'
+    className='inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+  >
+    <span aria-hidden='true'>🌸</span>
+    <Badge
+      variant='outline'
+      className='border-pink-200 bg-pink-50 px-1.5 py-0 text-[10px] font-bold tracking-[0.08em] text-pink-700 uppercase dark:border-pink-400/30 dark:bg-pink-400/10 dark:text-pink-200'
+    >
+      Blossom Color Picker
+    </Badge>
+  </a>
+);
+
 const ProLink = (
   <a
     href={PRO_URL}
@@ -134,6 +166,29 @@ const ProLink = (
   </a>
 );
 
+const SchedulerLink = (
+  <a
+    href={SCHEDULER_URL}
+    target='_blank'
+    rel='noopener noreferrer'
+    className='inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+  >
+    <Image
+      src={`${BASE}/schedule-logo.png`}
+      alt='Dayflow Scheduler logo'
+      width={1254}
+      height={1254}
+      className='h-6 w-auto'
+    />
+    <Badge
+      variant='outline'
+      className='border-sky-200 bg-sky-50 px-1.5 py-0 text-[10px] font-bold tracking-[0.12em] text-sky-700 uppercase dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-200'
+    >
+      Scheduler
+    </Badge>
+  </a>
+);
+
 const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
 
 export function baseOptions(): BaseLayoutProps {
@@ -143,13 +198,16 @@ export function baseOptions(): BaseLayoutProps {
     },
     links: [
       {
-        text: '🌸 Blossom Color Picker',
-        url: 'https://blossom.dayflow.studio',
-        external: true,
+        type: 'custom',
+        children: ProLink,
       },
       {
         type: 'custom',
-        children: ProLink,
+        children: SchedulerLink,
+      },
+      {
+        type: 'custom',
+        children: BlossomLink,
       },
       {
         type: 'icon',

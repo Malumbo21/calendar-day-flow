@@ -18,12 +18,21 @@ export const SITE_URL = rawSiteUrl.endsWith('/')
 export const SITE_METADATA_BASE = new URL(SITE_URL);
 
 const PRO_BASE_URL = 'https://pro.dayflow.studio';
+const SCHEDULER_BASE_URL = 'https://scheduler.dayflow.studio';
 
-export function proUrl(content: string): string {
+function ecosystemUrl(baseUrl: string, content: string): string {
   const params = new URLSearchParams({
     utm_source: 'calendar.dayflow.studio',
     utm_medium: 'referral',
     utm_content: content,
   });
-  return `${PRO_BASE_URL}/?${params.toString()}`;
+  return `${baseUrl}/?${params.toString()}`;
+}
+
+export function proUrl(content: string): string {
+  return ecosystemUrl(PRO_BASE_URL, content);
+}
+
+export function schedulerUrl(content: string): string {
+  return ecosystemUrl(SCHEDULER_BASE_URL, content);
 }

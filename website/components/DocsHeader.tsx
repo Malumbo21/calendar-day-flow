@@ -7,13 +7,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
-import { proUrl } from '@/lib/site';
+import { proUrl, schedulerUrl } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const PRO_URL = proUrl('docs_nav');
+const SCHEDULER_URL = schedulerUrl('docs_nav');
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
@@ -105,15 +106,44 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
                 </Badge>
               </a>
               <a
+                href={SCHEDULER_URL}
+                target='_blank'
+                rel='noopener noreferrer'
+                className={cn(
+                  buttonVariants({ color: 'ghost' }),
+                  'gap-2 px-2 text-sm font-medium text-slate-600 dark:text-slate-400'
+                )}
+              >
+                <Image
+                  src={`${BASE}/schedule-logo.png`}
+                  alt='Dayflow Scheduler logo'
+                  width={1254}
+                  height={1254}
+                  className='h-6 w-auto'
+                />
+                <Badge
+                  variant='outline'
+                  className='border-sky-200 bg-sky-50 px-1.5 py-0 text-[10px] font-bold tracking-[0.12em] text-sky-700 uppercase dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-200'
+                >
+                  Scheduler
+                </Badge>
+              </a>
+              <a
                 href='https://blossom.dayflow.studio'
                 target='_blank'
                 rel='noopener noreferrer'
                 className={cn(
                   buttonVariants({ color: 'ghost' }),
-                  'text-sm font-medium text-slate-600 dark:text-slate-400'
+                  'gap-2 px-2 text-sm font-medium text-slate-600 dark:text-slate-400'
                 )}
               >
-                🌸 Blossom Color Picker
+                <span aria-hidden='true'>🌸</span>
+                <Badge
+                  variant='outline'
+                  className='border-pink-200 bg-pink-50 px-1.5 py-0 text-[10px] font-bold tracking-[0.08em] text-pink-700 uppercase dark:border-pink-400/30 dark:bg-pink-400/10 dark:text-pink-200'
+                >
+                  Blossom Color Picker
+                </Badge>
               </a>
               <LanguageSwitcher />
               <a
@@ -172,6 +202,30 @@ export function DocsHeader({ githubUrl }: DocsHeaderProps) {
                   className='border-amber-200 bg-amber-50 px-1 py-0 text-[9px] font-bold tracking-[0.14em] text-amber-700 uppercase dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200'
                 >
                   Pro
+                </Badge>
+              </a>
+              <a
+                href={SCHEDULER_URL}
+                target='_blank'
+                rel='noopener noreferrer'
+                aria-label='Dayflow Scheduler'
+                className={cn(
+                  buttonVariants({ color: 'ghost', size: 'sm' }),
+                  'gap-1 px-2 text-slate-600 dark:text-slate-400'
+                )}
+              >
+                <Image
+                  src={`${BASE}/schedule-logo.png`}
+                  alt=''
+                  width={1254}
+                  height={1254}
+                  className='h-4 w-auto'
+                />
+                <Badge
+                  variant='outline'
+                  className='hidden border-sky-200 bg-sky-50 px-1 py-0 text-[9px] font-bold tracking-[0.1em] text-sky-700 uppercase min-[560px]:inline-flex dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-200'
+                >
+                  Scheduler
                 </Badge>
               </a>
               <LanguageSwitcher />

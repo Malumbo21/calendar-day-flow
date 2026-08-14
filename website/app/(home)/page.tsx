@@ -1,11 +1,17 @@
-import { ArrowRight, Check, Search, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  Search,
+  Sparkles,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
 
 import { LandingRevealEffects } from '@/components/LandingRevealEffects';
-import { proUrl, SITE_URL } from '@/lib/site';
+import { proUrl, schedulerUrl, SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'DayFlow Calendar - React, Vue, Angular, and Svelte Calendar UI',
@@ -560,6 +566,62 @@ export default function HomePage() {
             >
               Read docs
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className='relative z-10 px-4 pb-16 sm:px-6 lg:px-8'
+        data-reveal
+        aria-labelledby='scheduler-promo-title'
+      >
+        <div className='mx-auto max-w-7xl'>
+          <div className='relative grid gap-6 overflow-hidden rounded-[30px] border border-blue-200/80 bg-white p-6 shadow-[0_28px_90px_rgba(15,23,42,0.12)] before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(120deg,rgba(255,255,255,0.55),transparent_38%)] lg:grid-cols-[minmax(0,1.55fr)_minmax(240px,0.45fr)] lg:p-8 dark:border-blue-400/20 dark:bg-slate-950 dark:shadow-[0_28px_90px_rgba(0,0,0,0.32)] dark:before:bg-[linear-gradient(120deg,rgba(255,255,255,0.06),transparent_38%)]'>
+            <div className='relative z-10 grid content-center justify-items-start gap-3.5'>
+              <span className='text-xs font-semibold tracking-[0.18em] text-blue-600 uppercase dark:text-blue-300'>
+                Also from Dayflow
+              </span>
+              <h2
+                id='scheduler-promo-title'
+                className='text-2xl leading-none font-semibold tracking-tight text-balance text-slate-950 sm:text-3xl dark:text-white'
+              >
+                Meet Dayflow Scheduler.
+              </h2>
+              <p className='max-w-xl text-[15px] leading-7 text-slate-600 dark:text-slate-300'>
+                A standalone, resource-first scheduler for building fast,
+                editable planning experiences with grouped rows and flexible
+                timeline views.
+              </p>
+              <a
+                href={schedulerUrl('landing_banner')}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(37,99,235,0.26)] transition hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-[0_18px_40px_rgba(37,99,235,0.32)] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-blue-400/50'
+              >
+                Explore Dayflow Scheduler
+                <ArrowUpRight className='size-4' aria-hidden='true' />
+              </a>
+            </div>
+
+            <a
+              href={schedulerUrl('landing_banner_visual')}
+              target='_blank'
+              rel='noopener noreferrer'
+              aria-label='Visit the Dayflow Scheduler website'
+              className='group relative z-10 grid min-h-40 place-items-center overflow-hidden rounded-3xl border border-blue-200/80 bg-blue-50/70 no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-blue-400/50 dark:border-blue-400/20 dark:bg-white/5'
+            >
+              <span
+                className='absolute inset-[18%_12%] rounded-full bg-blue-500/20 blur-3xl'
+                aria-hidden='true'
+              />
+              <Image
+                src='/schedule-logo.png'
+                alt=''
+                width={1254}
+                height={1254}
+                className='relative z-10 w-[min(72%,190px)] drop-shadow-[0_24px_32px_rgba(4,73,149,0.22)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] sm:w-[min(88%,240px)]'
+              />
+            </a>
           </div>
         </div>
       </section>
