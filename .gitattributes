@@ -1,0 +1,6 @@
+# Documentation content is excluded from GitHub's language statistics so the
+# repository is characterised by its source code, not by the docs that describe
+# it. `linguist-documentation` (rather than `linguist-vendored`/`-generated`)
+# keeps these files fully visible in pull request diffs — only the language bar
+# is affected.
+website/content/** linguist-documentation

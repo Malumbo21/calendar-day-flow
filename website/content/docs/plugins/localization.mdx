@@ -10,7 +10,7 @@ Install the i18n plugin package:
 
 ## Usage
 
-To enable support for additional languages, register the plugin and provide the desired locale objects.
+To enable support for additional languages, register the plugin and provide the desired locale objects. The `locale` property accepts either a locale code string (e.g. `'zh-CN'`) or an imported `Locale` object directly (e.g. `zh`).
 
 <FrameworkTabs>
   <Tab>
@@ -33,7 +33,7 @@ To enable support for additional languages, register the plugin and provide the 
             locales: [zh, ja, fr], // Register the languages you need
           }),
         ],
-        locale: 'zh-CN', // Set the current locale
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
       });
 
       return <DayFlowCalendar calendar={calendar} />;
@@ -65,7 +65,7 @@ To enable support for additional languages, register the plugin and provide the 
           locales: [zh, ja, fr], // Register the languages you need
         }),
       ],
-      locale: 'zh-CN', // Set the current locale
+      locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
     });
     </script>
     ```
@@ -98,7 +98,7 @@ To enable support for additional languages, register the plugin and provide the 
             locales: [zh, ja, fr], // Register the languages you need
           })
         ],
-        locale: 'zh-CN', // Set the current locale
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
       };
     }
     ```
@@ -124,7 +124,7 @@ To enable support for additional languages, register the plugin and provide the 
             locales: [zh, ja, fr], // Register the languages you need
           }),
         ],
-        locale: 'zh-CN', // Set the current locale
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
       });
     </script>
 
@@ -158,6 +158,11 @@ The following locales are currently available in the `@dayflow/plugin-localizati
 | `es`   | Spanish  | `es-ES`                         |
 | `en`   | English  | `en-US` (Also built-in to core) |
 
+When setting the `locale` property, you can pass either:
+
+- **`Locale` Object**: Pass the imported locale object directly (e.g. `locale: zh`).
+- **Locale Code String**: Pass a language code string (e.g. `locale: 'zh-CN'` or `'zh'`), which automatically matches against registered locales.
+
 ## Custom Locales
 
 You can also register your own custom locales without using the plugin, or by passing them to the plugin:
@@ -180,6 +185,6 @@ const calendar = useCalendarApp({
       locales: [myCustomLocale],
     }),
   ],
-  locale: 'pt-BR',
+  locale: myCustomLocale, // Pass the custom Locale object directly (or code string 'pt-BR')
 });
 ```
