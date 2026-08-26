@@ -66,7 +66,7 @@ describe('DefaultYearView', () => {
   });
 
   it('uses gridDateDoubleClick callback in year-canvas mode when provided', async () => {
-    const onGridDateDoubleClick = jest.fn();
+    const onGridDateDoubleClick = vi.fn();
 
     const app = new CalendarApp({
       views: [],
@@ -116,7 +116,7 @@ describe('DefaultYearView', () => {
   });
 
   it('uses gridDateDoubleClick callback in fixed-week mode when provided', async () => {
-    const onGridDateDoubleClick = jest.fn();
+    const onGridDateDoubleClick = vi.fn();
 
     const app = new CalendarApp({
       views: [],

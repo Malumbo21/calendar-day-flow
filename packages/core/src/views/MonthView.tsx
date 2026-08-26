@@ -41,6 +41,7 @@ import {
   temporalToVisualDate,
   generateUniKey,
 } from '@/utils';
+import { expandRecurringEvents } from '@/utils/recurrence';
 
 /** Compute the 6 weeks that fill a month-view grid for the given date. */
 const getMonthWeeks = (date: Date, startOfWeek: number): WeeksData[] => {
@@ -216,6 +217,24 @@ const MonthView = ({
     return rawEvents;
   }, [rawEvents]);
 
+  const recurrenceRange = useMemo(() => {
+    const start = new Date(currentDateYear, currentDateMonth - 18, 1);
+    const end = new Date(currentDateYear, currentDateMonth + 19, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }, [currentDateMonth, currentDateYear]);
+
+  const renderEvents = useMemo(
+    () =>
+      expandRecurringEvents(
+        events,
+        recurrenceRange.start,
+        recurrenceRange.end,
+        appTimeZone
+      ),
+    [appTimeZone, events, recurrenceRange]
+  );
+
   const eventsByWeek = useMemo(() => {
     const map = new Map<number, Event[]>();
 
@@ -238,7 +257,7 @@ const MonthView = ({
       }
     };
 
-    events.forEach(event => {
+    renderEvents.forEach(event => {
       if (!event.start) return;
 
       const startFull = temporalToVisualDate(event.start, appTimeZone);
@@ -288,7 +307,7 @@ const MonthView = ({
     });
 
     return map;
-  }, [events, startOfWeek, appTimeZone]);
+  }, [renderEvents, startOfWeek, appTimeZone]);
 
   // Responsive configuration
   const { screenSize } = useResponsiveMonthConfig();
@@ -752,7 +771,8 @@ const MonthView = ({
     (eventId: string | null) => {
       const isViewable = app.getReadOnlyConfig().viewable;
       if ((screenSize !== 'desktop' || isTouch) && eventId && isViewable) {
-        const evt = events.find(e => e.id === eventId);
+        const masterId = eventId.split('::')[0];
+        const evt = events.find(e => e.id === masterId);
         if (evt) {
           app.onMobileEventDetailToggle(evt);
           return;

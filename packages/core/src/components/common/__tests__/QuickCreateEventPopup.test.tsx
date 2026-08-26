@@ -48,7 +48,7 @@ const createAnchor = () => {
 describe('QuickCreateEventPopup', () => {
   it('creates an event from the keyboard suggestion flow', () => {
     const app = createApp();
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const anchor = document.createElement('div');
 
     Object.defineProperty(anchor, 'getBoundingClientRect', {
@@ -95,7 +95,7 @@ describe('QuickCreateEventPopup', () => {
         <QuickCreateEventPopup
           app={createApp()}
           anchorRef={{ current: createAnchor() }}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           isOpen
         />
       );
@@ -107,7 +107,7 @@ describe('QuickCreateEventPopup', () => {
     it('renders plugin-owned content with popup control callbacks', () => {
       const plugin: CalendarPlugin = {
         name: 'demo-plugin',
-        install: jest.fn(),
+        install: vi.fn(),
         renderQuickCreateTopContent: ({ focusInput, close }) => (
           <div data-testid='plugin-top-content'>
             <button type='button' onClick={focusInput}>
@@ -120,7 +120,7 @@ describe('QuickCreateEventPopup', () => {
         ),
       };
       const app = createApp([plugin]);
-      const onClose = jest.fn();
+      const onClose = vi.fn();
 
       render(
         <QuickCreateEventPopup

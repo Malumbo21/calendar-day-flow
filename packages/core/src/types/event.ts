@@ -37,4 +37,8 @@ export interface Event {
   _originalStartHour?: number;
   /** Original end hour (used for stable cross-day layout) */
   _originalEndHour?: number;
+  /** Recurrence master ID for a generated render-only occurrence. */
+  _recurrenceMasterId?: string;
+  /** Stable occurrence key for generated recurrence instances. */
+  _recurrenceKey?: string;
 }

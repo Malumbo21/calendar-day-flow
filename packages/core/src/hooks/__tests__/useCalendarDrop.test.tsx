@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/preact';
 import { Temporal } from 'temporal-polyfill';
+import type { Mock } from 'vitest';
 
 import { useCalendarDrop } from '@/hooks/useCalendarDrop';
 import { Event, ICalendarApp } from '@/types';
 
-jest.mock('@/locale', () => ({
+vi.mock('@/locale', () => ({
   useLocale: () => ({
     t: (key: string, params?: Record<string, string>) =>
       params?.calendarName ? `${key}:${params.calendarName}` : key,
@@ -15,9 +16,9 @@ describe('useCalendarDrop', () => {
   it('creates timed events in app.timeZone for day/week drops', () => {
     const app = {
       timeZone: 'Asia/Shanghai',
-      addEvent: jest.fn(),
-      getCalendarRegistry: jest.fn(() => ({
-        get: jest.fn(() => ({
+      addEvent: vi.fn(),
+      getCalendarRegistry: vi.fn(() => ({
+        get: vi.fn(() => ({
           readOnly: false,
           subscription: false,
         })),
@@ -27,7 +28,7 @@ describe('useCalendarDrop', () => {
     const { result } = renderHook(() => useCalendarDrop({ app }));
 
     const dataTransfer = {
-      getData: jest.fn(() =>
+      getData: vi.fn(() =>
         JSON.stringify({
           calendarId: 'work',
           calendarName: 'Work',
@@ -42,7 +43,7 @@ describe('useCalendarDrop', () => {
     };
 
     const event = {
-      preventDefault: jest.fn(),
+      preventDefault: vi.fn(),
       dataTransfer,
     } as unknown as DragEvent;
 
@@ -58,7 +59,7 @@ describe('useCalendarDrop', () => {
 
     expect(created).not.toBeNull();
     expect(app.addEvent).toHaveBeenCalledTimes(1);
-    const createdEvent = (app.addEvent as jest.Mock).mock.calls[0][0] as Event;
+    const createdEvent = (app.addEvent as Mock).mock.calls[0][0] as Event;
     expect(app.addEvent).toHaveBeenCalledWith(createdEvent);
     expect(createdEvent.start).toBeInstanceOf(Temporal.ZonedDateTime);
     expect(createdEvent.end).toBeInstanceOf(Temporal.ZonedDateTime);

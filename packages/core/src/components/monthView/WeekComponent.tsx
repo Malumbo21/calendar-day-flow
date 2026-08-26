@@ -333,7 +333,7 @@ const WeekComponent = memo(
       // 1. Initial pass: calculate total slots and basic "more" check for each day
       const initialResults = weekData.days.map((day, dayIndex) => {
         const dayEvents = eventsByDayDate.get(day.date.toDateString()) ?? [];
-        const sortedEvents = sortDayEvents(dayEvents);
+        const sortedEvents = sortDayEvents(dayEvents, appTimeZone);
 
         // Filter out all-day events that are rendered as multi-day segments
         const timedEventsOnly = sortedEvents.filter(event => {

@@ -11,10 +11,10 @@ interface HarnessProps {
 }
 
 const Harness = ({
-  onEventSelect = jest.fn(),
-  onDetailPanelToggle = jest.fn(),
-  setIsSelected = jest.fn(),
-  setActiveDayIndex = jest.fn(),
+  onEventSelect = vi.fn(),
+  onDetailPanelToggle = vi.fn(),
+  setIsSelected = vi.fn(),
+  setActiveDayIndex = vi.fn(),
 }: HarnessProps) => {
   const calendarRef = useRef<HTMLDivElement>(null);
   const eventRef = useRef<HTMLButtonElement>(null);
@@ -51,10 +51,10 @@ const Harness = ({
 
 describe('useClickOutside', () => {
   it('keeps the current panel mounted when another event receives mousedown', () => {
-    const onDetailPanelToggle = jest.fn();
-    const onEventSelect = jest.fn();
-    const setIsSelected = jest.fn();
-    const setActiveDayIndex = jest.fn();
+    const onDetailPanelToggle = vi.fn();
+    const onEventSelect = vi.fn();
+    const setIsSelected = vi.fn();
+    const setActiveDayIndex = vi.fn();
 
     const { getByText } = render(
       <Harness
@@ -74,10 +74,10 @@ describe('useClickOutside', () => {
   });
 
   it('dismisses the panel when mousedown lands outside events and overlays', () => {
-    const onDetailPanelToggle = jest.fn();
-    const onEventSelect = jest.fn();
-    const setIsSelected = jest.fn();
-    const setActiveDayIndex = jest.fn();
+    const onDetailPanelToggle = vi.fn();
+    const onEventSelect = vi.fn();
+    const setIsSelected = vi.fn();
+    const setActiveDayIndex = vi.fn();
 
     const { getByText } = render(
       <Harness

@@ -11,7 +11,9 @@
   }
 
   .df-form-input {
+    box-sizing: border-box;
     width: 100%;
+    min-height: 2.25rem;
     border-radius: 0.5rem;
     border: 1px solid var(--df-color-border);
     padding: 0.375rem 0.75rem;
@@ -35,6 +37,65 @@
   .df-form-input:disabled,
   .df-form-input[readonly] {
     opacity: 0.5;
+  }
+
+  .df-form-date-input,
+  .df-form-number-input {
+    box-sizing: border-box;
+    min-height: 2.25rem;
+    min-width: 0;
+    border-radius: 0.5rem;
+    border: 1px solid var(--df-color-border);
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    color: var(--df-color-foreground);
+    background-color: var(--df-color-card);
+    outline: none;
+  }
+
+  .df-form-date-input:focus,
+  .df-form-number-input:focus {
+    border-color: var(--df-color-ring);
+    box-shadow: 0 0 0 2px var(--df-color-ring);
+  }
+
+  .df-form-date-input:disabled,
+  .df-form-number-input:disabled {
+    opacity: 0.5;
+  }
+
+  .df-form-number-input {
+    width: 4.25rem;
+  }
+
+  .df-form-select {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .df-form-select-trigger {
+    width: 100%;
+    min-width: 0;
+    height: 2.25rem;
+    padding-inline: 0.75rem;
+    font-weight: 400;
+  }
+
+  .df-form-select-trigger:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .df-form-select-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .df-form-select-dropdown {
+    z-index: 10002;
   }
 
   .df-form-textarea {
@@ -357,6 +418,153 @@
 
   .df-event-dialog-time-row {
     margin-bottom: 1rem;
+  }
+
+  .df-event-repeat-editor {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .df-event-repeat-field {
+    min-width: 0;
+  }
+
+  .df-event-repeat-end {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+  }
+
+  .df-event-repeat-end > .df-form-select {
+    flex: 1;
+  }
+
+  .df-event-repeat-end > .df-form-date-input {
+    flex: 1.35;
+  }
+
+  .df-event-repeat-suffix {
+    color: var(--df-color-muted-foreground);
+    white-space: nowrap;
+  }
+
+  .df-repeat-dialog-backdrop {
+    position: fixed;
+    z-index: 10020;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgb(0 0 0 / 0.28);
+  }
+
+  .df-repeat-dialog {
+    box-sizing: border-box;
+    width: min(24rem, 100%);
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    color: var(--df-color-foreground);
+    background: var(--df-color-card);
+    box-shadow:
+      0 20px 25px -5px rgb(0 0 0 / 0.16),
+      0 8px 10px -6px rgb(0 0 0 / 0.12);
+  }
+
+  .df-repeat-dialog-title {
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .df-repeat-dialog-row {
+    display: grid;
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .df-repeat-dialog-label {
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+  }
+
+  .df-repeat-dialog-interval {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  .df-repeat-dialog-interval .df-form-number-input {
+    width: 4rem;
+  }
+
+  .df-repeat-dialog-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    margin: 0 0 1.5rem;
+    overflow: hidden;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.375rem;
+  }
+
+  .df-repeat-dialog-weekday {
+    min-width: 0;
+    height: 2.25rem;
+    border: 0;
+    border-left: 1px solid var(--df-color-border);
+    padding: 0;
+    color: var(--df-color-foreground);
+    background: var(--df-color-background);
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+
+  .df-repeat-dialog-weekday:first-child {
+    border-left: 0;
+  }
+
+  .df-repeat-dialog-weekday:hover {
+    background: var(--df-color-muted);
+  }
+
+  .df-repeat-dialog-weekday[data-selected='true'] {
+    color: var(--df-color-primary-foreground);
+    background: var(--df-color-primary);
+  }
+
+  .df-repeat-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .df-repeat-dialog-action {
+    width: 7rem;
+    height: 2.25rem;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+
+  .df-repeat-dialog-cancel {
+    color: var(--df-color-foreground);
+    background: var(--df-color-card);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+
+  .df-repeat-dialog-confirm {
+    border-color: var(--df-color-primary);
+    color: var(--df-color-primary-foreground);
+    background: var(--df-color-primary);
   }
 
   .df-event-panel-content {

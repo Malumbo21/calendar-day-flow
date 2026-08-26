@@ -16,6 +16,7 @@ import {
 } from '@/utils/timeUtils';
 
 import { CalendarPicker, CalendarOption } from './CalendarPicker';
+import { EventRepeatEditor } from './EventRepeatEditor';
 import { LoadingButton } from './LoadingButton';
 
 interface DefaultEventDetailDialogProps extends EventDetailDialogProps {
@@ -283,6 +284,13 @@ const DefaultEventDetailDialog = ({
               />
             </div>
           )}
+
+          <EventRepeatEditor
+            event={editedEvent}
+            startOfWeek={startOfWeek}
+            disabled={!isEditable || isPending}
+            onChange={setEditedEvent}
+          />
 
           {shouldShowNotes && (
             <div className='df-event-dialog-notes-row'>

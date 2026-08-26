@@ -33,17 +33,18 @@ const EventContextMenu = ({
   triggerEvent,
 }: EventContextMenuProps) => {
   const { t } = useLocale();
-  if (!app.canMutateFromUI(event.id)) return null;
+  const mutableEventId = event._recurrenceMasterId ?? event.id;
+  if (!app.canMutateFromUI(mutableEventId)) return null;
 
   const calendars = app.getCalendars();
 
   const handleMoveToCalendar = (calendarId: string) => {
-    app.updateEvent(event.id, { calendarId });
+    app.updateEvent(mutableEventId, { calendarId });
     onClose();
   };
 
   const handleDelete = () => {
-    app.deleteEvent(event.id);
+    app.deleteEvent(mutableEventId);
     onClose();
   };
 
@@ -63,7 +64,7 @@ const EventContextMenu = ({
       const eventData = JSON.stringify(event, null, 2);
       await navigator.clipboard.writeText(eventData);
       clipboardStore.setEvent(event);
-      app.deleteEvent(event.id);
+      app.deleteEvent(mutableEventId);
     } catch (err) {
       console.error('Failed to cut event: ', err);
     }

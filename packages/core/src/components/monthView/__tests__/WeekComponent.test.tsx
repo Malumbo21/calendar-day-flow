@@ -68,8 +68,8 @@ const sortByCalendarId = (
 
 const createRequiredWeekProps = () => ({
   detailPanelEventId: null,
-  onDetailPanelToggle: jest.fn(),
-  onCalendarDrop: jest.fn(() => null),
+  onDetailPanelToggle: vi.fn(),
+  onCalendarDrop: vi.fn(() => null),
 });
 
 describe('WeekComponent', () => {
@@ -131,9 +131,9 @@ describe('WeekComponent', () => {
           endDate: null,
         }}
         calendarRef={calendarRef}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
-        onDetailPanelOpen={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
+        onDetailPanelOpen={vi.fn()}
         {...createRequiredWeekProps()}
         app={app}
         appTimeZone='Australia/Sydney'
@@ -147,9 +147,9 @@ describe('WeekComponent', () => {
   });
 
   it('lets each month cell decide independently whether to show 3 rows plus more or 4 rows', () => {
-    const onEventUpdate = jest.fn();
-    const onEventDelete = jest.fn();
-    const onDetailPanelOpen = jest.fn();
+    const onEventUpdate = vi.fn();
+    const onEventDelete = vi.fn();
+    const onDetailPanelOpen = vi.fn();
 
     const events = [
       createAllDayEvent('a', 'Event A', '2026-03-12', '2026-03-14'),
@@ -282,9 +282,9 @@ describe('WeekComponent', () => {
           endDate: null,
         }}
         calendarRef={calendarRef}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
-        onDetailPanelOpen={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
+        onDetailPanelOpen={vi.fn()}
         {...createRequiredWeekProps()}
         app={app}
       />
@@ -363,9 +363,9 @@ describe('WeekComponent', () => {
           endDate: null,
         }}
         calendarRef={calendarRef}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
-        onDetailPanelOpen={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
+        onDetailPanelOpen={vi.fn()}
         {...createRequiredWeekProps()}
         app={app}
       />
@@ -443,9 +443,9 @@ describe('WeekComponent', () => {
           endDate: null,
         }}
         calendarRef={calendarRef}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
-        onDetailPanelOpen={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
+        onDetailPanelOpen={vi.fn()}
         {...createRequiredWeekProps()}
         app={app}
       />
@@ -539,9 +539,9 @@ describe('WeekComponent', () => {
           endDate: null,
         }}
         calendarRef={calendarRef}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
-        onDetailPanelOpen={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
+        onDetailPanelOpen={vi.fn()}
         {...createRequiredWeekProps()}
         app={app}
       />
@@ -615,9 +615,9 @@ describe('WeekComponent', () => {
           endDate: new Date(2026, 2, 12, 1),
         }}
         calendarRef={calendarRef}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
-        onDetailPanelOpen={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
+        onDetailPanelOpen={vi.fn()}
         {...createRequiredWeekProps()}
         app={app}
       />

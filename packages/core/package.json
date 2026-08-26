@@ -58,9 +58,9 @@
     "postbuild": "rimraf dist/types",
     "prebuild": "rimraf dist",
     "prepublishOnly": "npm run typecheck && npm run check:css && npm run test && npm run build",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -81,14 +81,13 @@
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/preact": "catalog:",
     "@testing-library/user-event": "catalog:",
-    "@types/jest": "catalog:",
     "@types/lodash": "catalog:",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "autoprefixer": "catalog:",
     "cssnano": "catalog:",
     "identity-obj-proxy": "^3.0.0",
-    "jest": "catalog:",
-    "jest-environment-jsdom": "catalog:",
+    "jsdom": "catalog:",
     "postcss": "catalog:",
     "rimraf": "catalog:",
     "rollup": "catalog:",
@@ -97,8 +96,8 @@
     "rollup-plugin-postcss": "catalog:",
     "rollup-plugin-visualizer": "catalog:",
     "tailwindcss": "catalog:",
-    "ts-jest": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

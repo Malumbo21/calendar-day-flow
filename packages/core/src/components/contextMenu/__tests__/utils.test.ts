@@ -1,4 +1,5 @@
 import { Temporal } from 'temporal-polyfill';
+import type { Mock } from 'vitest';
 
 import { handlePasteEvent } from '@/components/contextMenu/utils';
 import { ViewType, ICalendarApp, Event } from '@/types';
@@ -7,16 +8,16 @@ import { clipboardStore } from '@/utils/clipboardStore';
 describe('handlePasteEvent', () => {
   afterEach(() => {
     clipboardStore.clear();
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('creates timed pasted events in app.timeZone', async () => {
     const app = {
       timeZone: 'Asia/Shanghai',
-      addEvent: jest.fn(),
-      getCalendarRegistry: jest.fn(() => ({
-        has: jest.fn(() => true),
-        getDefaultCalendarId: jest.fn(() => 'work'),
+      addEvent: vi.fn(),
+      getCalendarRegistry: vi.fn(() => ({
+        has: vi.fn(() => true),
+        getDefaultCalendarId: vi.fn(() => 'work'),
       })),
     } as unknown as ICalendarApp;
 
@@ -34,7 +35,7 @@ describe('handlePasteEvent', () => {
     await handlePasteEvent(app, new Date(2026, 3, 10), ViewType.DAY);
 
     expect(app.addEvent).toHaveBeenCalledTimes(1);
-    const createdEvent = (app.addEvent as jest.Mock).mock.calls[0][0] as Event;
+    const createdEvent = (app.addEvent as Mock).mock.calls[0][0] as Event;
     expect(createdEvent.start).toBeInstanceOf(Temporal.ZonedDateTime);
     expect(createdEvent.end).toBeInstanceOf(Temporal.ZonedDateTime);
     expect(String(createdEvent.start)).toContain('[Asia/Shanghai]');

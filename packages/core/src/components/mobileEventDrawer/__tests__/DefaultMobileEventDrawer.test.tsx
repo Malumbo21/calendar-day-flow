@@ -42,7 +42,7 @@ const createApp = () =>
 
 describe('MobileEventDrawer', () => {
   beforeAll(() => {
-    window.scrollTo = jest.fn();
+    window.scrollTo = vi.fn();
   });
 
   it('hydrates notes and toggles start date expander state', () => {
@@ -55,9 +55,9 @@ describe('MobileEventDrawer', () => {
     render(
       <MobileEventDrawer
         isOpen
-        onClose={jest.fn()}
-        onSave={jest.fn()}
-        onEventDelete={jest.fn()}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onEventDelete={vi.fn()}
         draftEvent={draftEvent}
         app={app}
       />
@@ -84,9 +84,9 @@ describe('MobileEventDrawer', () => {
     const { unmount } = render(
       <MobileEventDrawer
         isOpen
-        onClose={jest.fn()}
-        onSave={jest.fn()}
-        onEventDelete={jest.fn()}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onEventDelete={vi.fn()}
         draftEvent={draftEvent}
         app={app}
       />

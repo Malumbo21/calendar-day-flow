@@ -39,8 +39,8 @@ describe('CalendarEvent style contract', () => {
         calendarRef={calendarRef}
         hourHeight={60}
         firstHour={0}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
       />
     );
 
@@ -59,8 +59,8 @@ describe('CalendarEvent style contract', () => {
   it('suppresses the synthetic click after a touch tap so mobile opens only one path', () => {
     const calendarElement = document.createElement('div');
     const calendarRef = { current: calendarElement };
-    const onEventSelect = jest.fn();
-    const onDetailPanelToggle = jest.fn();
+    const onEventSelect = vi.fn();
+    const onDetailPanelToggle = vi.fn();
 
     const timedEvent: Event = {
       ...baseEvent,
@@ -76,9 +76,9 @@ describe('CalendarEvent style contract', () => {
         calendarRef={calendarRef}
         hourHeight={60}
         firstHour={0}
-        onMoveStart={jest.fn()}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
+        onMoveStart={vi.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
         onEventSelect={onEventSelect}
         onDetailPanelToggle={onDetailPanelToggle}
         isMobile
@@ -143,11 +143,11 @@ describe('CalendarEvent style contract', () => {
   });
 
   it('keeps long-press drag active through small finger drift and blocks follow-up scrolling', () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const calendarElement = document.createElement('div');
       const calendarRef = { current: calendarElement };
-      const onMoveStart = jest.fn();
+      const onMoveStart = vi.fn();
 
       const timedEvent: Event = {
         ...baseEvent,
@@ -164,8 +164,8 @@ describe('CalendarEvent style contract', () => {
           hourHeight={60}
           firstHour={0}
           onMoveStart={onMoveStart}
-          onEventUpdate={jest.fn()}
-          onEventDelete={jest.fn()}
+          onEventUpdate={vi.fn()}
+          onEventDelete={vi.fn()}
           isMobile
           enableTouch
         />
@@ -219,7 +219,7 @@ describe('CalendarEvent style contract', () => {
       });
       eventElement?.dispatchEvent(driftMoveEvent);
 
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       expect(onMoveStart).toHaveBeenCalledTimes(1);
 
@@ -247,7 +247,7 @@ describe('CalendarEvent style contract', () => {
 
       expect(dragMoveEvent.defaultPrevented).toBe(true);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

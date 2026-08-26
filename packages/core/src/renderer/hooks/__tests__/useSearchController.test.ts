@@ -1,4 +1,5 @@
 import { renderHook, act } from '@testing-library/preact';
+import type { Mock } from 'vitest';
 
 import { useSearchController } from '@/renderer/hooks/useSearchController';
 import { ICalendarApp } from '@/types';
@@ -14,27 +15,27 @@ describe('useSearchController', () => {
         locale: 'en-US',
         switcherMode: 'select',
         calendarRegistry: {
-          get: jest.fn(),
-          resolveColors: jest.fn(() => ({ lineColor: '#000' })),
+          get: vi.fn(),
+          resolveColors: vi.fn(() => ({ lineColor: '#000' })),
         },
       },
-      selectEvent: jest.fn(),
-      highlightEvent: jest.fn(),
-      setCurrentDate: jest.fn(),
-      getEvents: jest.fn(() => []),
-      getCalendarRegistry: jest.fn(() => ({
-        get: jest.fn(),
-        resolveColors: jest.fn(() => ({ lineColor: '#000' })),
+      selectEvent: vi.fn(),
+      highlightEvent: vi.fn(),
+      setCurrentDate: vi.fn(),
+      getEvents: vi.fn(() => []),
+      getCalendarRegistry: vi.fn(() => ({
+        get: vi.fn(),
+        resolveColors: vi.fn(() => ({ lineColor: '#000' })),
       })),
-      subscribeThemeChange: jest.fn(() => () => {
+      subscribeThemeChange: vi.fn(() => () => {
         /* unsubscribe */
       }),
-      getTheme: jest.fn(() => 'light'),
+      getTheme: vi.fn(() => 'light'),
     } as unknown as ICalendarApp;
   });
 
   it('should call onResultClick when provided', () => {
-    const onResultClick = jest.fn();
+    const onResultClick = vi.fn();
     const searchConfig = { onResultClick };
     const { result } = renderHook(() =>
       useSearchController(mockApp, searchConfig)
@@ -86,7 +87,7 @@ describe('useSearchController', () => {
   });
 
   it('should close search when closeSearch is called', () => {
-    const onResultClick = jest.fn(({ closeSearch }) => {
+    const onResultClick = vi.fn(({ closeSearch }) => {
       closeSearch();
     });
     const searchConfig = { onResultClick };
@@ -125,7 +126,7 @@ describe('useSearchController', () => {
   });
 
   it('keeps highlight when custom navigation calls defaultAction and closeSearch', () => {
-    const onResultClick = jest.fn(({ defaultAction, closeSearch }) => {
+    const onResultClick = vi.fn(({ defaultAction, closeSearch }) => {
       defaultAction();
       closeSearch();
     });
@@ -157,12 +158,12 @@ describe('useSearchController', () => {
     mockApp.state.highlightedEventId = 'event-1';
 
     const { rerender } = renderHook(
-      ({ config }: { config: { onResultClick: jest.Mock } }) =>
+      ({ config }: { config: { onResultClick: Mock } }) =>
         useSearchController(mockApp, config),
       {
         initialProps: {
           config: {
-            onResultClick: jest.fn(),
+            onResultClick: vi.fn(),
           },
         },
       }
@@ -172,7 +173,7 @@ describe('useSearchController', () => {
 
     rerender({
       config: {
-        onResultClick: jest.fn(),
+        onResultClick: vi.fn(),
       },
     });
 
