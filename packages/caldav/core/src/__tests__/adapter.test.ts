@@ -132,7 +132,7 @@ function makeMockFetch(responses: MockResponse[]) {
   let idx = 0;
   const calls: Array<{ url: string; init?: RequestInit }> = [];
 
-  const fetchFn = jest.fn((url: string, init?: RequestInit) => {
+  const fetchFn = vi.fn((url: string, init?: RequestInit) => {
     calls.push({ url, init });
     const r = responses[idx++] ?? { status: 200, body: '' };
     const hdrs = new Headers(r.headers ?? {});

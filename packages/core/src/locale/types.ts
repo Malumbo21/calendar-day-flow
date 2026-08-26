@@ -77,7 +77,31 @@ export type TranslationKey =
   | 'calendarAlreadySubscribed'
   | 'appointmentScheduler'
   | 'newAppointmentSchedule'
-  | 'editAppointmentSchedule';
+  | 'editAppointmentSchedule'
+  | 'repeat'
+  | 'doesNotRepeat'
+  | 'everyDay'
+  | 'everyWeek'
+  | 'everyMonth'
+  | 'everyYear'
+  | 'custom'
+  | 'endRepeat'
+  | 'never'
+  | 'onDate'
+  | 'after'
+  | 'occurrences'
+  | 'every'
+  | 'days'
+  | 'weeks'
+  | 'months'
+  | 'years'
+  | 'customRepeat'
+  | 'frequency'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'yearly'
+  | 'on';
 
 export type LocaleDict = Partial<Record<TranslationKey, string>>;
 export type LocaleMessages = Partial<Record<TranslationKey, string>>;

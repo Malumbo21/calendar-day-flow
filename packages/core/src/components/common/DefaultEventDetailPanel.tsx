@@ -32,6 +32,7 @@ import {
 } from '@/utils/timeUtils';
 
 import { CalendarOption, CalendarPicker } from './CalendarPicker';
+import { EventRepeatEditor } from './EventRepeatEditor';
 import { LoadingButton } from './LoadingButton';
 
 interface DefaultEventDetailPanelProps extends EventDetailPanelProps {
@@ -493,6 +494,13 @@ const DefaultEventDetailPanel = ({
           />
         </div>
       )}
+
+      <EventRepeatEditor
+        event={draftEvent}
+        startOfWeek={startOfWeek}
+        disabled={!isEditable || isLoading}
+        onChange={applyDraftEventUpdate}
+      />
 
       {shouldShowNotes && (
         <div

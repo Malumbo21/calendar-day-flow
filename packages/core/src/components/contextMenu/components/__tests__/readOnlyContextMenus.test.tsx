@@ -40,7 +40,7 @@ describe('read-only context menus', () => {
         }}
         x={10}
         y={10}
-        onClose={jest.fn()}
+        onClose={vi.fn()}
         app={app}
         detailPanelKey='event-1'
       />
@@ -58,9 +58,9 @@ describe('read-only context menus', () => {
         x={10}
         y={10}
         date={new Date(2026, 2, 27)}
-        onClose={jest.fn()}
+        onClose={vi.fn()}
         app={app}
-        onCreateEvent={jest.fn()}
+        onCreateEvent={vi.fn()}
       />
     );
 
@@ -76,9 +76,9 @@ describe('read-only context menus', () => {
         x={10}
         y={10}
         date={new Date(2026, 2, 27)}
-        onClose={jest.fn()}
+        onClose={vi.fn()}
         app={app}
-        onCreateEvent={jest.fn()}
+        onCreateEvent={vi.fn()}
       />
     );
 

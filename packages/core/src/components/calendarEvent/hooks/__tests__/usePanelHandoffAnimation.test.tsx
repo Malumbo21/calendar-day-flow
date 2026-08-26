@@ -1,5 +1,6 @@
 import { render, act } from '@testing-library/preact';
 import { useRef } from 'preact/hooks';
+import type { MockInstance } from 'vitest';
 
 import {
   getPanelHandoffStartPosition,
@@ -63,7 +64,7 @@ const Harness = ({
       ref={node => {
         panelRef.current = node;
         if (node) {
-          node.getBoundingClientRect = jest.fn(() => rectRef.current);
+          node.getBoundingClientRect = vi.fn(() => rectRef.current);
         }
       }}
     />
@@ -71,11 +72,11 @@ const Harness = ({
 };
 
 describe('usePanelHandoffAnimation', () => {
-  let requestAnimationFrameSpy: jest.SpyInstance;
+  let requestAnimationFrameSpy: MockInstance;
 
   beforeEach(() => {
-    jest.useFakeTimers();
-    requestAnimationFrameSpy = jest
+    vi.useFakeTimers();
+    requestAnimationFrameSpy = vi
       .spyOn(window, 'requestAnimationFrame')
       .mockImplementation(callback => {
         callback(0);
@@ -84,8 +85,8 @@ describe('usePanelHandoffAnimation', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     requestAnimationFrameSpy.mockRestore();
   });
 

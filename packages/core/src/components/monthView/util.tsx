@@ -11,7 +11,6 @@ import { eventIcon } from '@/styles/classNames';
 import { Event } from '@/types';
 import { daysDifference, temporalToVisualDate } from '@/utils';
 import { createAllDayDisplayComparator } from '@/utils/allDaySort';
-import { extractHourFromDate } from '@/utils/helpers';
 import { logger } from '@/utils/logger';
 
 export interface MultiDayEventSegment {
@@ -494,7 +493,7 @@ export const constructRenderEvents = (
   return renderEvents;
 };
 
-export const sortDayEvents = (events: Event[]): Event[] =>
+export const sortDayEvents = (events: Event[], appTimeZone?: string): Event[] =>
   [...events].toSorted((a, b) => {
     if (a.allDay !== b.allDay) {
       return a.allDay ? -1 : 1;
@@ -502,7 +501,10 @@ export const sortDayEvents = (events: Event[]): Event[] =>
 
     if (a.allDay && b.allDay) return 0;
 
-    return extractHourFromDate(a.start) - extractHourFromDate(b.start);
+    return (
+      temporalToVisualDate(a.start, appTimeZone).getTime() -
+      temporalToVisualDate(b.start, appTimeZone).getTime()
+    );
   });
 
 export const createDateString = (date: Date): string => {

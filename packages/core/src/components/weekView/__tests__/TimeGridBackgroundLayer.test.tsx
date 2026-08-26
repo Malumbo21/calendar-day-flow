@@ -47,7 +47,7 @@ function setup(sourceUpdates: Partial<TimeGridBackgroundSource> = {}) {
       plugins: new Map([[plugin.name, plugin]]),
       currentDate: new Date(2026, 7, 3),
     },
-    triggerRender: jest.fn(),
+    triggerRender: vi.fn(),
   } as unknown as ICalendarApp;
 
   render(
@@ -78,7 +78,7 @@ describe('TimeGridBackgroundLayer', () => {
   });
 
   it('moves a selected range by the configured keyboard snap', () => {
-    const onRangeChange = jest.fn();
+    const onRangeChange = vi.fn();
     setup({ onRangeChange });
     fireEvent.keyDown(screen.getByRole('button'), { key: 'ArrowDown' });
     expect(onRangeChange).toHaveBeenCalledWith(
@@ -90,7 +90,7 @@ describe('TimeGridBackgroundLayer', () => {
   });
 
   it('deletes the focused range without involving EventManager', () => {
-    const onRangeDelete = jest.fn();
+    const onRangeDelete = vi.fn();
     setup({ onRangeDelete });
     fireEvent.keyDown(
       screen.getByRole('button', { name: 'Monday availability' }),
@@ -102,7 +102,7 @@ describe('TimeGridBackgroundLayer', () => {
   });
 
   it('deletes a titled editable range from its visible close button', () => {
-    const onRangeDelete = jest.fn();
+    const onRangeDelete = vi.fn();
     setup({ onRangeDelete });
     fireEvent.click(
       screen.getByRole('button', { name: 'Remove 09:00 · Available slot' })
@@ -208,7 +208,7 @@ describe('TimeGridBackgroundLayer', () => {
   });
 
   it('keeps a range ending at 24:00 on the next-day midnight boundary', () => {
-    const onRangeChange = jest.fn();
+    const onRangeChange = vi.fn();
     const lateStart = start.with({ hour: 23, minute: 0 });
     setup({
       onRangeChange,

@@ -67,11 +67,16 @@ export const DayFlowCalendar = defineComponent({
       const r = new CalendarRenderer(appInstance, Object.keys(slots));
       renderer.value = r;
       r.setProps(extraProps.value);
-      r.mount(container.value);
 
+      // Subscribe BEFORE mount. mount() renders synchronously and registers
+      // every placeholder in one burst; subscribing afterwards means those
+      // registrations arrive via the initial sync on a later tick, leaving the
+      // slots empty for a frame. Same ordering the React adapter relies on.
       storeUnsubscribe = r.getCustomRenderingStore().subscribe(renderings => {
         customRenderings.value = [...renderings.values()];
       });
+
+      r.mount(container.value);
     }
 
     watch(

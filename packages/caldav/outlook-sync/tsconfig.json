@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "declaration": true,
     "declarationMap": true,
+    "types": ["vitest/globals"],
     "paths": {
       "@dayflow/sync-core": ["../sync-core/src/index.ts"],
       "@sync-core/*": ["../sync-core/src/*"],

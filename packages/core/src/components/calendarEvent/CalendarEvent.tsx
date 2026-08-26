@@ -128,10 +128,14 @@ const CalendarEvent = ({
   const panelEnabled = useEventDetailPanel !== false;
   const showDetailPanelForClickOutside = showDetailPanel && panelEnabled;
 
-  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as ReadOnlyConfig;
-  const isEditable = app?.canMutateFromUI(event.id) ?? false;
+  const permissionEventId = event._recurrenceMasterId ?? event.id;
+  const readOnlyConfig = app?.getReadOnlyConfig(
+    permissionEventId
+  ) as ReadOnlyConfig;
+  const isEditable = app?.canMutateFromUI(permissionEventId) ?? false;
   const canOpenDetail = readOnlyConfig?.viewable !== false;
-  const isDraggable = readOnlyConfig?.draggable !== false;
+  const isDraggable =
+    !event._recurrenceMasterId && readOnlyConfig?.draggable !== false;
 
   // Interaction Hook
   const {

@@ -15,6 +15,7 @@
     "jsxImportSource": "preact",
     "declaration": true,
     "declarationMap": true,
+    "types": ["vitest/globals"],
     "paths": {
       "@drag/*": ["./src/*"]
     }

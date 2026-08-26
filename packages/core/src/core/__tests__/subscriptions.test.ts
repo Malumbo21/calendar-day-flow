@@ -46,7 +46,7 @@ function createWriteBackTracker(
 
 describe('subscribeVisibleRangeChange', () => {
   it('does not replay the initial visible range to late subscribers', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     const app = new CalendarApp({
       views: [createWeekView()],
       plugins: [],
@@ -66,7 +66,7 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('fires when navigating forward', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeVisibleRangeChange(listener);
 
     app.goToNext();
@@ -84,7 +84,7 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('fires when navigating backward', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeVisibleRangeChange(listener);
 
     app.goToPrevious();
@@ -95,7 +95,7 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('fires when changing view and includes the new view type', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeVisibleRangeChange(listener);
 
     app.changeView(ViewType.DAY);
@@ -108,7 +108,7 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('fires when setCurrentDate is called', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeVisibleRangeChange(listener);
 
     app.setCurrentDate(new Date(2025, 0, 1));
@@ -119,8 +119,8 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('supports multiple independent listeners', () => {
     const app = makeApp();
-    const listenerA = jest.fn();
-    const listenerB = jest.fn();
+    const listenerA = vi.fn();
+    const listenerB = vi.fn();
     app.subscribeVisibleRangeChange(listenerA);
     app.subscribeVisibleRangeChange(listenerB);
 
@@ -132,7 +132,7 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('unsubscribes when the returned function is called', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     const unsubscribe = app.subscribeVisibleRangeChange(listener);
 
     app.goToNext();
@@ -145,7 +145,7 @@ describe('subscribeVisibleRangeChange', () => {
 
   it('includes start/end dates in the correct order and spanning the full view window', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeVisibleRangeChange(listener);
 
     app.setCurrentDate(new Date(2025, 0, 15)); // mid-January 2025
@@ -163,7 +163,7 @@ describe('subscribeVisibleRangeChange', () => {
 describe('subscribeEventChanges', () => {
   it('fires when an event is added via addEvent', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.addEvent(makeEvent('e1'));
@@ -181,7 +181,7 @@ describe('subscribeEventChanges', () => {
     const app = makeApp();
     app.addEvent(makeEvent('e1'));
 
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     await app.updateEvent('e1', { title: 'Updated' });
@@ -197,7 +197,7 @@ describe('subscribeEventChanges', () => {
     const app = makeApp();
     app.addEvent(makeEvent('e1'));
 
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     await app.deleteEvent('e1');
@@ -212,7 +212,7 @@ describe('subscribeEventChanges', () => {
 
   it('fires for batch add/update/delete via applyEventsChanges', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.applyEventsChanges({
@@ -227,7 +227,7 @@ describe('subscribeEventChanges', () => {
 
   it('stamps source=local on user-initiated changes', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.addEvent(makeEvent('e1'));
@@ -240,7 +240,7 @@ describe('subscribeEventChanges', () => {
     const app = makeApp();
     app.addEvent(makeEvent('e1'));
 
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.applyEventsChanges(
@@ -257,7 +257,7 @@ describe('subscribeEventChanges', () => {
     const app = makeApp();
     app.addEvent(makeEvent('e1'));
 
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.applyEventsChanges(
@@ -272,8 +272,8 @@ describe('subscribeEventChanges', () => {
 
   it('supports multiple independent listeners', () => {
     const app = makeApp();
-    const listenerA = jest.fn();
-    const listenerB = jest.fn();
+    const listenerA = vi.fn();
+    const listenerB = vi.fn();
     app.subscribeEventChanges(listenerA);
     app.subscribeEventChanges(listenerB);
 
@@ -285,7 +285,7 @@ describe('subscribeEventChanges', () => {
 
   it('unsubscribes when the returned function is called', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     const unsubscribe = app.subscribeEventChanges(listener);
 
     app.addEvent(makeEvent('e1'));
@@ -302,7 +302,7 @@ describe('subscribeEventChanges', () => {
 describe('remote-source changes', () => {
   it('notifies subscribeEventChanges with source=remote', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.applyEventsChanges({ add: [makeEvent('remote-1')] }, false, 'remote');
@@ -313,7 +313,7 @@ describe('remote-source changes', () => {
   });
 
   it('does NOT call onEventBatchChange for remote-sourced changes', () => {
-    const onEventBatchChange = jest.fn();
+    const onEventBatchChange = vi.fn();
     const app = new CalendarApp({
       views: [],
       plugins: [],
@@ -327,7 +327,7 @@ describe('remote-source changes', () => {
   });
 
   it('does NOT call onEventUpdate for remote-sourced single updates', async () => {
-    const onEventUpdate = jest.fn();
+    const onEventUpdate = vi.fn();
     const app = new CalendarApp({
       views: [],
       plugins: [],
@@ -346,7 +346,7 @@ describe('remote-source changes', () => {
   });
 
   it('does NOT call onEventBatchChange for drag/resize changes', () => {
-    const onEventBatchChange = jest.fn();
+    const onEventBatchChange = vi.fn();
     const app = new CalendarApp({
       views: [],
       plugins: [],
@@ -364,7 +364,7 @@ describe('remote-source changes', () => {
   });
 
   it('DOES call onEventBatchChange for local (default) changes', () => {
-    const onEventBatchChange = jest.fn();
+    const onEventBatchChange = vi.fn();
     const app = new CalendarApp({
       views: [],
       plugins: [],
@@ -392,7 +392,7 @@ describe('remote-source changes', () => {
 
   it('does not leak remote source after a no-op remote batch', () => {
     const app = makeApp();
-    const listener = jest.fn();
+    const listener = vi.fn();
     app.subscribeEventChanges(listener);
 
     app.applyEventsChanges({ delete: ['missing-event'] }, false, 'remote');

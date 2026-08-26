@@ -426,7 +426,9 @@ export const isEventDeepEqual = (
     (event1.description || '') === (event2.description || '') &&
     !!event1.allDay === !!event2.allDay &&
     event1.start.toString() === event2.start.toString() &&
-    event1.end.toString() === event2.end.toString()
+    event1.end.toString() === event2.end.toString() &&
+    event1.meta?.recurring === event2.meta?.recurring &&
+    event1.meta?.recurrenceRule === event2.meta?.recurrenceRule
   );
 };
 

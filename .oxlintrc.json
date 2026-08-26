@@ -10,7 +10,6 @@
     "jsdoc",
     "node",
     "promise",
-    "jest",
     "vitest",
     "react",
     "react-perf",
@@ -146,6 +145,22 @@
     },
     {
       "files": ["examples/**/*"],
+      "rules": {
+        "import/no-relative-parent-imports": "off"
+      }
+    },
+    {
+      // Tests live in a __tests__ folder beside the module they cover, so
+      // reaching one directory up is the normal case, not a smell.
+      "files": ["packages/*/src/**/__tests__/**"],
+      "rules": {
+        "import/no-relative-parent-imports": "off"
+      }
+    },
+    {
+      // The adapter test kit deliberately wraps core's real CustomRenderingStore
+      // rather than a copy of it; that is the point of the package.
+      "files": ["test-kit/**"],
       "rules": {
         "import/no-relative-parent-imports": "off"
       }

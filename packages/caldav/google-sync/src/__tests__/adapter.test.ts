@@ -7,6 +7,7 @@ import type {
   GoogleCalendarList,
   GoogleEventList,
 } from '@google-sync/types/api';
+import type { Mock, MockedFunction } from 'vitest';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -30,8 +31,8 @@ function makeGoogleEvent(
 function mockFetch(
   body: unknown,
   status = 200
-): jest.MockedFunction<(url: string, init?: RequestInit) => Promise<Response>> {
-  return jest.fn((_url: string, _init?: RequestInit) =>
+): MockedFunction<(url: string, init?: RequestInit) => Promise<Response>> {
+  return vi.fn((_url: string, _init?: RequestInit) =>
     Promise.resolve(
       new Response(JSON.stringify(body), {
         status,
@@ -59,7 +60,7 @@ describe('createGoogleSyncAdapter – listCalendars', () => {
   });
 
   it('paginates through all pages', async () => {
-    const fetch = jest
+    const fetch = vi
       .fn()
       .mockResolvedValueOnce(
         new Response(
@@ -81,7 +82,7 @@ describe('createGoogleSyncAdapter – listCalendars', () => {
             { status: 200 }
           )
         );
-      }) as jest.MockedFunction<
+      }) as MockedFunction<
       (url: string, init?: RequestInit) => Promise<Response>
     >;
     const adapter = createGoogleSyncAdapter({ fetch });
@@ -117,7 +118,7 @@ describe('createGoogleSyncAdapter – listEvents', () => {
       timeMax: '2025-06-30T00:00:00Z',
       singleEvents: true,
     });
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain('timeMin=2025-06-01');
     expect(url).toContain('timeMax=2025-06-30');
     expect(url).toContain('singleEvents=true');
@@ -130,7 +131,7 @@ describe('createGoogleSyncAdapter – listEvents', () => {
       syncToken: 'my-tok',
       showDeleted: true,
     });
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain('syncToken=my-tok');
     expect(url).toContain('showDeleted=true');
   });
@@ -139,7 +140,7 @@ describe('createGoogleSyncAdapter – listEvents', () => {
     const fetch = mockFetch({ items: [] } as GoogleEventList);
     const adapter = createGoogleSyncAdapter({ fetch });
     await adapter.listEvents('alice@example.com', {});
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain('alice%40example.com');
   });
 });
@@ -178,10 +179,7 @@ describe('createGoogleSyncAdapter – updateEvent', () => {
       },
       '"abc"'
     );
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
-      string,
-      RequestInit,
-    ];
+    const [, init] = (fetch as Mock).mock.calls[0] as [string, RequestInit];
     expect(init.method).toBe('PUT');
     expect((init.headers as Record<string, string>)['If-Match']).toBe('"abc"');
   });
@@ -210,15 +208,12 @@ describe('createGoogleSyncAdapter – updateEvent', () => {
 
 describe('createGoogleSyncAdapter – deleteEvent', () => {
   it('DELETEs the correct URL', async () => {
-    const fetch = jest.fn((_url: string, _init?: RequestInit) =>
+    const fetch = vi.fn((_url: string, _init?: RequestInit) =>
       Promise.resolve(new Response(null, { status: 204 }))
     );
     const adapter = createGoogleSyncAdapter({ fetch });
     await adapter.deleteEvent('cal-1', 'ev-1');
-    const [url, init] = (fetch as jest.Mock).mock.calls[0] as [
-      string,
-      RequestInit,
-    ];
+    const [url, init] = (fetch as Mock).mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/calendars/cal-1/events/ev-1');
     expect(init.method).toBe('DELETE');
   });
@@ -230,15 +225,12 @@ describe('createGoogleSyncAdapter – deleteEvent', () => {
   });
 
   it('sends If-Match header when etag is provided', async () => {
-    const fetch = jest.fn((_url: string, _init?: RequestInit) =>
+    const fetch = vi.fn((_url: string, _init?: RequestInit) =>
       Promise.resolve(new Response(null, { status: 204 }))
     );
     const adapter = createGoogleSyncAdapter({ fetch });
     await adapter.deleteEvent('cal-1', 'ev-1', '"my-etag"');
-    const [, init] = (fetch as jest.Mock).mock.calls[0] as [
-      string,
-      RequestInit,
-    ];
+    const [, init] = (fetch as Mock).mock.calls[0] as [string, RequestInit];
     expect((init.headers as Record<string, string>)['If-Match']).toBe(
       '"my-etag"'
     );
@@ -255,7 +247,7 @@ describe('createGoogleSyncAdapter – custom baseUrl', () => {
       fetch,
     });
     await adapter.listCalendars();
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain('proxy.example.com/gcal');
   });
 
@@ -266,7 +258,7 @@ describe('createGoogleSyncAdapter – custom baseUrl', () => {
       fetch,
     });
     await adapter.listCalendars();
-    const [url] = (fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (fetch as Mock).mock.calls[0] as [string];
     expect(url).not.toContain('//users');
   });
 });

@@ -63,28 +63,28 @@ function makeAdapter(
   overrides: Partial<GoogleSyncAdapter> = {}
 ): GoogleSyncAdapter {
   return {
-    listCalendars: jest.fn(
+    listCalendars: vi.fn(
       (): Promise<GoogleCalendarList> =>
         Promise.resolve({ items: [makeEntry()] })
     ),
-    listEvents: jest.fn(
+    listEvents: vi.fn(
       (): Promise<GoogleEventList> =>
         Promise.resolve({
           items: [makeApiEvent()],
           nextSyncToken: 'tok-1',
         })
     ),
-    getEvent: jest.fn(() =>
+    getEvent: vi.fn(() =>
       Promise.resolve(makeApiEvent({ etag: '"fresh-etag"' }))
     ),
-    createEvent: jest.fn(() =>
+    createEvent: vi.fn(() =>
       Promise.resolve(makeApiEvent({ id: 'ev-new', etag: '"new-etag"' }))
     ),
-    updateEvent: jest.fn(() =>
+    updateEvent: vi.fn(() =>
       Promise.resolve(makeApiEvent({ etag: '"updated-etag"' }))
     ),
-    deleteEvent: jest.fn(() => Promise.resolve()),
-    moveEvent: jest.fn(() => Promise.resolve(makeApiEvent())),
+    deleteEvent: vi.fn(() => Promise.resolve()),
+    moveEvent: vi.fn(() => Promise.resolve(makeApiEvent())),
     ...overrides,
   };
 }
@@ -103,7 +103,7 @@ describe('createGoogleSync – listCalendars', () => {
 
   it('excludes hidden calendars', async () => {
     const adapter = makeAdapter({
-      listCalendars: jest.fn(() =>
+      listCalendars: vi.fn(() =>
         Promise.resolve({
           items: [
             makeEntry(),
@@ -120,7 +120,7 @@ describe('createGoogleSync – listCalendars', () => {
 
   it('marks reader calendars as readOnly', async () => {
     const adapter = makeAdapter({
-      listCalendars: jest.fn(() =>
+      listCalendars: vi.fn(() =>
         Promise.resolve({
           items: [makeEntry({ accessRole: 'reader' })],
         })
@@ -147,7 +147,7 @@ describe('createGoogleSync – syncEvents', () => {
   });
 
   it('passes timeMin and timeMax for range queries', async () => {
-    const listEvents = jest.fn(() =>
+    const listEvents = vi.fn(() =>
       Promise.resolve({ items: [], nextSyncToken: 'tok' })
     );
     const sync = createGoogleSync(makeAdapter({ listEvents }));
@@ -166,7 +166,7 @@ describe('createGoogleSync – syncEvents', () => {
   });
 
   it('passes syncToken for incremental sync', async () => {
-    const listEvents = jest.fn(() =>
+    const listEvents = vi.fn(() =>
       Promise.resolve({ items: [], nextSyncToken: 'tok-2' })
     );
     const sync = createGoogleSync(makeAdapter({ listEvents }));
@@ -191,7 +191,7 @@ describe('createGoogleSync – syncEvents', () => {
 
   it('treats cancelled events as deletions', async () => {
     const adapter = makeAdapter({
-      listEvents: jest.fn(() =>
+      listEvents: vi.fn(() =>
         Promise.resolve({
           items: [makeApiEvent({ id: 'ev-del', status: 'cancelled' })],
         })
@@ -204,7 +204,7 @@ describe('createGoogleSync – syncEvents', () => {
   });
 
   it('paginates when nextPageToken is returned', async () => {
-    const listEvents = jest
+    const listEvents = vi
       .fn()
       .mockResolvedValueOnce({
         items: [makeApiEvent({ id: 'ev-a' })],
@@ -225,10 +225,10 @@ describe('createGoogleSync – syncEvents', () => {
 
   it('clears an expired sync token and retries with a full query', async () => {
     const storage = {
-      getSyncToken: jest.fn(() => Promise.resolve('expired-token')),
-      setSyncToken: jest.fn(() => Promise.resolve()),
+      getSyncToken: vi.fn(() => Promise.resolve('expired-token')),
+      setSyncToken: vi.fn(() => Promise.resolve()),
     };
-    const listEvents = jest
+    const listEvents = vi
       .fn()
       .mockRejectedValueOnce(new GoogleSyncError(410, 'expired'))
       .mockResolvedValueOnce({
@@ -254,7 +254,7 @@ describe('createGoogleSync – syncEvents', () => {
 
 describe('createGoogleSync – createEvent', () => {
   it('calls adapter.createEvent and returns mapped event', async () => {
-    const createEvent = jest.fn(() =>
+    const createEvent = vi.fn(() =>
       Promise.resolve(makeApiEvent({ id: 'ev-new', etag: '"new-etag"' }))
     );
     const sync = createGoogleSync(makeAdapter({ createEvent }));
@@ -272,7 +272,7 @@ describe('createGoogleSync – createEvent', () => {
 
 describe('createGoogleSync – updateEvent', () => {
   it('calls adapter.updateEvent with correct etag', async () => {
-    const updateEvent = jest.fn(() =>
+    const updateEvent = vi.fn(() =>
       Promise.resolve(makeApiEvent({ etag: '"updated-etag"' }))
     );
     const sync = createGoogleSync(makeAdapter({ updateEvent }));
@@ -298,7 +298,7 @@ describe('createGoogleSync – updateEvent', () => {
 
 describe('createGoogleSync – deleteEvent', () => {
   it('calls adapter.deleteEvent with correct ids', async () => {
-    const deleteEvent = jest.fn(() => Promise.resolve());
+    const deleteEvent = vi.fn(() => Promise.resolve());
     const sync = createGoogleSync(makeAdapter({ deleteEvent }));
     await sync.deleteEvent(makeDayFlowEvent());
     expect(deleteEvent).toHaveBeenCalledWith('cal-1', 'ev-1', '"etag1"');

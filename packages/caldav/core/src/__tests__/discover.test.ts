@@ -42,7 +42,7 @@ const HOME_SET_RESPONSE = `<?xml version="1.0" encoding="utf-8"?>
 describe('discoverCalendarHome', () => {
   it('performs two-step PROPFIND and returns the calendar home URL', async () => {
     const calls: string[] = [];
-    const mockFetch = jest
+    const mockFetch = vi
       .fn()
       .mockImplementationOnce((url: string) => {
         calls.push(url);
@@ -72,7 +72,7 @@ describe('discoverCalendarHome', () => {
   });
 
   it('first PROPFIND sends Depth: 0 and correct body', async () => {
-    const mockFetch = jest
+    const mockFetch = vi
       .fn()
       .mockImplementationOnce((_url: string, init?: RequestInit) => {
         expect((init?.headers as Record<string, string>)?.Depth).toBe('0');
@@ -90,7 +90,7 @@ describe('discoverCalendarHome', () => {
   });
 
   it('resolves root-relative hrefs using the server origin', async () => {
-    const mockFetch = jest
+    const mockFetch = vi
       .fn()
       .mockResolvedValueOnce(new Response(PRINCIPAL_RESPONSE, { status: 207 }))
       .mockResolvedValueOnce(new Response(HOME_SET_RESPONSE, { status: 207 }));
@@ -113,7 +113,7 @@ describe('discoverCalendarHome', () => {
       '../calendars/'
     );
     const calls: string[] = [];
-    const mockFetch = jest
+    const mockFetch = vi
       .fn()
       .mockImplementationOnce((url: string) => {
         calls.push(url);
@@ -137,7 +137,7 @@ describe('discoverCalendarHome', () => {
 
   it('treats serverUrl without trailing slash as a collection URL', async () => {
     const calls: string[] = [];
-    const mockFetch = jest
+    const mockFetch = vi
       .fn()
       .mockImplementationOnce((url: string) => {
         calls.push(url);
@@ -161,7 +161,7 @@ describe('discoverCalendarHome', () => {
   });
 
   it('throws CalDAVError when principal PROPFIND returns non-207', async () => {
-    const mockFetch = jest.fn(() =>
+    const mockFetch = vi.fn(() =>
       Promise.resolve(new Response('', { status: 401 }))
     );
     await expect(
@@ -170,7 +170,7 @@ describe('discoverCalendarHome', () => {
   });
 
   it('throws CalDAVError when current-user-principal is missing', async () => {
-    const mockFetch = jest.fn(() =>
+    const mockFetch = vi.fn(() =>
       Promise.resolve(
         new Response(
           `<D:multistatus xmlns:D="DAV:"><D:response><D:href>/</D:href></D:response></D:multistatus>`,
@@ -191,7 +191,7 @@ describe('discoverCalendarHome', () => {
   </D:propstat></D:response>
 </D:multistatus>`;
 
-    const mockFetch = jest
+    const mockFetch = vi
       .fn()
       .mockResolvedValueOnce(new Response(PRINCIPAL_RESPONSE, { status: 207 }))
       .mockResolvedValueOnce(new Response(emptyHomeset, { status: 207 }));
@@ -202,7 +202,7 @@ describe('discoverCalendarHome', () => {
   });
 
   it('throws CalDAVError (not a generic Error) so callers can check error.code', async () => {
-    const mockFetch = jest.fn(() =>
+    const mockFetch = vi.fn(() =>
       Promise.resolve(new Response('', { status: 500 }))
     );
     const err = await discoverCalendarHome(

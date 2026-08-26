@@ -25,8 +25,8 @@ describe('CalendarEvent timezone rendering', () => {
         calendarRef={calendarRef}
         hourHeight={10}
         firstHour={0}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
         appTimeZone='Pacific/Kiritimati'
       />
     );
@@ -45,8 +45,8 @@ describe('CalendarEvent timezone rendering', () => {
         calendarRef={calendarRef}
         hourHeight={10}
         firstHour={0}
-        onEventUpdate={jest.fn()}
-        onEventDelete={jest.fn()}
+        onEventUpdate={vi.fn()}
+        onEventDelete={vi.fn()}
         appTimeZone='America/New_York'
       />
     );

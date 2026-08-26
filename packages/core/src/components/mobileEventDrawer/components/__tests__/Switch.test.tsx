@@ -4,7 +4,7 @@ import { Switch } from '@/components/mobileEventDrawer/components/Switch';
 
 describe('mobile drawer Switch', () => {
   it('toggles checked state when enabled', () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     render(<Switch checked={false} onChange={onChange} />);
 
@@ -14,7 +14,7 @@ describe('mobile drawer Switch', () => {
   });
 
   it('does not toggle when disabled', () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     render(<Switch checked={false} onChange={onChange} disabled />);
 

@@ -134,11 +134,16 @@
     );
     renderer = new CalendarRenderer(app, activeOverrides);
     renderer.setProps(renderProps);
-    renderer.mount(container);
 
+    // Subscribe BEFORE mount. mount() renders synchronously and registers every
+    // placeholder in one burst; subscribing afterwards means those registrations
+    // only arrive via the initial sync on a later tick, leaving the slots empty
+    // for a frame. Same ordering the React adapter relies on.
     unsubscribe = renderer.getCustomRenderingStore().subscribe((renderings) => {
       customRenderings = [...renderings.values()];
     });
+
+    renderer.mount(container);
 
     mounted = true;
   });

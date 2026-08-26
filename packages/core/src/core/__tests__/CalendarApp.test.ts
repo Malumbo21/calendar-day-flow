@@ -58,7 +58,7 @@ describe('CalendarApp', () => {
     });
 
     it('updates an event once and preserves the assigned calendarId', async () => {
-      const onEventUpdate = jest.fn();
+      const onEventUpdate = vi.fn();
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -437,7 +437,7 @@ describe('CalendarApp', () => {
 
   describe('Config Updates', () => {
     it('defaults eventDetailTrigger to dbClick and updates it dynamically', () => {
-      const onRender = jest.fn();
+      const onRender = vi.fn();
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -544,8 +544,8 @@ describe('CalendarApp', () => {
     });
 
     it('does not trigger a render when allDaySortComparator is unchanged', () => {
-      const onRender = jest.fn();
-      const comparator = jest.fn(() => 0);
+      const onRender = vi.fn();
+      const comparator = vi.fn(() => 0);
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -561,9 +561,9 @@ describe('CalendarApp', () => {
     });
 
     it('triggers a render when allDaySortComparator changes', () => {
-      const onRender = jest.fn();
-      const comparatorA = jest.fn(() => 0);
-      const comparatorB = jest.fn(() => 0);
+      const onRender = vi.fn();
+      const comparatorA = vi.fn(() => 0);
+      const comparatorB = vi.fn(() => 0);
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -580,9 +580,9 @@ describe('CalendarApp', () => {
     });
 
     it('updates view config function references without forcing a render', () => {
-      const onRender = jest.fn();
-      const resolverA = jest.fn(() => 'a');
-      const resolverB = jest.fn(() => 'b');
+      const onRender = vi.fn();
+      const resolverA = vi.fn(() => 'a');
+      const resolverB = vi.fn(() => 'b');
       const app = new CalendarApp({
         views: [
           {
@@ -618,7 +618,7 @@ describe('CalendarApp', () => {
     });
 
     it('replaces callbacks instead of retaining removed handlers', () => {
-      const onEventClick = jest.fn();
+      const onEventClick = vi.fn();
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -640,7 +640,7 @@ describe('CalendarApp', () => {
     });
 
     it('passes the triggering MouseEvent to onEventClick when provided', () => {
-      const onEventClick = jest.fn();
+      const onEventClick = vi.fn();
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -663,7 +663,7 @@ describe('CalendarApp', () => {
     });
 
     it('passes the triggering MouseEvent to onMoreEventsClick when provided', () => {
-      const onMoreEventsClick = jest.fn();
+      const onMoreEventsClick = vi.fn();
       const app = new CalendarApp({
         views: [],
         plugins: [],
@@ -681,7 +681,7 @@ describe('CalendarApp', () => {
     });
 
     it('passes the triggering event to onDismissUI when provided', () => {
-      const onDismissUI = jest.fn();
+      const onDismissUI = vi.fn();
       const app = new CalendarApp({
         views: [],
         plugins: [],
