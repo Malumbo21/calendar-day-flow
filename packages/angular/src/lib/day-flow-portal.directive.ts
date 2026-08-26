@@ -5,6 +5,7 @@ import {
   OnDestroy,
   Directive,
   Input,
+  inject,
 } from '@angular/core';
 
 @Directive({
@@ -13,7 +14,7 @@ import {
 export class DayFlowPortalDirective implements OnChanges, OnDestroy {
   @Input('dayflowPortal') targetEl!: HTMLElement;
 
-  constructor(private el: ElementRef) {}
+  private el = inject(ElementRef);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['targetEl'] && this.targetEl) {

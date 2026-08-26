@@ -7,6 +7,7 @@ import type {
 } from '@dayflow/core';
 import { attachGoogleSyncToDayFlow } from '@google-sync/sync/attachGoogleSyncToDayFlow';
 import type { GoogleSync } from '@google-sync/sync/createGoogleSync';
+import type { GoogleSyncStatus } from '@google-sync/types/adapter';
 import { Temporal } from 'temporal-polyfill';
 
 // ─── Minimal mock ICalendarApp ────────────────────────────────────────────────
@@ -18,14 +19,14 @@ function makeMockApp(overrides: Partial<ICalendarApp> = {}): ICalendarApp {
   const changeListeners: Array<(c: EventChange[]) => void> = [];
 
   return {
-    getCalendars: jest.fn(() => [...calendars]),
-    createCalendar: jest.fn((cal: CalendarType) => {
+    getCalendars: vi.fn(() => [...calendars]),
+    createCalendar: vi.fn((cal: CalendarType) => {
       calendars.push(cal);
       return Promise.resolve();
     }),
-    updateCalendar: jest.fn(),
-    getAllEvents: jest.fn(() => [...events]),
-    applyEventsChanges: jest.fn(
+    updateCalendar: vi.fn(),
+    getAllEvents: vi.fn(() => [...events]),
+    applyEventsChanges: vi.fn(
       (batch: {
         add?: Event[];
         update?: Array<{ id: string; updates: Partial<Event> }>;
@@ -48,7 +49,7 @@ function makeMockApp(overrides: Partial<ICalendarApp> = {}): ICalendarApp {
         }
       }
     ),
-    subscribeVisibleRangeChange: jest.fn(
+    subscribeVisibleRangeChange: vi.fn(
       (fn: (p: VisibleRangePayload) => void) => {
         rangeListeners.push(fn);
         return () => {
@@ -57,7 +58,7 @@ function makeMockApp(overrides: Partial<ICalendarApp> = {}): ICalendarApp {
         };
       }
     ),
-    subscribeEventChanges: jest.fn((fn: (c: EventChange[]) => void) => {
+    subscribeEventChanges: vi.fn((fn: (c: EventChange[]) => void) => {
       changeListeners.push(fn);
       return () => {
         const i = changeListeners.indexOf(fn);
@@ -78,7 +79,7 @@ function makeMockApp(overrides: Partial<ICalendarApp> = {}): ICalendarApp {
 
 function makeSync(overrides: Partial<GoogleSync> = {}): GoogleSync {
   return {
-    listCalendars: jest.fn(() =>
+    listCalendars: vi.fn(() =>
       Promise.resolve([
         {
           id: 'cal-1',
@@ -95,10 +96,10 @@ function makeSync(overrides: Partial<GoogleSync> = {}): GoogleSync {
         },
       ])
     ),
-    syncEvents: jest.fn(() =>
+    syncEvents: vi.fn(() =>
       Promise.resolve({ events: [], deleted: [], syncToken: 'tok-1' })
     ),
-    createEvent: jest.fn((_calId: string, event: Event) =>
+    createEvent: vi.fn((_calId: string, event: Event) =>
       Promise.resolve({
         ...event,
         meta: {
@@ -111,7 +112,7 @@ function makeSync(overrides: Partial<GoogleSync> = {}): GoogleSync {
         },
       })
     ),
-    updateEvent: jest.fn((event: Event) =>
+    updateEvent: vi.fn((event: Event) =>
       Promise.resolve({
         ...event,
         meta: {
@@ -124,7 +125,7 @@ function makeSync(overrides: Partial<GoogleSync> = {}): GoogleSync {
         },
       })
     ),
-    deleteEvent: jest.fn(() => Promise.resolve()),
+    deleteEvent: vi.fn(() => Promise.resolve()),
     ...overrides,
   };
 }
@@ -159,7 +160,7 @@ describe('attachGoogleSyncToDayFlow – start', () => {
   it('loads calendars and syncs events on start', async () => {
     const app = makeMockApp();
     const syncEngine = makeSync({
-      syncEvents: jest.fn(() =>
+      syncEvents: vi.fn(() =>
         Promise.resolve({
           events: [makeEvent()],
           deleted: [],
@@ -191,7 +192,7 @@ describe('attachGoogleSyncToDayFlow – start', () => {
 
   it('sets state to error if start fails', async () => {
     const sync = makeSync({
-      listCalendars: jest.fn(() => Promise.reject(new Error('Network error'))),
+      listCalendars: vi.fn(() => Promise.reject(new Error('Network error'))),
     });
     const controller = attachGoogleSyncToDayFlow(makeMockApp(), sync);
     await controller.start();
@@ -286,7 +287,7 @@ describe('attachGoogleSyncToDayFlow – visible range change', () => {
     });
     const app = makeMockApp();
     const sync = makeSync({
-      syncEvents: jest
+      syncEvents: vi
         .fn()
         .mockResolvedValueOnce({
           events: [localEvent],
@@ -333,7 +334,7 @@ describe('attachGoogleSyncToDayFlow – visible range change', () => {
     });
     const app = makeMockApp();
     const sync = makeSync({
-      syncEvents: jest
+      syncEvents: vi
         .fn()
         .mockResolvedValueOnce({
           events: [localEvent],
@@ -515,7 +516,7 @@ describe('attachGoogleSyncToDayFlow – write-back', () => {
 
   it('does NOT write back to readOnly calendars', async () => {
     const app = makeMockApp({
-      getCalendars: jest.fn(() => [
+      getCalendars: vi.fn(() => [
         {
           id: 'cal-1',
           name: 'Work',
@@ -545,9 +546,9 @@ describe('attachGoogleSyncToDayFlow – write-back', () => {
   });
 
   it('calls onWriteError when write-back fails', async () => {
-    const onWriteError = jest.fn();
+    const onWriteError = vi.fn();
     const sync = makeSync({
-      updateEvent: jest.fn(() => Promise.reject(new Error('Conflict'))),
+      updateEvent: vi.fn(() => Promise.reject(new Error('Conflict'))),
     });
     const app = makeMockApp();
     const controller = attachGoogleSyncToDayFlow(app, sync, { onWriteError });
@@ -583,15 +584,13 @@ describe('attachGoogleSyncToDayFlow – getStatus', () => {
   });
 
   it('onStatusChange is called on transitions', async () => {
-    const onStatusChange = jest.fn();
+    const onStatusChange = vi.fn<(status: GoogleSyncStatus) => void>();
     const controller = attachGoogleSyncToDayFlow(makeMockApp(), makeSync(), {
       onStatusChange,
     });
     await controller.start();
     // syncing → idle
-    const calls = onStatusChange.mock.calls.map(
-      (c: [{ state: string }]) => c[0].state
-    );
+    const calls = onStatusChange.mock.calls.map(c => c[0].state);
     expect(calls).toContain('syncing');
     expect(calls).toContain('idle');
   });

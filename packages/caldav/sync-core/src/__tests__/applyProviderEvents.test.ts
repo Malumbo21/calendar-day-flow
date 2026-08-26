@@ -14,8 +14,8 @@ function makeEvent(id: string, providerId: string): Event {
 
 function makeApp(events: Event[] = []): ICalendarApp {
   return {
-    getAllEvents: jest.fn(() => [...events]),
-    applyEventsChanges: jest.fn(
+    getAllEvents: vi.fn(() => [...events]),
+    applyEventsChanges: vi.fn(
       (batch: {
         add?: Event[];
         update?: Array<{ id: string; updates: Partial<Event> }>;
@@ -36,12 +36,12 @@ function makeApp(events: Event[] = []): ICalendarApp {
         }
       }
     ),
-    getCalendars: jest.fn(() => [] as CalendarType[]),
-    createCalendar: jest.fn(),
-    updateCalendar: jest.fn(),
-    deleteCalendar: jest.fn(),
-    subscribeEventChanges: jest.fn(),
-    subscribeVisibleRangeChange: jest.fn(),
+    getCalendars: vi.fn(() => [] as CalendarType[]),
+    createCalendar: vi.fn(),
+    updateCalendar: vi.fn(),
+    deleteCalendar: vi.fn(),
+    subscribeEventChanges: vi.fn(),
+    subscribeVisibleRangeChange: vi.fn(),
   } as unknown as ICalendarApp;
 }
 

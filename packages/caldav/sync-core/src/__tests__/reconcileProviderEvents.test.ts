@@ -51,7 +51,7 @@ describe('reconcileProviderEvents', () => {
       isRecordDeleted: record => record.deletedAt !== null,
       mapRemoteEvent,
       save: records => records,
-      softDelete: jest.fn(),
+      softDelete: vi.fn(),
     });
 
     expect(result.imported).toBe(1);
@@ -84,7 +84,7 @@ describe('reconcileProviderEvents', () => {
         deletedAt: '2026-01-01T00:00:00Z',
       },
     ];
-    const softDelete = jest.fn(() => ({
+    const softDelete = vi.fn(() => ({
       deletedAt: '2026-02-01T00:00:00Z',
     }));
 
@@ -104,7 +104,7 @@ describe('reconcileProviderEvents', () => {
       getRecordExternalEventId: record => record.externalEventId,
       isRecordDeleted: record => record.deletedAt !== null,
       mapRemoteEvent,
-      save: jest.fn(),
+      save: vi.fn(),
       softDelete,
     });
 

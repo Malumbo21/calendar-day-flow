@@ -17,7 +17,7 @@ describe('weekDay layout', () => {
   });
 
   it('uses rounded hours when building drag layout', () => {
-    const calculateDragLayout = jest.fn(() => ({ width: 42 }) as never);
+    const calculateDragLayout = vi.fn(() => ({ width: 42 }) as never);
     const result = buildWeekDayDragLayout({
       calculateDragLayout,
       dayIndex: 3,

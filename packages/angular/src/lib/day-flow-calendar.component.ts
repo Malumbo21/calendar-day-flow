@@ -8,6 +8,7 @@ import {
   ChangeDetectorRef,
   Component,
   Input,
+  inject,
   ViewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -109,7 +110,7 @@ export class DayFlowCalendarComponent
   private getNormalizedInternalConfig?: () => CalendarAppConfig;
   private internalConfigSyncSnapshot?: CalendarAppConfigSyncSnapshot;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  private cdr = inject(ChangeDetectorRef);
 
   private get app(): ICalendarApp {
     if (this.internalApp) {
@@ -201,15 +202,20 @@ export class DayFlowCalendarComponent
     const activeOverrides = this.getActiveOverrides();
     this.renderer = new CalendarRenderer(this.app, activeOverrides);
     this.renderer.setProps(this.getRendererProps());
-    this.renderer.mount(this.container.nativeElement);
     this.app.setOverrides(activeOverrides);
 
+    // Subscribe BEFORE mount. mount() renders synchronously and registers every
+    // placeholder in one burst; subscribing afterwards means those registrations
+    // only arrive via the initial sync on a later change-detection pass, leaving
+    // the slots empty for a frame. Same ordering the React adapter relies on.
     this.unsubscribe = this.renderer
       .getCustomRenderingStore()
       .subscribe(renderings => {
         this.customRenderings = [...renderings.values()];
         this.cdr.markForCheck();
       });
+
+    this.renderer.mount(this.container.nativeElement);
   }
 
   private getActiveOverrides(): string[] {

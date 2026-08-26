@@ -20,6 +20,9 @@
     "build": "rollup -c",
     "clean": "rimraf dist node_modules",
     "prebuild": "rimraf dist",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {
@@ -28,11 +31,16 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-terser": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "jsdom": "catalog:",
     "rimraf": "catalog:",
     "rollup": "catalog:",
     "rollup-plugin-peer-deps-external": "catalog:",
     "rollup-plugin-vue": "catalog:",
     "typescript": "catalog:",
+    "vitest": "catalog:",
     "vue": "^3.5.13",
     "vue-tsc": "^2.2.0"
   },

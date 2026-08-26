@@ -4,9 +4,10 @@
   "private": true,
   "description": "Multi-framework calendar component library",
   "scripts": {
-    "build": "turbo run build",
-    "clean": "turbo run clean && rimraf node_modules pnpm-lock.yaml",
-    "dev": "turbo run dev",
+    "build": "pnpm -r --workspace-concurrency=4 --if-present run build",
+    "build:demo": "vite build --config packages/core/vite.config.ts",
+    "clean": "pnpm -r --parallel --if-present run clean && rimraf node_modules",
+    "dev": "vite --config packages/core/vite.config.ts --host",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check",
     "lint": "oxlint .",
@@ -17,8 +18,8 @@
     "publish:dry": "./scripts/publish.sh all --dry-run",
     "publish:main": "./scripts/publish.sh main",
     "tag": "./scripts/git-tag.sh",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
+    "test": "vitest run && pnpm --filter @dayflow/angular test",
+    "typecheck": "pnpm -r --parallel --if-present run typecheck && tsc -p test-kit/tsconfig.json --noEmit",
     "version:update": "./scripts/update-versions.sh"
   },
   "devDependencies": {
@@ -44,8 +45,9 @@
     "tailwindcss": "catalog:",
     "temporal-polyfill": "catalog:",
     "tsc-alias": "^1.8.16",
-    "turbo": "^2.8.10",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "packageManager": "pnpm@9.15.0"
 }

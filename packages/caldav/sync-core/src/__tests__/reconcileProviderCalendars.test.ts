@@ -32,8 +32,8 @@ describe('reconcileProviderCalendars', () => {
         updatedAt: '2026-01-01T00:00:00Z',
       },
     ];
-    const save = jest.fn();
-    const deactivate = jest.fn();
+    const save = vi.fn();
+    const deactivate = vi.fn();
 
     const result = await reconcileProviderCalendars({
       provider: 'test',

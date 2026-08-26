@@ -13,7 +13,7 @@ function makeFetch(
   }>
 ) {
   let idx = 0;
-  return jest.fn().mockImplementation(() => {
+  return vi.fn().mockImplementation(() => {
     const resp = responses[idx++] ?? responses.at(-1);
     return Promise.resolve({
       status: resp.status,
@@ -119,8 +119,8 @@ describe('createOutlookSyncAdapter getToken', () => {
 // ─── 429 retry ───────────────────────────────────────────────────────────────
 
 describe('createOutlookSyncAdapter 429 handling', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
 
   it('retries once after 429 with Retry-After seconds', async () => {
     const fetch = makeFetch([
@@ -130,7 +130,7 @@ describe('createOutlookSyncAdapter 429 handling', () => {
     const adapter = createOutlookSyncAdapter({ fetch });
 
     const promise = adapter.listCalendars();
-    await jest.advanceTimersByTimeAsync(1100);
+    await vi.advanceTimersByTimeAsync(1100);
     const result = await promise;
 
     expect(fetch).toHaveBeenCalledTimes(2);
@@ -146,7 +146,7 @@ describe('createOutlookSyncAdapter 429 handling', () => {
 
     await Promise.all([
       expect(adapter.listCalendars()).rejects.toBeInstanceOf(OutlookSyncError),
-      jest.runAllTimersAsync(),
+      vi.runAllTimersAsync(),
     ]);
 
     expect(fetch).toHaveBeenCalledTimes(2);

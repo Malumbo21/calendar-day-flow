@@ -100,8 +100,8 @@ case $choice in
     ;;
 esac
 
-echo "🚀 Building packages with turbo (parallel & cached)..."
-pnpm turbo build $BUILD_FILTER_STAGE1 $BUILD_FILTER_STAGE2
+echo "🚀 Building packages with pnpm workspace..."
+pnpm $BUILD_FILTER_STAGE1 $BUILD_FILTER_STAGE2 --workspace-concurrency=4 run build
 
 echo "📦 Packing selected packages in parallel..."
 PACKS_DIR="$ROOT_DIR/temp/packs"

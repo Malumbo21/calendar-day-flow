@@ -10,6 +10,7 @@ import type { CalDAVEventData } from '@caldav/types/event';
 import { CalendarApp } from '@dayflow/core';
 import type { Event } from '@dayflow/core';
 import { Temporal } from 'temporal-polyfill';
+import type { Mocked } from 'vitest';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -60,21 +61,19 @@ function makeApp() {
   return new CalendarApp({ views: [], plugins: [], events: [], calendars: [] });
 }
 
-function makeMockSync(
-  overrides: Partial<CalDAVSync> = {}
-): jest.Mocked<CalDAVSync> {
+function makeMockSync(overrides: Partial<CalDAVSync> = {}): Mocked<CalDAVSync> {
   return {
-    listCalendars: jest.fn().mockResolvedValue([REMOTE_CALENDAR]),
-    syncEvents: jest.fn().mockResolvedValue({ events: [], deleted: [] }),
-    createEvent: jest
+    listCalendars: vi.fn().mockResolvedValue([REMOTE_CALENDAR]),
+    syncEvents: vi.fn().mockResolvedValue({ events: [], deleted: [] }),
+    createEvent: vi
       .fn()
       .mockResolvedValue({ href: `${CAL_ID}new.ics`, etag: '"new-etag"' }),
-    updateEvent: jest
+    updateEvent: vi
       .fn()
       .mockResolvedValue({ href: EVENT_HREF, etag: '"updated-etag"' }),
-    deleteEvent: jest.fn(() => Promise.resolve()),
+    deleteEvent: vi.fn(() => Promise.resolve()),
     ...overrides,
-  } as jest.Mocked<CalDAVSync>;
+  } as Mocked<CalDAVSync>;
 }
 
 /** Drain microtasks and one event-loop tick to allow async listeners to complete. */
@@ -116,10 +115,10 @@ describe('mapCalDAVCalendarToDayFlow', () => {
 function makeStorage() {
   const store = new Map<string, string>();
   return {
-    getSyncToken: jest.fn((id: string) =>
+    getSyncToken: vi.fn((id: string) =>
       Promise.resolve(store.get(`st:${id}`) ?? null)
     ),
-    setSyncToken: jest.fn((id: string, t: string | null) => {
+    setSyncToken: vi.fn((id: string, t: string | null) => {
       if (t) {
         store.set(`st:${id}`, t);
       } else {
@@ -127,28 +126,28 @@ function makeStorage() {
       }
       return Promise.resolve();
     }),
-    getCtag: jest.fn((id: string) =>
+    getCtag: vi.fn((id: string) =>
       Promise.resolve(store.get(`ct:${id}`) ?? null)
     ),
-    setCtag: jest.fn((id: string, ctag: string) => {
+    setCtag: vi.fn((id: string, ctag: string) => {
       store.set(`ct:${id}`, ctag);
       return Promise.resolve();
     }),
-    getEtag: jest.fn((href: string) =>
+    getEtag: vi.fn((href: string) =>
       Promise.resolve(store.get(`et:${href}`) ?? null)
     ),
-    setEtag: jest.fn((href: string, etag: string) => {
+    setEtag: vi.fn((href: string, etag: string) => {
       store.set(`et:${href}`, etag);
       return Promise.resolve();
     }),
-    deleteEtag: jest.fn((href: string) => {
+    deleteEtag: vi.fn((href: string) => {
       store.delete(`et:${href}`);
       return Promise.resolve();
     }),
-    getEventState: jest.fn(() => Promise.resolve(null)),
-    setEventState: jest.fn(() => Promise.resolve()),
-    deleteEventState: jest.fn(() => Promise.resolve()),
-    clearCalendar: jest.fn(() => Promise.resolve()),
+    getEventState: vi.fn(() => Promise.resolve(null)),
+    setEventState: vi.fn(() => Promise.resolve()),
+    deleteEventState: vi.fn(() => Promise.resolve()),
+    clearCalendar: vi.fn(() => Promise.resolve()),
   };
 }
 
@@ -157,15 +156,15 @@ function makeStorage() {
 describe('createCalDAVSync', () => {
   function makeAdapter() {
     return {
-      listCalendars: jest.fn().mockResolvedValue([REMOTE_CALENDAR]),
-      syncEvents: jest.fn().mockResolvedValue({ events: [], deleted: [] }),
-      createEvent: jest
+      listCalendars: vi.fn().mockResolvedValue([REMOTE_CALENDAR]),
+      syncEvents: vi.fn().mockResolvedValue({ events: [], deleted: [] }),
+      createEvent: vi
         .fn()
         .mockResolvedValue({ href: `${CAL_ID}new.ics`, etag: '"new-etag"' }),
-      updateEvent: jest
+      updateEvent: vi
         .fn()
         .mockResolvedValue({ href: EVENT_HREF, etag: '"updated-etag"' }),
-      deleteEvent: jest.fn(() => Promise.resolve()),
+      deleteEvent: vi.fn(() => Promise.resolve()),
     };
   }
 
@@ -446,7 +445,7 @@ describe('attachCalDAVToDayFlow – initial sync', () => {
   it('loads remote events into DayFlow state', async () => {
     const app = makeApp();
     const sync = makeMockSync({
-      syncEvents: jest.fn().mockResolvedValue({
+      syncEvents: vi.fn().mockResolvedValue({
         events: [makeRemoteEventData()],
         deleted: [],
       }),
@@ -464,7 +463,7 @@ describe('attachCalDAVToDayFlow – initial sync', () => {
   it('applies remote events without triggering write-back', async () => {
     const app = makeApp();
     const sync = makeMockSync({
-      syncEvents: jest.fn().mockResolvedValue({
+      syncEvents: vi.fn().mockResolvedValue({
         events: [makeRemoteEventData()],
         deleted: [],
       }),
@@ -487,9 +486,9 @@ describe('attachCalDAVToDayFlow – initial sync', () => {
 
   it('reports error status when listCalendars fails', async () => {
     const app = makeApp();
-    const onError = jest.fn();
+    const onError = vi.fn();
     const sync = makeMockSync({
-      listCalendars: jest.fn().mockRejectedValue(new Error('Network error')),
+      listCalendars: vi.fn().mockRejectedValue(new Error('Network error')),
     });
     const controller = attachCalDAVToDayFlow(app, sync, { onError });
 
@@ -546,7 +545,7 @@ describe('attachCalDAVToDayFlow – range sync', () => {
   it('updates existing events (add→update on re-sync)', async () => {
     const app = makeApp();
     const sync = makeMockSync({
-      syncEvents: jest.fn().mockResolvedValue({
+      syncEvents: vi.fn().mockResolvedValue({
         events: [makeRemoteEventData()],
         deleted: [],
       }),
@@ -587,7 +586,7 @@ describe('attachCalDAVToDayFlow – range sync', () => {
   it('removes events reported as deleted by the server', async () => {
     const app = makeApp();
     const sync = makeMockSync({
-      syncEvents: jest
+      syncEvents: vi
         .fn()
         .mockResolvedValueOnce({ events: [makeRemoteEventData()], deleted: [] })
         .mockResolvedValueOnce({
@@ -698,7 +697,7 @@ describe('attachCalDAVToDayFlow – write-back (creates)', () => {
 });
 
 describe('attachCalDAVToDayFlow – write-back (updates)', () => {
-  async function setupWithExistingRemoteEvent(sync: jest.Mocked<CalDAVSync>) {
+  async function setupWithExistingRemoteEvent(sync: Mocked<CalDAVSync>) {
     const app = makeApp();
     // First, load the event as a remote event (sets meta.caldav)
     sync.syncEvents.mockResolvedValueOnce({
@@ -772,7 +771,7 @@ describe('attachCalDAVToDayFlow – write-back (deletes)', () => {
   it('calls sync.deleteEvent when user deletes event with caldav meta', async () => {
     const app = makeApp();
     const sync = makeMockSync({
-      syncEvents: jest
+      syncEvents: vi
         .fn()
         .mockResolvedValue({ events: [makeRemoteEventData()], deleted: [] }),
     });
@@ -797,7 +796,7 @@ describe('attachCalDAVToDayFlow – read-only calendars', () => {
   it('does not write events to read-only calendars', async () => {
     const app = makeApp();
     const sync = makeMockSync({
-      listCalendars: jest.fn().mockResolvedValue([READ_ONLY_CALENDAR]),
+      listCalendars: vi.fn().mockResolvedValue([READ_ONLY_CALENDAR]),
     });
     const controller = attachCalDAVToDayFlow(app, sync, { writable: true });
     await controller.start();
@@ -822,8 +821,8 @@ describe('attachCalDAVToDayFlow – read-only calendars', () => {
     };
     const app = makeApp();
     const sync = makeMockSync({
-      listCalendars: jest.fn().mockResolvedValue([updateOnlyCalendar]),
-      syncEvents: jest
+      listCalendars: vi.fn().mockResolvedValue([updateOnlyCalendar]),
+      syncEvents: vi
         .fn()
         .mockResolvedValue({ events: [makeRemoteEventData()], deleted: [] }),
     });
@@ -850,13 +849,13 @@ describe('attachCalDAVToDayFlow – read-only calendars', () => {
 
 describe('attachCalDAVToDayFlow – ETag conflict', () => {
   it('calls onError with operation=update when update returns 412', async () => {
-    const onError = jest.fn();
+    const onError = vi.fn();
     const app = makeApp();
     const sync = makeMockSync({
-      syncEvents: jest
+      syncEvents: vi
         .fn()
         .mockResolvedValue({ events: [makeRemoteEventData()], deleted: [] }),
-      updateEvent: jest
+      updateEvent: vi
         .fn()
         .mockRejectedValue(
           new CalDAVError('etag-conflict', 'ETag conflict', 412, EVENT_HREF)

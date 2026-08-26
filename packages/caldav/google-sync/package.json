@@ -29,7 +29,7 @@
     "clean": "rimraf dist node_modules",
     "postbuild": "rimraf dist/types dist/build",
     "prebuild": "rimraf dist",
-    "test": "jest",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -41,15 +41,12 @@
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
-    "@types/jest": "catalog:",
-    "jest": "catalog:",
-    "jest-environment-jsdom": "catalog:",
     "rimraf": "catalog:",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
-    "ts-jest": "catalog:",
     "tsc-alias": "^1.8.16",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@dayflow/core": "workspace:*"

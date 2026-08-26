@@ -7,6 +7,7 @@ import type {
   OutlookEventList,
 } from '@outlook-sync/types/api';
 import type { OutlookSyncStorage } from '@outlook-sync/types/storage';
+import type { Mocked } from 'vitest';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -31,9 +32,9 @@ function makeOutlookEvent(
 
 function makeAdapter(
   overrides: Partial<OutlookSyncAdapter> = {}
-): jest.Mocked<OutlookSyncAdapter> {
+): Mocked<OutlookSyncAdapter> {
   return {
-    listCalendars: jest.fn().mockResolvedValue({
+    listCalendars: vi.fn().mockResolvedValue({
       value: [
         {
           id: 'cal-1',
@@ -46,17 +47,17 @@ function makeAdapter(
         },
       ],
     } satisfies OutlookCalendarList),
-    listEvents: jest.fn().mockResolvedValue({
+    listEvents: vi.fn().mockResolvedValue({
       value: [makeOutlookEvent('evt-1')],
       '@odata.deltaLink':
         'https://graph.microsoft.com/v1.0/me/calendarView/delta?$deltatoken=TOKEN123',
     } satisfies OutlookEventList),
-    getEvent: jest.fn(),
-    createEvent: jest.fn(),
-    updateEvent: jest.fn(),
-    deleteEvent: jest.fn().mockImplementation(() => Promise.resolve()),
+    getEvent: vi.fn(),
+    createEvent: vi.fn(),
+    updateEvent: vi.fn(),
+    deleteEvent: vi.fn().mockImplementation(() => Promise.resolve()),
     ...overrides,
-  } as jest.Mocked<OutlookSyncAdapter>;
+  } as Mocked<OutlookSyncAdapter>;
 }
 
 function makeStorage(
@@ -64,8 +65,8 @@ function makeStorage(
 ): OutlookSyncStorage {
   const store = { ...initial };
   return {
-    getDeltaToken: jest.fn((id: string) => Promise.resolve(store[id] ?? null)),
-    setDeltaToken: jest.fn((id: string, token: string | null) => {
+    getDeltaToken: vi.fn((id: string) => Promise.resolve(store[id] ?? null)),
+    setDeltaToken: vi.fn((id: string, token: string | null) => {
       store[id] = token;
       return Promise.resolve();
     }),
@@ -153,7 +154,7 @@ describe('createOutlookSync.syncEvents', () => {
 
   it('treats @removed items as deletions', async () => {
     const adapter = makeAdapter({
-      listEvents: jest.fn().mockResolvedValue({
+      listEvents: vi.fn().mockResolvedValue({
         value: [
           makeOutlookEvent('evt-kept'),
           { id: 'evt-deleted', '@removed': { reason: 'deleted' } },
@@ -174,7 +175,7 @@ describe('createOutlookSync.syncEvents', () => {
 
   it('does NOT treat isCancelled events as deletions', async () => {
     const adapter = makeAdapter({
-      listEvents: jest.fn().mockResolvedValue({
+      listEvents: vi.fn().mockResolvedValue({
         value: [makeOutlookEvent('evt-cancelled', { isCancelled: true })],
       } satisfies OutlookEventList),
     });
@@ -220,7 +221,7 @@ describe('createOutlookSync.syncEvents', () => {
 
   it('re-throws non-410 errors', async () => {
     const adapter = makeAdapter({
-      listEvents: jest
+      listEvents: vi
         .fn()
         .mockRejectedValue(new OutlookSyncError(503, 'Service unavailable')),
     });
@@ -241,7 +242,7 @@ describe('createOutlookSync.createEvent', () => {
   it('creates event and returns mapped result', async () => {
     const created = makeOutlookEvent('evt-server-id');
     const adapter = makeAdapter({
-      createEvent: jest.fn().mockResolvedValue(created),
+      createEvent: vi.fn().mockResolvedValue(created),
     });
     const sync = createOutlookSync(adapter);
 
@@ -290,7 +291,7 @@ describe('createOutlookSync.updateEvent', () => {
   it('calls updateEvent with correct etag', async () => {
     const { base, mapped } = makeEventWithMeta();
     const adapter = makeAdapter({
-      updateEvent: jest.fn().mockResolvedValue(base),
+      updateEvent: vi.fn().mockResolvedValue(base),
     });
     const sync = createOutlookSync(adapter);
 

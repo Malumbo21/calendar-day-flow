@@ -12,9 +12,16 @@
   "scripts": {
     "build": "ng-packagr -p ng-packagr.json",
     "clean": "rimraf dist node_modules",
+    "test": "vitest run --config vitest.config.mts",
+    "test:coverage": "vitest run --config vitest.config.mts --coverage",
+    "test:watch": "vitest --config vitest.config.mts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "catalog:",
+    "@analogjs/vitest-angular": "catalog:",
+    "@angular-devkit/architect": "catalog:",
+    "@angular/build": "catalog:",
     "@angular/common": "^18.2.0",
     "@angular/compiler": "^18.2.0",
     "@angular/compiler-cli": "^18.2.0",
@@ -22,11 +29,15 @@
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@dayflow/core": "workspace:*",
+    "@testing-library/jest-dom": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "jsdom": "catalog:",
     "ng-packagr": "^18.2.1",
     "rimraf": "catalog:",
     "rxjs": "^7.8.1",
     "tslib": "catalog:",
     "typescript": "~5.5.0",
+    "vitest": "catalog:",
     "zone.js": "~0.14.10"
   },
   "peerDependencies": {
