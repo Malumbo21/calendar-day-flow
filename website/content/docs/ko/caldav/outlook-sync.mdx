@@ -1,0 +1,515 @@
+---
+title: '@dayflow/outlook-sync'
+---
+
+# @dayflow/outlook-sync
+
+`@dayflow/outlook-sync`는 DayFlow를 Microsoft Graph 캘린더 API에 연결합니다. `@dayflow/caldav`와는 별개의 패키지로, Microsoft Graph API와 직접 통신합니다.
+
+## 설치
+
+<PackageTabs pkg='@dayflow/outlook-sync' />
+
+## 빠른 시작
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useRef, useEffect, useState } from 'react';
+    import {
+      DayFlowCalendar,
+      useCalendarApp,
+      createMonthView,
+    } from '@dayflow/react';
+    import {
+      attachOutlookSyncToDayFlow,
+      createOutlookSync,
+      createOutlookSyncAdapter,
+      type OutlookDayFlowController,
+      type OutlookSyncStatus,
+    } from '@dayflow/outlook-sync';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      const controllerRef = useRef<OutlookDayFlowController | null>(null);
+      const [syncStatus, setSyncStatus] = useState<OutlookSyncStatus>({
+        state: 'idle',
+      });
+
+      useEffect(() => {
+        if (controllerRef.current) return;
+
+        const adapter = createOutlookSyncAdapter({
+          baseUrl: '/api/outlook-calendar',
+        });
+
+        const sync = createOutlookSync(adapter);
+        const controller = attachOutlookSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: setSyncStatus,
+          onWriteError: (error, ctx) =>
+            console.error(`[outlook-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controllerRef.current = controller;
+        controller.start();
+
+        return () => {
+          controller.stop();
+          controllerRef.current = null;
+        };
+      }, [calendar.app]);
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+      import { ref, onMounted, onBeforeUnmount } from 'vue';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachOutlookSyncToDayFlow,
+        createOutlookSync,
+        createOutlookSyncAdapter,
+      } from '@dayflow/outlook-sync';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      const syncStatus = ref({ state: 'idle' });
+      let controller;
+
+      onMounted(() => {
+        const adapter = createOutlookSyncAdapter({
+          baseUrl: '/api/outlook-calendar',
+        });
+
+        const sync = createOutlookSync(adapter);
+        controller = attachOutlookSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: status => {
+            syncStatus.value = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[outlook-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onBeforeUnmount(() => {
+        controller?.stop();
+      });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component, OnInit, OnDestroy } from '@angular/core';
+    import { CalendarApp, createMonthView } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import {
+      attachOutlookSyncToDayFlow,
+      createOutlookSync,
+      createOutlookSyncAdapter,
+      type OutlookDayFlowController,
+      type OutlookSyncStatus,
+    } from '@dayflow/outlook-sync';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`,
+    })
+    export class AppComponent implements OnInit, OnDestroy {
+      calendar = new CalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      syncStatus: OutlookSyncStatus = { state: 'idle' };
+      private controller?: OutlookDayFlowController;
+
+      ngOnInit() {
+        const adapter = createOutlookSyncAdapter({
+          baseUrl: '/api/outlook-calendar',
+        });
+
+        const sync = createOutlookSync(adapter);
+        this.controller = attachOutlookSyncToDayFlow(this.calendar, sync, {
+          writable: true,
+          onStatusChange: status => {
+            this.syncStatus = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[outlook-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        this.controller.start();
+      }
+
+      ngOnDestroy() {
+        this.controller?.stop();
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { onMount, onDestroy } from 'svelte';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachOutlookSyncToDayFlow,
+        createOutlookSync,
+        createOutlookSyncAdapter,
+      } from '@dayflow/outlook-sync';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      let syncStatus = { state: 'idle' };
+      let controller;
+
+      onMount(() => {
+        const adapter = createOutlookSyncAdapter({
+          baseUrl: '/api/outlook-calendar',
+        });
+
+        const sync = createOutlookSync(adapter);
+        controller = attachOutlookSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: status => {
+            syncStatus = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[outlook-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onDestroy(() => {
+        controller?.stop();
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 토큰 주입
+
+### `getToken` 사용하기 (클라이언트 토큰에 권장)
+
+`getToken` 팩토리를 전달하면 어댑터가 매 요청 전에 새 토큰을 가져옵니다. MSAL처럼 토큰 갱신을 대신 관리해 주는 인증 라이브러리를 쓸 때 특히 적합합니다:
+
+```ts
+import { PublicClientApplication } from '@azure/msal-browser';
+
+const msalInstance = new PublicClientApplication(msalConfig);
+
+const adapter = createOutlookSyncAdapter({
+  getToken: async () => {
+    const result = await msalInstance.acquireTokenSilent({
+      scopes: ['Calendars.ReadWrite'],
+    });
+    return result.accessToken;
+  },
+});
+```
+
+### 백엔드 프록시 사용하기 (운영 환경에 권장)
+
+OAuth 토큰은 서버에 두고, 모든 Graph API 요청을 프록시로 우회시키세요.
+
+```ts
+const adapter = createOutlookSyncAdapter({
+  baseUrl: '/api/outlook-calendar',
+  // No getToken needed — the proxy injects Authorization
+});
+```
+
+```js
+// proxy.mjs (Node.js example using MSAL Node)
+import { createServer } from 'node:http';
+import { ConfidentialClientApplication } from '@azure/msal-node';
+
+const msalClient = new ConfidentialClientApplication({
+  auth: {
+    clientId: process.env.AZURE_CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}`,
+    clientSecret: process.env.AZURE_CLIENT_SECRET,
+  },
+});
+
+const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
+const ALLOWED_METHODS = new Set(['GET', 'POST', 'PATCH', 'DELETE']);
+
+async function getToken() {
+  const result = await msalClient.acquireTokenByClientCredential({
+    scopes: ['https://graph.microsoft.com/.default'],
+  });
+  return result?.accessToken ?? '';
+}
+
+createServer(async (req, res) => {
+  const upstreamPath = req.url.replace(/^\/api\/outlook-calendar/, '');
+  const upstreamUrl = `${GRAPH_BASE}${upstreamPath}`;
+
+  if (!ALLOWED_METHODS.has(req.method ?? 'GET')) {
+    res.writeHead(405);
+    res.end();
+    return;
+  }
+
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const body =
+    req.method === 'GET' || req.method === 'DELETE'
+      ? undefined
+      : Buffer.concat(chunks).toString();
+
+  const token = await getToken();
+  const upstream = await fetch(upstreamUrl, {
+    method: req.method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(req.headers['if-match']
+        ? { 'If-Match': req.headers['if-match'] }
+        : {}),
+    },
+    body,
+  });
+
+  const responseBody = upstream.status === 204 ? '' : await upstream.text();
+  res.writeHead(upstream.status, { 'Content-Type': 'application/json' });
+  res.end(responseBody);
+}).listen(3003);
+```
+
+## 델타 토큰 영속화
+
+기본적으로 Outlook 동기화 토큰(델타 토큰)은 메모리에만 저장되어 페이지를 새로 고치면 사라집니다. `OutlookSyncStorage` 구현을 제공해 세션 간에 토큰을 보존하세요:
+
+```ts
+import {
+  createOutlookSync,
+  type OutlookSyncStorage,
+} from '@dayflow/outlook-sync';
+
+const storage: OutlookSyncStorage = {
+  getDeltaToken: async calendarId =>
+    localStorage.getItem(`outlook-delta:${calendarId}`),
+  setDeltaToken: async (calendarId, token) =>
+    token
+      ? localStorage.setItem(`outlook-delta:${calendarId}`, token)
+      : localStorage.removeItem(`outlook-delta:${calendarId}`),
+};
+
+const sync = createOutlookSync(adapter, { storage });
+```
+
+저장소를 연결하면 각 세션이 전체 이벤트를 처음부터 가져오는 대신 증분 델타 동기화로 시작합니다.
+
+## 로컬 캐시로 초기화하기
+
+첫 원격 동기화 전에 로컬 저장소로 DayFlow를 미리 채우면 캘린더가 즉시 표시됩니다:
+
+```ts
+const controller = attachOutlookSyncToDayFlow(calendar.app, sync, {
+  getInitialSnapshot: async () => {
+    const { calendars, events } = await loadFromLocalDB();
+    return { calendars, events };
+  },
+  onSyncComplete: delta => {
+    saveChanges(delta);
+  },
+  onWriteComplete: (operation, event) => {
+    persistEvent(operation, event);
+  },
+});
+```
+
+## 원격 스냅숏 직접 적용하기
+
+동기화 흐름을 직접 구성하는 애플리케이션이라면, `applyRemoteSnapshot`으로 원격 이벤트 묶음을 제공자에게 다시 전송하지 않고 DayFlow에 적용할 수 있습니다:
+
+```ts
+import { applyRemoteSnapshot, getOutlookMeta } from '@dayflow/outlook-sync';
+
+const delta = await applyRemoteSnapshot(
+  calendar.app,
+  { calendars, events },
+  {
+    isOwnedEvent: event => Boolean(getOutlookMeta(event)),
+    isOwnedCalendar: calendar => calendar.source === 'Outlook',
+    snapshotMode: 'authoritative',
+    resolveConflict: (remote, local) =>
+      mergeLocalEditsOntoRemote(remote, local),
+  }
+);
+```
+
+`snapshotMode: 'authoritative'`는 전체 제공자 스냅숏에만 사용하세요. 범위가 제한되었거나 필터링·페이지 처리된 스냅숏은 기본 부분 모드를 유지해야 누락된 로컬 레코드가 보존됩니다.
+
+## 옵션 레퍼런스
+
+### `attachOutlookSyncToDayFlow` 옵션
+
+| 옵션                 | 타입                                   | 기본값          | 설명                                                                                |
+| :------------------- | :------------------------------------- | :-------------- | :---------------------------------------------------------------------------------- |
+| `writable`           | `boolean`                              | `true`          | 로컬 변경 사항을 Outlook 캘린더에 다시 쓰도록 허용합니다.                           |
+| `onStatusChange`     | `(status: OutlookSyncStatus) => void`  | —               | 동기화 상태가 바뀔 때마다 호출됩니다.                                               |
+| `onWriteError`       | `(error: Error, ctx) => void`          | `console.error` | 다시 쓰기가 실패했을 때 호출됩니다. `ctx`에는 `action`과 `eventId`가 들어 있습니다. |
+| `getInitialSnapshot` | `() => Promise<{ events, calendars }>` | —               | 첫 원격 동기화 전에 로컬 캐시로 DayFlow를 채웁니다.                                 |
+| `onSyncComplete`     | `(delta: OutlookSyncDelta) => void`    | —               | 동기화가 성공할 때마다 변경 건수와 함께 호출됩니다.                                 |
+| `onWriteComplete`    | `(operation, event) => void`           | —               | 로컬 변경이 Outlook 캘린더에 성공적으로 반영된 뒤 호출됩니다.                       |
+
+### `createOutlookSyncAdapter` 옵션
+
+| 옵션       | 타입                              | 기본값                             | 설명                                                                                          |
+| :--------- | :-------------------------------- | :--------------------------------- | :-------------------------------------------------------------------------------------------- |
+| `baseUrl`  | `string`                          | `https://graph.microsoft.com/v1.0` | 백엔드 프록시를 가리키도록 바꿀 수 있습니다.                                                  |
+| `fetch`    | `function`                        | `globalThis.fetch`                 | 사용자 정의 fetch 구현입니다.                                                                 |
+| `getToken` | `() => string \| Promise<string>` | —                                  | 모든 요청 전에 호출되며, `Authorization: Bearer <token>`으로 주입할 액세스 토큰을 반환합니다. |
+
+### `OutlookSyncStatus`
+
+```ts
+type OutlookSyncStatus = {
+  state: 'idle' | 'syncing' | 'error';
+  lastSyncedAt?: string; // ISO timestamp
+  error?: {
+    message: string;
+    calendarId?: string;
+  };
+};
+```
+
+### `OutlookSyncDelta`
+
+```ts
+type OutlookSyncDelta = {
+  calendars: { added: number; updated: number; deleted: number };
+  events: { added: number; updated: number; deleted: number };
+};
+```
+
+## 컨트롤러 API
+
+```ts
+// Load calendars, sync initial events, and subscribe to changes
+await controller.start();
+
+// Unsubscribe all listeners
+controller.stop();
+
+// Re-sync all calendars for the current visible range
+await controller.refresh();
+
+// Re-sync a specific calendar
+await controller.refresh({ calendarId: 'AAMk...' });
+
+// Re-sync with an explicit range
+await controller.refresh({
+  range: { start: new Date('2025-01-01'), end: new Date('2025-02-01') },
+});
+
+// Current sync state
+const status = controller.getStatus();
+```
+
+## 동기화 동작 방식
+
+### 캘린더 탐색
+
+`controller.start()`를 호출하면 패키지가 사용자의 캘린더 목록(`GET /me/calendars`)을 가져와 DayFlow에 각각 등록합니다. `canEdit`가 `false`인 캘린더는 `readOnly: true`로 표시됩니다.
+
+### 이벤트 로딩
+
+이벤트는 Microsoft Graph의 `calendarView/delta` 엔드포인트에 `startDateTime`과 `endDateTime` 매개변수를 붙여 로드합니다. 이 엔드포인트는 해당 기간 안의 반복 이벤트를 펼쳐 줍니다. 사용자가 이동하면 새 범위의 이벤트가 자동으로 로드됩니다.
+
+### 델타 토큰을 이용한 증분 동기화
+
+최초 로드 이후 Graph API는 `@odata.deltaLink`를 반환합니다. 이후 동기화에서는 이 링크를 따라가 전체 범위가 아니라 변경된 이벤트만 가져옵니다. `OutlookSyncStorage`를 제공하면 델타 토큰이 페이지 새로 고침 후에도 유지됩니다.
+
+델타 토큰이 만료되면(Graph가 `410 Gone`을 반환) 패키지가 자동으로 전체 범위 조회로 되돌아갑니다.
+
+### 원격 반영(쓰기)
+
+`writable: true`이면 로컬 이벤트 변경이 Outlook 캘린더에 반영됩니다:
+
+- **생성**: `POST /me/calendars/{calendarId}/events`
+- **수정**: `PATCH /me/calendars/{calendarId}/events/{eventId}` (`If-Match: <etag>` 포함)
+- **삭제**: `DELETE /me/calendars/{calendarId}/events/{eventId}`
+
+수정 요청이 **412 Precondition Failed**(ETag 충돌)를 반환하면, 패키지가 최신 ETag를 다시 가져와 한 번 재시도합니다.
+
+반복 이벤트는 **절대** 원격에 반영되지 않으며 읽기 전용입니다.
+
+### 캘린더 색상
+
+Outlook은 16진 코드가 아니라 이름이 지정된 색상(예: `lightBlue`, `darkGreen`)을 사용합니다. 패키지는 이를 근사한 16진 값으로 매핑한 뒤 `getCalendarColorsForHex`에 통과시켜 DayFlow 테마와 일관되게 맞춥니다.
+
+## Microsoft Graph API 스코프
+
+OAuth 토큰에는 다음 스코프 중 최소 하나가 포함되어야 합니다:
+
+| 스코프                | 접근 권한                                     |
+| :-------------------- | :-------------------------------------------- |
+| `Calendars.ReadWrite` | 읽기·쓰기 전체 권한                           |
+| `Calendars.Read`      | 읽기 전용 권한(`writable: false`와 함께 사용) |
+
+앱 전용(서버 간) 흐름에서는 서비스 주체와 함께 `.default` 스코프를 사용하세요:
+
+```
+https://graph.microsoft.com/.default
+```

@@ -1,59 +1,27 @@
-import { DocsBody, DocsPage } from 'fumadocs-ui/layouts/docs/page';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 
-import { sourceZh } from '@/lib/source';
-import { getMDXComponents } from '@/mdx-components';
+import {
+  DocsLocalePage,
+  generateDocsMetadata,
+  generateDocsParams,
+} from '@/components/docs/DocsLocalePage';
+
+const LOCALE = 'zh';
 
 export default async function Page(props: PageProps<'/docs-zh/[[...slug]]'>) {
-  const params = await props.params;
-  const page = sourceZh.getPage(params.slug);
-  if (!page) notFound();
+  const { slug } = await props.params;
 
-  const { body: MDX, toc } = await page.data.load();
-
-  const full = page.data.full ?? params.slug?.[0] === 'features';
-
-  return (
-    <DocsPage
-      toc={toc}
-      full={full}
-      breadcrumb={{ enabled: false }}
-      tableOfContent={{ style: 'clerk' }}
-    >
-      <DocsBody>
-        <MDX
-          components={getMDXComponents({
-            a: createRelativeLink(sourceZh, page),
-          })}
-        />
-      </DocsBody>
-    </DocsPage>
-  );
+  return <DocsLocalePage locale={LOCALE} slug={slug} />;
 }
 
 export function generateStaticParams() {
-  return sourceZh.generateParams();
+  return generateDocsParams(LOCALE);
 }
 
 export async function generateMetadata(
   props: PageProps<'/docs-zh/[[...slug]]'>
 ): Promise<Metadata> {
-  const params = await props.params;
-  const page = sourceZh.getPage(params.slug);
-  if (!page) return {};
+  const { slug } = await props.params;
 
-  return {
-    title: page.data.title,
-    description: page.data.description,
-    alternates: {
-      canonical: page.url,
-    },
-    openGraph: {
-      title: page.data.title,
-      description: page.data.description,
-      url: page.url,
-    },
-  };
+  return generateDocsMetadata(LOCALE, slug);
 }

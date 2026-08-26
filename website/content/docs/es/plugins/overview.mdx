@@ -1,0 +1,63 @@
+---
+title: 'Resumen de plugins'
+---
+
+# Resumen de plugins
+
+DayFlow usa una arquitectura de plugins para ampliar sus funcionalidades. Los plugins aportan funciones modulares que puedes activar, desactivar o configurar según tus necesidades.
+
+## ¿Por qué plugins?
+
+El sistema de plugins te permite:
+
+- **Activar y desactivar funciones**: cargar solo lo que necesitas (por ejemplo, únicamente inglés por defecto, para reducir el tamaño del bundle)
+- **Configurar el comportamiento**: ajustar cada plugin a tu caso de uso
+- **Ampliar funcionalidades**: crear plugins propios para requisitos específicos
+- **Acceder a las APIs de los plugins**: usar sus servicios directamente en tu lógica de negocio
+
+## Plugins disponibles
+
+DayFlow incluye varios plugins integrados y oficiales:
+
+### i18n
+
+Soporte para varios idiomas. Extraer las locales distintas del inglés a un plugin permite un núcleo más ligero en aplicaciones solo en inglés. [Más información](../localization)
+
+### Arrastrar y soltar
+
+Habilita la gestión interactiva de eventos: mover, redimensionar y crear eventos con doble clic. [Más información](../drag)
+
+### Servicio de eventos
+
+Aporta capacidades avanzadas de gestión de eventos: validación, filtrado y consultas por rango de fechas. [Más información](../events)
+
+### Programación de citas (Pro)
+
+Edición de disponibilidad para organizadores, más componentes de reserva independientes para los asistentes. [Más información](../appointment-schedule)
+
+---
+
+## Ciclo de vida de un plugin
+
+1. **Creación**: llama a la función factory (por ejemplo, `createDragPlugin()`) con tu configuración.
+2. **Registro**: añade la instancia del plugin al array `plugins` al inicializar el calendario.
+3. **Instalación**: la función `install()` se llama automáticamente con la instancia de `CalendarApp`.
+4. **Uso**: accede a las APIs del plugin mediante `app.getPlugin('nombre-del-plugin')`.
+
+## Crear plugins propios
+
+Puedes crear tus propios plugins para ampliar el calendario implementando la interfaz `CalendarPlugin`:
+
+```tsx
+import { CalendarPlugin, ICalendarApp } from '@dayflow/core';
+
+export const myPlugin: CalendarPlugin = {
+  name: 'my-custom-plugin',
+  install(app: ICalendarApp) {
+    console.log('Plugin installed!');
+    // Extend app functionality here
+  },
+};
+```
+
+Consulta [Crear plugins propios](#crear-plugins-propios) para más detalles sobre el desarrollo de plugins personalizados.

@@ -1,0 +1,575 @@
+---
+title: DayFlowCalendar
+---
+
+# Die Komponente DayFlowCalendar
+
+`DayFlowCalendar` ist die übergeordnete Komponente: Sie rendert die aktive Ansicht, kümmert sich um das Layout und bindet optionale UI-Elemente wie die Seitenleiste oder den Termindetail-Dialog ein. Zusammen mit `useCalendarApp` und den Factory-Funktionen für Ansichten erhalten Sie mit sehr wenig Code einen voll funktionsfähigen Kalender.
+
+## Grundlegende Verwendung
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      DayFlowCalendar,
+      useCalendarApp,
+      createWeekView,
+      ViewType,
+    } from '@dayflow/react';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+    import '@dayflow/core/dist/styles.css';
+
+    export function CalendarDemo() {
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+        events: [],
+        plugins: [createSidebarPlugin()],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createWeekView, ViewType } from '@dayflow/core';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+    import '@dayflow/core/dist/styles.css';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      defaultView: ViewType.WEEK,
+      initialDate: new Date(),
+      events: [],
+      plugins: [createSidebarPlugin()],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createWeekView, ViewType } from '@dayflow/core';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import '@dayflow/core/dist/styles.css';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+        events: [],
+        plugins: [createSidebarPlugin()],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createWeekView, ViewType } from '@dayflow/core';
+      import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+      import '@dayflow/core/dist/styles.css';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+        events: [],
+        plugins: [createSidebarPlugin()],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+Die Komponente erhält das `calendar`-Objekt von `useCalendarApp`, liest die aktive Ansicht aus und rendert die passende Ansichtskomponente. Eine eigene Toolbar oder UI können Sie daneben platzieren – Folgendes ist aber bereits enthalten:
+
+- eine optionale Kalender-Seitenleiste (wird über `createSidebarPlugin` hinzugefügt),
+- Unterstützung für den Termindetail-Dialog (gesteuert über `useEventDetailDialog` oder einen eigenen Renderer),
+- automatische Layout-Aktualisierung, wenn Kalender ein- oder ausgeblendet werden oder die Ansicht wechselt.
+
+## Props
+
+| Prop                    | Typ                    | Erforderlich | Beschreibung                                                                                                              |
+| ----------------------- | ---------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `calendar`              | `UseCalendarAppReturn` | Erforderlich | Ergebnis von `useCalendarApp`. Liefert Zustand, registrierte Ansichten, Seitenleisten-Konfiguration und Kalenderaktionen. |
+| `collapsedSafeAreaLeft` | `number`               | Optional     | Linker Innenabstand (px) bei eingeklappter Seitenleiste, etwa um Platz für die Fensterbuttons unter macOS zu lassen.      |
+| `search`                | `CalendarSearchProps`  | Optional     | Konfiguration der integrierten Suche.                                                                                     |
+
+> **Die Anpassung über Slots** (Termininhalt, Inhalt des Detailbereichs, Detaildialog, Farbwähler usw.) erfolgt über framework-eigene Slots und nicht über Props. Die vollständige Liste finden Sie unter [Content Slots](/docs-de/features/content-slots).
+
+## Suchkonfiguration
+
+Mit der Prop `search` passen Sie das Verhalten der integrierten Suche an. Standardmäßig durchsucht sie lokal Titel und Beschreibungen der Termine.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    <DayFlowCalendar
+      calendar={calendar}
+      search={{
+        debounceDelay: 500,
+        emptyText: 'No events found',
+        onSearch: async keyword => {
+          // Custom async search (e.g., from an API)
+          return fetch(`/api/search?q=${keyword}`).then(res => res.json());
+        },
+      }}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar
+        :calendar="calendar"
+        :search="{
+          debounceDelay: 500,
+          emptyText: 'No events found',
+          onSearch: handleSearch,
+        }"
+      />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+
+    const handleSearch = async (keyword) => {
+      // Custom async search (e.g., from an API)
+      return fetch(`/api/search?q=${keyword}`).then(res => res.json());
+    };
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar
+          [calendar]="calendar"
+          [search]="searchConfig"
+        >
+        </dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        // ... calendar app config
+      };
+
+      searchConfig = {
+        debounceDelay: 500,
+        emptyText: 'No events found',
+        onSearch: async (keyword: string) => {
+          return fetch(`/api/search?q=${keyword}`).then(res => res.json());
+        }
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar } from '@dayflow/svelte';
+
+      const handleSearch = async (keyword) => {
+        return fetch(`/api/search?q=${keyword}`).then(res => res.json());
+      };
+    </script>
+
+    <DayFlowCalendar
+      {calendar}
+      search={{
+        debounceDelay: 500,
+        emptyText: 'No events found',
+        onSearch: handleSearch,
+      }}
+    />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Such-Props
+
+| Option          | Beschreibung                                                                                                                                                                                                                                                                                                                              |
+| :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `debounceDelay` | Wartezeit in Millisekunden, bevor die Suche ausgelöst wird.                                                                                                                                                                                                                                                                               |
+| `onSearch`      | Asynchrone Funktion, die Ergebnisse zu einem Suchbegriff lädt.                                                                                                                                                                                                                                                                            |
+| `customSearch`  | Synchrone Funktion, um Termine lokal nach eigener Logik zu filtern.                                                                                                                                                                                                                                                                       |
+| `onResultClick` | Optionaler Callback, der beim Klick auf ein Suchergebnis ausgelöst wird. Er enthält den Callback `defaultAction` für die integrierte Navigation (zum Termindatum springen, Termin hervorheben und die Such-UI auf Mobilgeräten schließen). Rufen Sie `defaultAction()` nicht auf, müssen Sie Navigation und UI-Zustand selbst übernehmen. |
+| `emptyText`     | Text, der angezeigt wird, wenn es keine Treffer gibt.                                                                                                                                                                                                                                                                                     |
+| `timeFormat`    | Zeitformat für die Anzeige der Suchergebnisse (`'12h'` oder `'24h'`). Ist in `useCalendarApp` ein globales `timeFormat` gesetzt, hat dieses Vorrang.                                                                                                                                                                                      |
+
+## Verhalten der Seitenleiste
+
+Die Seitenleiste fügen Sie hinzu, indem Sie das Plugin `@dayflow/plugin-sidebar` installieren:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      plugins: [
+        createSidebarPlugin({
+          width: 280,
+          initialCollapsed: false,
+          createCalendarMode: 'modal', // 'inline' or 'modal'
+        }),
+      ],
+    });
+
+    return <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createWeekView } from '@dayflow/core';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      plugins: [
+        createSidebarPlugin({
+          width: 280,
+          initialCollapsed: false,
+          createCalendarMode: 'modal',
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createWeekView } from '@dayflow/core';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createWeekView()],
+        plugins: [
+          createSidebarPlugin({
+            width: 280,
+            initialCollapsed: false,
+            createCalendarMode: 'modal',
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createWeekView } from '@dayflow/core';
+      import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [
+          createSidebarPlugin({
+            width: 280,
+            initialCollapsed: false,
+            createCalendarMode: 'modal',
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+- Sobald `createSidebarPlugin()` zu den Plugins hinzugefügt wird, erscheint die Standard-Seitenleiste (`DefaultCalendarSidebar`) mit Kalenderfiltern und Schaltern zum Ein- und Ausblenden aller Kalender.
+- Breite, voreingestellter Einklappzustand und Erstellungsmodus (`createCalendarMode`) lassen sich anpassen; alternativ liefern Sie über `render` oder `renderSidebarHeader` einen eigenen Renderer. Dieser erhält `CalendarSidebarRenderProps` (bei `render`) bzw. `SidebarHeaderSlotArgs` (bei `renderSidebarHeader`), sodass Sie die mitgelieferten Callbacks und Daten weiterverwenden können.
+
+## Darstellung von Termindetails
+
+DayFlow bietet dafür drei Varianten:
+
+1. **Panel-Modus (Standard)** – steht `useEventDetailDialog` auf `false` (Voreinstellung), erscheint beim Öffnen der Termindetails das eingebaute schwebende `DefaultEventDetailPanel`. Am Desktop öffnet es sich per Doppelklick (`eventDetailTrigger: 'dbClick'`) oder per Einfachklick, wenn Sie `eventDetailTrigger: 'click'` setzen. Bei Touch-Eingabe genügt stets ein Tippen.
+2. **Dialog-Modus** – setzen Sie `useEventDetailDialog: true` in `useCalendarApp`, um das eingebaute zentrierte Modal zu aktivieren. Über den Slot `eventDetailDialog` ersetzen Sie es durch einen eigenen Dialog.
+3. **Ganz abschalten** – setzen Sie `useEventDetailPanel: false` in `useCalendarApp`, um das schwebende Panel zu unterdrücken, wenn Sie eigene, über App-Callbacks gesteuerte Termindialoge verwenden.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    // Suppress the built-in panel — use your own modal triggered elsewhere
+    const calendar = useCalendarApp({
+      ...
+      useEventDetailPanel: false,
+    });
+
+    return <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    // Suppress the built-in panel — use your own modal triggered elsewhere
+    const calendar = useCalendarApp({
+      ...
+      useEventDetailPanel: false,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      // Suppress the built-in panel — use your own modal triggered elsewhere
+      calendar = {
+        ...
+        useEventDetailPanel: false,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      // Suppress the built-in panel — use your own modal triggered elsewhere
+      const calendar = useCalendarApp({
+        ...
+        useEventDetailPanel: false,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    // Custom panel content (keeps the default panel chrome)
+    <DayFlowCalendar
+      calendar={calendar}
+      eventDetailContent={({ event, onClose }) => (
+        <div className='p-4'>
+          <h2>{event.title}</h2>
+          <button onClick={onClose}>Close</button>
+        </div>
+      )}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <!-- Custom panel content (keeps the default panel chrome) -->
+        <template #eventDetailContent="{ event, onClose }">
+          <div class="p-4">
+            <h2>{{ event.title }}</h2>
+            <button @click="onClose()">Close</button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <!-- Custom panel content (keeps the default panel chrome) -->
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventDetailContent]="detailContent"
+    >
+    </dayflow-calendar>
+
+    <ng-template #detailContent let-args>
+      <div class="p-4">
+        <h2>{{ args.event.title }}</h2>
+        <button (click)="args.onClose()">Close</button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} eventDetailContent={CustomDetailContent} />
+
+    <!-- CustomDetailContent.svelte -->
+    <script lang="ts">
+      import type { EventDetailContentSlotArgs } from '@dayflow/core';
+      let { event, onClose } = $props<EventDetailContentSlotArgs>();
+    </script>
+
+    <div class="p-4">
+      <h2>{event.title}</h2>
+      <button onclick={onClose}>Close</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    // Custom dialog (requires useEventDetailDialog: true in useCalendarApp)
+    <DayFlowCalendar
+      calendar={calendar}
+      eventDetailDialog={({ event, isOpen, onClose }) => (
+        <MyDialog isOpen={isOpen} onClose={onClose}>
+          <EventForm event={event} />
+        </MyDialog>
+      )}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <!-- Custom dialog -->
+        <template #eventDetailDialog="{ event, isOpen, onClose }">
+          <MyDialog :isOpen="isOpen" @close="onClose()">
+            <EventForm :event="event" />
+          </MyDialog>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    import MyDialog from './MyDialog.vue';
+    import EventForm from './EventForm.vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <!-- Custom dialog -->
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventDetailDialog]="dialog"
+    >
+    </dayflow-calendar>
+
+    <ng-template #dialog let-args>
+      <my-dialog [isOpen]="args.isOpen" (close)="args.onClose()">
+        <event-form [event]="args.event"></event-form>
+      </my-dialog>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} eventDetailDialog={MyCustomDialog} />
+
+    <!-- MyCustomDialog.svelte -->
+    <script lang="ts">
+      import type { EventDetailDialogSlotArgs } from '@dayflow/core';
+      import MyDialog from './MyDialog.svelte';
+      import EventForm from './EventForm.svelte';
+
+      let { event, isOpen, onClose } = $props<EventDetailDialogSlotArgs>();
+    </script>
+
+    <MyDialog {isOpen} {onClose}>
+      <EventForm {event} />
+    </MyDialog>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+---
+
+Kurz gesagt: `DayFlowCalendar` übernimmt die Orchestrierung – Layout, Anbindung der Seitenleiste und das Innenleben der Termindetails – damit Sie sich auf die Konfiguration von `useCalendarApp` und das übrige Produkterlebnis konzentrieren können.

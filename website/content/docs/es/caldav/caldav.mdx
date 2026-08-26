@@ -1,0 +1,628 @@
+---
+title: '@dayflow/caldav'
+---
+
+# @dayflow/caldav
+
+`@dayflow/caldav` es un motor de sincronización CalDAV headless, basado en adaptadores. Funciona con iCloud Calendar, Nextcloud, Radicale, Fastmail y cualquier servidor CalDAV compatible con RFC 4791.
+
+## Instalación
+
+<PackageTabs pkg='@dayflow/caldav' />
+
+## Inicio rápido
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useRef, useEffect } from 'react';
+    import {
+      DayFlowCalendar,
+      useCalendarApp,
+      createMonthView,
+    } from '@dayflow/react';
+    import {
+      attachCalDAVToDayFlow,
+      createCalDAVAdapter,
+      createCalDAVSync,
+      type CalDAVDayFlowController,
+    } from '@dayflow/caldav';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+      const controllerRef = useRef<CalDAVDayFlowController | null>(null);
+
+      useEffect(() => {
+        if (controllerRef.current) return;
+
+        const adapter = createCalDAVAdapter({
+          calendarHomeUrl: 'https://caldav.example.com/calendars/alice/',
+          fetch: (url, init) =>
+            fetch('/api/caldav-proxy', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url, init }),
+            }),
+        });
+
+        const sync = createCalDAVSync({ adapter });
+        const controller = attachCalDAVToDayFlow(calendar.app, sync, {
+          writable: true,
+          maxConcurrentCalendars: 4,
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controllerRef.current = controller;
+        controller.start();
+
+        return () => {
+          controller.stop();
+          controllerRef.current = null;
+        };
+      }, [calendar.app]);
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+      import { onMounted, onBeforeUnmount } from 'vue';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachCalDAVToDayFlow,
+        createCalDAVAdapter,
+        createCalDAVSync,
+      } from '@dayflow/caldav';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      let controller;
+
+      onMounted(() => {
+        const adapter = createCalDAVAdapter({
+          calendarHomeUrl: 'https://caldav.example.com/calendars/alice/',
+          fetch: (url, init) =>
+            fetch('/api/caldav-proxy', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url, init }),
+            }),
+        });
+
+        const sync = createCalDAVSync({ adapter });
+        controller = attachCalDAVToDayFlow(calendar.app, sync, {
+          writable: true,
+          maxConcurrentCalendars: 4,
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onBeforeUnmount(() => {
+        controller?.stop();
+      });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component, OnInit, OnDestroy } from '@angular/core';
+    import { CalendarApp, createMonthView } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import {
+      attachCalDAVToDayFlow,
+      createCalDAVAdapter,
+      createCalDAVSync,
+      type CalDAVDayFlowController,
+    } from '@dayflow/caldav';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`,
+    })
+    export class AppComponent implements OnInit, OnDestroy {
+      calendar = new CalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      private controller?: CalDAVDayFlowController;
+
+      ngOnInit() {
+        const adapter = createCalDAVAdapter({
+          calendarHomeUrl: 'https://caldav.example.com/calendars/alice/',
+          fetch: (url, init) =>
+            fetch('/api/caldav-proxy', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url, init }),
+            }),
+        });
+
+        const sync = createCalDAVSync({ adapter });
+        this.controller = attachCalDAVToDayFlow(this.calendar, sync, {
+          writable: true,
+          maxConcurrentCalendars: 4,
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        this.controller.start();
+      }
+
+      ngOnDestroy() {
+        this.controller?.stop();
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { onMount, onDestroy } from 'svelte';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachCalDAVToDayFlow,
+        createCalDAVAdapter,
+        createCalDAVSync,
+      } from '@dayflow/caldav';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      let controller;
+
+      onMount(() => {
+        const adapter = createCalDAVAdapter({
+          calendarHomeUrl: 'https://caldav.example.com/calendars/alice/',
+          fetch: (url, init) =>
+            fetch('/api/caldav-proxy', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url, init }),
+            }),
+        });
+
+        const sync = createCalDAVSync({ adapter });
+        controller = attachCalDAVToDayFlow(calendar.app, sync, {
+          writable: true,
+          maxConcurrentCalendars: 4,
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onDestroy(() => {
+        controller?.stop();
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Descubrimiento del calendar home
+
+En servidores que requieren descubrimiento dinámico (como iCloud), usa `createCalDAVAdapterFromServer`: ejecuta el PROPFIND en dos pasos y devuelve un adaptador listo en una sola llamada.
+
+```ts
+import {
+  createCalDAVAdapterFromServer,
+  ICLOUD_CALDAV_SERVER,
+} from '@dayflow/caldav';
+
+const adapter = await createCalDAVAdapterFromServer(ICLOUD_CALDAV_SERVER, {
+  fetch: proxiedFetch,
+});
+```
+
+Si necesitas la URL del home por separado (para cachearla o registrarla), usa la función de más bajo nivel `discoverCalendarHome`:
+
+```ts
+import {
+  discoverCalendarHome,
+  createCalDAVAdapter,
+  ICLOUD_CALDAV_SERVER,
+} from '@dayflow/caldav';
+
+const calendarHomeUrl = await discoverCalendarHome(
+  ICLOUD_CALDAV_SERVER,
+  authenticatedFetch
+);
+const adapter = createCalDAVAdapter({
+  calendarHomeUrl,
+  fetch: authenticatedFetch,
+});
+```
+
+`discoverCalendarHome` realiza un PROPFIND en dos pasos:
+
+1. Obtiene `current-user-principal` desde la raíz del servidor
+2. Obtiene `calendar-home-set` desde la URL del principal
+
+El argumento `fetch` debe inyectar las credenciales de autenticación: las peticiones de descubrimiento requieren autenticación igual que cualquier otra petición CalDAV.
+
+## Ajustes por proveedor
+
+Usa los ajustes integrados para construir el `calendarHomeUrl` correcto de los proveedores conocidos:
+
+```ts
+import {
+  ICLOUD_CALDAV_SERVER,
+  createCalDAVAdapterFromServer,
+  nextcloudConfig,
+  radicaleConfig,
+  fastmailConfig,
+  createCalDAVAdapter,
+} from '@dayflow/caldav';
+
+// iCloud — must always discover dynamically
+const icloudAdapter = await createCalDAVAdapterFromServer(
+  ICLOUD_CALDAV_SERVER,
+  { fetch: proxiedFetch }
+);
+
+// Nextcloud
+const nextcloudAdapter = createCalDAVAdapter({
+  ...nextcloudConfig('https://nextcloud.example.com', 'alice'),
+  fetch: proxiedFetch,
+});
+
+// Radicale
+const radicaleAdapter = createCalDAVAdapter({
+  ...radicaleConfig('https://radicale.example.com', 'alice'),
+  fetch: proxiedFetch,
+});
+
+// Fastmail
+const fastmailAdapter = createCalDAVAdapter({
+  ...fastmailConfig('https://caldav.fastmail.com/dav', 'alice@fastmail.com'),
+  fetch: proxiedFetch,
+});
+```
+
+### iCloud Calendar
+
+CalDAV de iCloud exige una **contraseña específica de aplicación**, no la contraseña de tu Apple ID. Puedes generarla en [appleid.apple.com](https://appleid.apple.com) → Inicio de sesión y seguridad → Contraseñas específicas de aplicación.
+
+iCloud no admite CORS desde el navegador, así que todas las peticiones —incluido el descubrimiento— necesitan un proxy en el backend.
+
+Comportamientos propios de iCloud que el adaptador resuelve automáticamente:
+
+- Colores hexadecimales RGBA de 8 dígitos (`#RRGGBBAA`): se descarta el canal alfa
+- Las escrituras condicionales (`If-Match` con ETag) funcionan correctamente
+- Los eventos de día completo usan el formato estándar `VALUE=DATE`
+- Los eventos con zona horaria usan el parámetro estándar `TZID`
+
+### Nextcloud
+
+Usa una [contraseña de aplicación](https://docs.nextcloud.com/server/latest/user_manual/en/session_management.html) desde Ajustes personales → Seguridad, no la contraseña de tu cuenta.
+
+Nextcloud devuelve correctamente `current-user-privilege-set`, así que los permisos de lectura y escritura se detectan de forma automática. No admite CORS: usa un proxy.
+
+### Radicale
+
+Radicale normalmente no devuelve `current-user-privilege-set`, así que el adaptador marca como de solo lectura los calendarios descubiertos. Si sabes que el usuario tiene permiso de escritura, define `readOnly: false` en el `CalendarType` tras el descubrimiento.
+
+### Fastmail
+
+Fastmail admite CalDAV estándar. Usa `fastmailConfig` con tu dirección de correo de Fastmail como nombre de usuario.
+
+## Hidratación desde la caché local
+
+Si guardas los eventos sincronizados en una base de datos o en un almacén local (por ejemplo, Supabase o IndexedDB), puedes precargar DayFlow antes de la primera sincronización remota para que el calendario se muestre de inmediato:
+
+```ts
+const controller = attachCalDAVToDayFlow(calendar.app, sync, {
+  getInitialSnapshot: async () => {
+    const { calendars, events } = await loadFromLocalDB();
+    return { calendars, events };
+  },
+  onSyncComplete: delta => {
+    // Save what changed to your local store
+    console.log(
+      `+${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+    );
+  },
+  onWriteComplete: (operation, event) => {
+    // Update local store after a successful write-back
+    persistEvent(operation, event);
+  },
+});
+```
+
+`getInitialSnapshot` se llama una sola vez durante `start()`, antes de cualquier petición CalDAV. DayFlow se renderiza con los datos en caché mientras la sincronización se ejecuta en segundo plano. Los errores de `getInitialSnapshot` se pasan a `onError` y no interrumpen la sincronización remota.
+
+## Aplicar una instantánea remota manualmente
+
+Para aplicaciones que gestionan su propia orquestación de sincronización (por ejemplo, desde una tarea de backend en lugar de directamente desde el navegador), `applyRemoteSnapshot` aplica un lote de eventos remotos a DayFlow sin volver a enviarlos al proveedor:
+
+```ts
+import { applyRemoteSnapshot, getCalDAVMeta } from '@dayflow/caldav';
+
+const delta = await applyRemoteSnapshot(
+  calendar.app,
+  { calendars, events },
+  {
+    // Identify events owned by this provider so stale ones are cleaned up
+    isOwnedEvent: event => Boolean(getCalDAVMeta(event)),
+    isOwnedCalendar: calendar => calendar.source === 'iCloud',
+    snapshotMode: 'authoritative',
+
+    // Optionally preserve local in-progress edits during optimistic sync
+    resolveConflict: (remote, local) =>
+      mergeLocalEditsOntoRemote(remote, local),
+  }
+);
+
+console.log(delta.events.added, delta.events.updated, delta.events.deleted);
+```
+
+`applyRemoteSnapshot` calcula la diferencia entre la instantánea entrante y el estado actual de la aplicación, y después aplica los cambios con `source: 'remote'` para evitar bucles de sincronización. Devuelve un `RemoteSnapshotDelta` con los recuentos por operación.
+
+Las instantáneas se tratan como parciales por defecto, así que los registros locales propios que no aparecen en ellas se conservan. Pasa `snapshotMode: 'authoritative'` solo cuando la instantánea represente por completo todos los calendarios y eventos del proveedor. Para respuestas limitadas por rango, filtradas o paginadas, mantén el modo parcial predeterminado o define explícitamente `deleteMissingEvents: false` y `deleteMissingCalendars: false`.
+
+## Proxy en el backend
+
+Los servidores CalDAV no admiten CORS desde el navegador, así que este no puede llamarlos directamente. Necesitas un proxy en el backend que:
+
+1. Reciba las peticiones de DayFlow (como peticiones CalDAV envueltas en JSON)
+2. Inyecta las credenciales (autenticación básica, token, etc.)
+3. Las reenvíe al servidor CalDAV y devuelva la respuesta
+
+```js
+// proxy.mjs (minimal Node.js example)
+import { createServer } from 'node:http';
+
+const {
+  CALDAV_BASE_URL, // e.g. https://caldav.icloud.com
+  CALDAV_USERNAME,
+  CALDAV_PASSWORD,
+  PORT = '3001',
+} = process.env;
+
+const ALLOWED_METHODS = new Set(['PROPFIND', 'REPORT', 'PUT', 'DELETE']);
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': 'http://localhost:5173',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Expose-Headers': 'ETag, DAV',
+};
+
+createServer(async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, CORS_HEADERS);
+    res.end();
+    return;
+  }
+
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const { url, init } = JSON.parse(Buffer.concat(chunks).toString());
+
+  if (!url.startsWith(CALDAV_BASE_URL)) {
+    res.writeHead(403);
+    res.end();
+    return;
+  }
+  if (!ALLOWED_METHODS.has(init?.method ?? 'PROPFIND')) {
+    res.writeHead(405);
+    res.end();
+    return;
+  }
+
+  const upstream = await fetch(url, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      Authorization:
+        'Basic ' +
+        Buffer.from(`${CALDAV_USERNAME}:${CALDAV_PASSWORD}`).toString('base64'),
+    },
+  });
+
+  const body = await upstream.text();
+  res.writeHead(upstream.status, {
+    'Content-Type': upstream.headers.get('Content-Type') ?? 'text/xml',
+    ETag: upstream.headers.get('ETag') ?? '',
+    ...CORS_HEADERS,
+  });
+  res.end(body);
+}).listen(Number(PORT));
+```
+
+Arranca el proxy con las credenciales en variables de entorno:
+
+```bash
+CALDAV_BASE_URL=https://caldav.icloud.com \
+CALDAV_USERNAME=alice@icloud.com \
+CALDAV_PASSWORD=xxxx-xxxx-xxxx-xxxx \
+node proxy.mjs
+```
+
+## Referencia de opciones
+
+### Opciones de `attachCalDAVToDayFlow`
+
+| Opción                        | Tipo                                   | Valor por defecto      | Descripción                                                                                                                     |
+| :---------------------------- | :------------------------------------- | :--------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
+| `writable`                    | `boolean`                              | `true`                 | Permite que los cambios locales se escriban de vuelta en el servidor CalDAV.                                                    |
+| `refreshOnVisibleRangeChange` | `boolean`                              | `true`                 | Vuelve a sincronizar cuando el usuario navega a un nuevo rango de fechas.                                                       |
+| `maxConcurrentCalendars`      | `number`                               | `4`                    | Número máximo de calendarios remotos que se sincronizan en paralelo.                                                            |
+| `eventMode.recurring`         | `'read-only'`                          | `'read-only'`          | Los eventos recurrentes son de solo lectura. Solo se admite `'read-only'`.                                                      |
+| `onError`                     | `(error, context) => void`             | —                      | Se llama ante cualquier fallo de sincronización o de escritura.                                                                 |
+| `getInitialSnapshot`          | `() => Promise<{ events, calendars }>` | —                      | Precarga DayFlow desde una caché local antes de la primera sincronización remota. Los errores se pasan a `onError`.             |
+| `onSyncComplete`              | `(delta: CalDAVSyncDelta) => void`     | —                      | Se llama tras cada sincronización correcta, con los recuentos de lo que ha cambiado.                                            |
+| `onWriteComplete`             | `(operation, event) => void`           | —                      | Se llama cuando un cambio local se escribe correctamente en el servidor CalDAV.                                                 |
+| `createEventId`               | `(input) => string`                    | con espacio de nombres | Construye los ids de DayFlow para los eventos CalDAV remotos. Por defecto usa ids acotados al proveedor para evitar colisiones. |
+
+`CalDAVErrorContext` incluye `operation` (`'list-calendars'` \| `'initial-sync'` \| `'range-sync'` \| `'create'` \| `'update'` \| `'delete'`), `calendarId` y `eventId`.
+
+`CalDAVSyncDelta`:
+
+```ts
+type CalDAVSyncDelta = {
+  calendars: { added: number; updated: number; deleted: number };
+  events: { added: number; updated: number; deleted: number };
+};
+```
+
+### Opciones de `createCalDAVAdapter`
+
+| Opción            | Tipo       | Obligatorio | Descripción                                                             |
+| :---------------- | :--------- | :---------- | :---------------------------------------------------------------------- |
+| `calendarHomeUrl` | `string`   | ✓           | La URL de la colección calendar home de CalDAV.                         |
+| `fetch`           | `function` | ✓           | Función fetch autenticada. Enrútala a través de tu proxy en el backend. |
+
+### Opciones de `createCalDAVAdapterFromServer`
+
+| Parámetro   | Tipo     | Descripción                                                           |
+| :---------- | :------- | :-------------------------------------------------------------------- |
+| `serverUrl` | `string` | URL raíz del servidor CalDAV (por ejemplo, `ICLOUD_CALDAV_SERVER`).   |
+| `options`   | `object` | Las mismas opciones que `createCalDAVAdapter`, sin `calendarHomeUrl`. |
+
+Ejecuta el descubrimiento internamente y devuelve un `CalDAVAdapter` listo para usar.
+
+## API del controlador
+
+```ts
+// Discover remote calendars, load initial events, and subscribe to DayFlow changes
+await controller.start();
+
+// Unsubscribe all listeners (does not clear DayFlow state)
+controller.stop();
+
+// Re-sync all calendars using the last known visible range
+await controller.refresh();
+
+// Re-sync a specific calendar
+await controller.refresh({ calendarId: 'my-calendar-id' });
+
+// Re-sync with an explicit date range
+await controller.refresh({
+  range: { start: new Date('2025-01-01'), end: new Date('2025-02-01') },
+});
+
+// Get current sync status
+const status = controller.getStatus();
+// { state: 'idle' | 'syncing' | 'error', lastSyncedAt?: Date, error?: unknown }
+```
+
+## Interfaz de almacenamiento
+
+`createCalDAVSync` acepta un objeto `storage` opcional para conservar entre recargas los tokens de sincronización, los ctags de los calendarios y los ETags. Si no lo proporcionas, el estado de sincronización solo vive en memoria. Ese valor por defecto está bien para pruebas y demos, pero en producción conviene proporcionar almacenamiento duradero para que la sincronización incremental y las escrituras condicionales sobrevivan a las recargas.
+
+```ts
+import { createCalDAVSync, type CalDAVStorage } from '@dayflow/caldav';
+
+const storage: CalDAVStorage = {
+  getSyncToken: async calendarId =>
+    localStorage.getItem(`sync:${calendarId}`) ?? null,
+  setSyncToken: async (calendarId, token) => {
+    if (token) localStorage.setItem(`sync:${calendarId}`, token);
+    else localStorage.removeItem(`sync:${calendarId}`);
+  },
+
+  getCtag: async calendarId =>
+    localStorage.getItem(`ctag:${calendarId}`) ?? null,
+  setCtag: async (calendarId, ctag) =>
+    localStorage.setItem(`ctag:${calendarId}`, ctag),
+
+  getEtag: async href => localStorage.getItem(`etag:${href}`) ?? null,
+  setEtag: async (href, etag) => localStorage.setItem(`etag:${href}`, etag),
+  deleteEtag: async href => localStorage.removeItem(`etag:${href}`),
+
+  getEventState: async id =>
+    JSON.parse(localStorage.getItem(`event:${id}`) ?? 'null'),
+  setEventState: async (id, state) =>
+    localStorage.setItem(`event:${id}`, JSON.stringify(state)),
+  deleteEventState: async id => localStorage.removeItem(`event:${id}`),
+
+  clearCalendar: async calendarId => {
+    for (const key of Object.keys(localStorage)) {
+      if (
+        key.startsWith(`sync:${calendarId}`) ||
+        key.startsWith(`ctag:${calendarId}`)
+      ) {
+        localStorage.removeItem(key);
+      }
+    }
+  },
+};
+
+const sync = createCalDAVSync({
+  adapter,
+  storage,
+  // Optional: split broad visible-range REPORTs into smaller windows.
+  rangeChunkDays: 31,
+});
+```
+
+Cuando hay valores `ctag` disponibles para un calendario, las sincronizaciones de la colección completa pueden ahorrarse tráfico de red si la colección no ha cambiado desde la última sincronización terminada. Las sincronizaciones por rango visible siguen consultando el rango solicitado, de modo que navegar a un rango nuevo puede cargar eventos que aún no se habían visto.
+
+## Identidad de los eventos
+
+Por defecto, el binding de DayFlow usa ids acotados al proveedor para los eventos CalDAV remotos:
+
+```ts
+import { createNamespacedCalDAVEventId } from '@dayflow/caldav';
+
+const controller = attachCalDAVToDayFlow(calendar.app, sync, {
+  createEventId: createNamespacedCalDAVEventId,
+});
+```
+
+Las llamadas directas al mapper mantienen la compatibilidad de usar el UID como id, salvo que pases una factory:
+
+```ts
+const event = mapCalDAVEventToDayFlow(data, {
+  createEventId: createNamespacedCalDAVEventId,
+});
+```
+
+Así se evitan colisiones con los eventos locales y con otros proveedores, sin dejar de emparejar los eventos existentes por sus metadatos CalDAV durante la sincronización.

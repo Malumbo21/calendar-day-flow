@@ -1,0 +1,440 @@
+---
+title: useCalendarApp
+---
+
+# Référence de useCalendarApp
+
+`useCalendarApp(config: CalendarAppConfig)` est le hook qui relie le cœur de DayFlow à votre application. Vous lui passez un unique objet de configuration pour enregistrer les vues, fournir les événements initiaux, activer l'interface optionnelle et brancher les callbacks du cycle de vie. Ce guide détaille toutes les options disponibles.
+
+## Démarrage rapide
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createMonthView,
+      createWeekView,
+      ViewType,
+    } from '@dayflow/react';
+    import '@dayflow/core/dist/styles.css';
+
+    export function TeamCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView(), createWeekView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        events: [],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createMonthView, createWeekView, ViewType } from '@dayflow/core';
+    import '@dayflow/core/dist/styles.css';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView(), createWeekView()],
+      defaultView: ViewType.MONTH,
+      initialDate: new Date(),
+      events: [],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createMonthView, createWeekView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import '@dayflow/core/dist/styles.css';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createMonthView(), createWeekView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        events: [],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView, createWeekView, ViewType } from '@dayflow/core';
+      import '@dayflow/core/dist/styles.css';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView(), createWeekView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        events: [],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Vue d'ensemble de la configuration
+
+| Option                 | Type                        | Obligatoire | Par défaut                                                                | Description                                                                                                                                                                               |
+| ---------------------- | --------------------------- | ----------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `views`                | `CalendarView[]`            | Obligatoire | —                                                                         | Enregistre les définitions de vues (par exemple `createMonthView()`). Au moins une vue est requise.                                                                                       |
+| `plugins`              | `CalendarPlugin[]`          | Facultatif  | `[]`                                                                      | Installe des plugins optionnels (aides au glisser-déposer, raccourcis, etc.). Chaque plugin reçoit l'instance de l'application pendant `install`.                                         |
+| `events`               | `Event[]`                   | Facultatif  | `[]`                                                                      | Événements initiaux. Utilisez ensuite `addEvent`/`updateEvent` pour modifier l'état.                                                                                                      |
+| `callbacks`            | `CalendarCallbacks`         | Facultatif  | `{}`                                                                      | Hooks de cycle de vie déclenchés lors des changements de vue, de date ou d'événement — parfaits pour se synchroniser avec une API.                                                        |
+| `defaultView`          | `ViewType`                  | Facultatif  | `ViewType.WEEK`                                                           | Vue chargée en premier ; elle doit figurer dans `views`.                                                                                                                                  |
+| `initialDate`          | `Date`                      | Facultatif  | `new Date()`                                                              | Date de départ (elle détermine aussi le calcul du mois visible).                                                                                                                          |
+| `timeZone`             | `string`                    | Facultatif  | Fuseau horaire du système                                                 | Fuseau horaire global d'affichage et d'édition pour toutes les vues.                                                                                                                      |
+| `timeFormat`           | `'12h' \| '24h'`            | Facultatif  | —                                                                         | Format d'heure global pour toutes les vues, la recherche et les composants. Il est prioritaire et remplace les réglages définis au niveau des vues ou de la recherche.                    |
+| `switcherMode`         | `'buttons' \| 'select'`     | Facultatif  | `'buttons'`                                                               | Contrôle l'affichage du sélecteur de vue intégré dans les en-têtes.                                                                                                                       |
+| `calendars`            | `CalendarType[]`            | Facultatif  | `[]`                                                                      | Enregistre les catégories de calendrier (Travail, Personnel, etc.) avec leurs couleurs et leur visibilité.                                                                                |
+| `defaultCalendar`      | `string`                    | Facultatif  | Premier calendrier visible                                                | Identifiant utilisé lors de la création de nouveaux événements.                                                                                                                           |
+| `theme`                | `ThemeConfig`               | Facultatif  | `{ mode: 'light' }`                                                       | Définit le mode de thème global et, éventuellement, des surcharges de tokens.                                                                                                             |
+| `locale`               | `string \| Locale`          | Facultatif  | `'en-US'`                                                                 | Définit la locale pour l'internationalisation (i18n). Accepte des codes de langue (par exemple 'ja') ou des objets Locale.                                                                |
+| `useEventDetailDialog` | `boolean`                   | Facultatif  | `false`                                                                   | Active la boîte de dialogue modale de détail au lieu des panneaux en ligne.                                                                                                               |
+| `eventDetailTrigger`   | `'click' \| 'dbClick'`      | Facultatif  | `'dbClick'`                                                               | Détermine si le détail d'un événement s'ouvre au simple ou au double-clic sur ordinateur. Au toucher, un simple appui suffit toujours.                                                    |
+| `useCalendarHeader`    | `boolean`                   | Facultatif  | `true`                                                                    | Affiche l'en-tête par défaut (`true`) ou le masque (`false`). Pour un en-tête sur mesure, utilisez le slot `calendarHeader` de `DayFlowCalendar`.                                         |
+| `readOnly`             | `boolean \| ReadOnlyConfig` | Facultatif  | `false`                                                                   | Désactive l'interface de modification intégrée. Accepte un booléen ou une configuration pour un contrôle fin (glisser / consultation). Les API programmatiques continuent de fonctionner. |
+| `allDaySortComparator` | `AllDaySortComparator`      | Facultatif  | Ordre par groupe de calendrier, événements sur plusieurs jours en premier | Comparateur personnalisé contrôlant l'ordre des lignes d'événements sur la journée entière dans toutes les vues. Fourni, il remplace entièrement l'ordre par défaut.                      |
+
+## Principales options
+
+### Views (obligatoire)
+
+- Chaque vue est un objet `CalendarView` de la forme `{ type, component, config }`.
+- DayFlow fournit des factories (`createDayView`, `createWeekView`, `createMonthView`, `createAgendaView`, `createYearView`) qui renvoient des définitions prêtes à l'emploi.
+- `defaultView` doit correspondre à l'un des types de vues enregistrés, sinon l'application lève une erreur à l'initialisation.
+
+### Events
+
+- Le tableau fourni devient la liste en mémoire `CalendarApp.state.events`.
+- `useCalendarApp` surveille les mutations de l'application : appeler `calendar.addEvent()` ou `calendar.updateEvent()` synchronise donc automatiquement l'état.
+- Assurez-vous que les événements respectent l'interface `Event` (`start`/`end` acceptent `PlainDate`, `PlainDateTime` ou `ZonedDateTime`).
+
+### Plugins
+
+- Un plugin a la forme `{ name, install(app), config }` et est exécuté une seule fois à la construction.
+- Utilisez les plugins pour enregistrer des gestionnaires de glisser-déposer, des raccourcis clavier, des observateurs analytiques, ou pour exposer vos propres API via `app.getPlugin(name)`.
+
+### Callbacks
+
+`callbacks` maintient l'état synchronisé avec votre backend ou votre couche analytique :
+
+- `onViewChange(view)` se déclenche après un changement de vue réussi.
+- `onDateChange(date)` se déclenche à chaque changement de la date courante (navigation ou sélection).
+- `onVisibleRangeChange(start, end, reason)` se déclenche lorsque la plage de dates visible change. Utile pour des requêtes plus ciblées, sans calcul supplémentaire.
+- `onEventCreate(event)`, `onEventUpdate(event)` et `onEventDelete(id)` reflètent les opérations CRUD — idéaux pour synchroniser une API.
+- `onEventDoubleClick(event, e)` se déclenche au double-clic sur un événement dans le mode par défaut `eventDetailTrigger: 'dbClick'`. Utilisez `e.currentTarget` comme ancre pour vos popovers externes et renvoyez `false` pour supprimer le panneau ou la boîte de dialogue de détail de DayFlow.
+- `onMoreEventsClick(date)` se déclenche au clic sur le lien « + X autres » dans la vue Mois.
+- `onCalendarCreate(calendar)`, `onCalendarUpdate(calendar)` et `onCalendarDelete(id)` reflètent les opérations CRUD sur les calendriers.
+- `onCalendarMerge(sourceId, targetId)` se déclenche lors de la fusion de deux calendriers (par exemple « Travail » dans « Personnel »).
+- `onRender()` s'exécute lorsque le calendrier termine une passe de rendu (utile pour l'instrumentation).
+
+### defaultView et initialDate
+
+- `defaultView` définit le `state.currentView` initial. Sans valeur, DayFlow retombe sur `ViewType.WEEK` : précisez-le donc explicitement pour les calendriers à vue unique.
+- `initialDate` initialise à la fois `state.currentDate` et le `visibleMonth` interne. Modifiez-le si vous récupérez la date depuis le routage ou les préférences utilisateur.
+
+### timeZone
+
+- `timeZone` définit le fuseau horaire principal d'affichage et d'édition pour les vues Jour, Semaine, Mois, Agenda et Année.
+- S'il est omis, DayFlow le déduit du fuseau horaire système de l'utilisateur.
+- Modifier `timeZone` reprojette l'interface, mais ne modifie pas en soi les données des événements.
+- Les callbacks d'édition renvoient toujours les données canoniques de l'événement une fois le changement appliqué. DayFlow ne conserve pas le fuseau de projection temporaire comme forme stockée de l'événement.
+- Le `secondaryTimeZone` des vues Jour et Semaine reste un axe de référence purement visuel et ne remplace pas le fuseau horaire principal de l'application.
+
+### switcherMode
+
+- `'buttons'` : affiche un groupe de boutons horizontal, idéal sur ordinateur.
+- `'select'` : affiche une liste déroulante, parfaite quand la place manque ou que vous proposez de nombreux types de vues.
+
+### calendars et defaultCalendar
+
+- `calendars` définit chaque type de calendrier (`id`, `name`, `colors`, visibilité). Le registre des calendriers choisit automatiquement les couleurs claires ou sombres selon `theme.mode` (`'light' | 'dark' | 'auto'`).
+- `defaultCalendar` détermine le calendrier dont héritent les nouveaux événements ; sans valeur, le premier calendrier visible l'emporte.
+
+**Propriétés de `CalendarType` :**
+
+| Propriété      | Type                     | Obligatoire | Description                                                                              |
+| -------------- | ------------------------ | ----------- | ---------------------------------------------------------------------------------------- |
+| `id`           | `string`                 | Oui         | Identifiant unique (par exemple `'work'`, `'personal'`).                                 |
+| `name`         | `string`                 | Oui         | Nom affiché dans l'interface.                                                            |
+| `colors`       | `CalendarColors`         | Oui         | Jeu de couleurs du mode clair (voir ci-dessous).                                         |
+| `darkColors`   | `CalendarColors`         | Non         | Jeu de couleurs du mode sombre ; à défaut, `colors` est utilisé.                         |
+| `description`  | `string`                 | Non         | Description facultative, lisible par un humain.                                          |
+| `icon`         | `string`                 | Non         | Emoji ou nom d'icône affiché à côté du nom du calendrier.                                |
+| `isVisible`    | `boolean`                | Non         | Indique si les événements de ce calendrier sont affichés. `true` par défaut.             |
+| `isDefault`    | `boolean`                | Non         | Marque ce calendrier comme calendrier système par défaut.                                |
+| `readOnly`     | `boolean`                | Non         | Désactive le glisser, le redimensionnement et l'édition des événements de ce calendrier. |
+| `source`       | `string`                 | Non         | Libellé d'origine (par exemple `'Google Calendar'`, `'iCloud'`).                         |
+| `subscription` | `{ url, status, meta? }` | Non         | Métadonnées d'abonnement pour les calendriers ICS ou distants.                           |
+
+**Propriétés de `CalendarColors` :**
+
+| Propriété            | Type     | Description                                                |
+| -------------------- | -------- | ---------------------------------------------------------- |
+| `eventColor`         | `string` | Couleur de fond de l'événement (généralement translucide). |
+| `eventSelectedColor` | `string` | Fond de l'événement lorsqu'il est sélectionné.             |
+| `lineColor`          | `string` | Couleur d'accent ou de bordure.                            |
+| `textColor`          | `string` | Couleur du texte de l'événement.                           |
+
+### theme
+
+La configuration `theme` contrôle l'apparence visuelle de tout le calendrier :
+
+```tsx
+const calendar = useCalendarApp({
+  theme: {
+    mode: 'dark', // 'light' | 'dark' | 'auto'
+  },
+});
+```
+
+**Modes de thème :**
+
+- `'light'` : mode clair, fonds clairs et texte sombre (par défaut)
+- `'dark'` : mode sombre, fonds sombres et texte clair
+- `'auto'` : suit automatiquement la préférence de thème du système
+
+**Changer de thème par programmation :**
+
+```tsx
+// Get current theme
+const currentTheme = calendar.app.getTheme();
+
+// Set theme
+calendar.app.setTheme('dark');
+
+// Subscribe to theme changes
+calendar.app.subscribeThemeChange(theme => {
+  console.log('Theme changed to:', theme);
+});
+```
+
+**Couleurs personnalisées pour le mode sombre :**
+
+Définissez des couleurs distinctes pour les modes clair et sombre sur chaque type de calendrier :
+
+```tsx
+const calendars = [
+  {
+    id: 'work',
+    name: 'Work',
+    colors: {
+      // Light mode colors
+      lineColor: '#0066cc',
+      eventColor: '#e6f2ff',
+      eventSelectedColor: '#cce4ff',
+      textColor: '#003d7a',
+    },
+    darkColors: {
+      // Dark mode colors
+      lineColor: '#4da6ff',
+      eventColor: '#1a3d5c',
+      eventSelectedColor: '#2a5a8a',
+      textColor: '#b3d9ff',
+    },
+  },
+];
+```
+
+Consultez [Mode sombre](/docs-fr/features/dark-mode) pour la documentation complète sur les thèmes.
+
+### locale
+
+L'option `locale` définit la langue et les réglages régionaux du calendrier.
+
+- **Chaîne :** utilisez un code de langue comme `'en-US'`, `'ja'`, `'zh'`, `'de'`, `'fr'`, `'es'` ou `'ko'`.
+- **Objet Locale :** passez un objet `Locale` importé pour bénéficier du typage, ou un objet sur mesure pour les langues non prises en charge.
+
+```tsx
+// String code
+const calendar = useCalendarApp({
+  locale: 'ja',
+});
+
+// Additional Locale object from the localization plugin
+import { ja } from '@dayflow/plugin-localization';
+const calendar = useCalendarApp({
+  locale: ja,
+});
+
+// Custom Locale object
+const customLocale = {
+  code: 'it',
+  messages: { today: 'Oggi', ... }
+};
+const calendar = useCalendarApp({
+  locale: customLocale,
+});
+```
+
+### useEventDetailDialog
+
+- `true` active la boîte de dialogue modale par défaut (`DefaultEventDetailDialog`).
+- Combinez-la avec `eventDetailContent` ou `eventDetailDialog` sur `DayFlowCalendar` pour remplacer l'interface tout en conservant la machine à états du cœur.
+
+### eventDetailTrigger
+
+- `'dbClick'` (par défaut) : un simple clic sélectionne l'événement, un double-clic ouvre le panneau ou la boîte de dialogue de détail.
+- `'click'` : un simple clic ouvre immédiatement le panneau ou la boîte de dialogue de détail.
+- Le toucher ne change pas : appuyer sur un événement ouvre le détail quelle que soit cette option.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  eventDetailTrigger: 'click',
+});
+```
+
+### useCalendarHeader
+
+- `true` (par défaut) : affiche l'en-tête de calendrier intégré.
+- `false` : masque entièrement l'en-tête.
+
+Pour afficher un en-tête sur mesure, utilisez le slot `calendarHeader` de `DayFlowCalendar`. Voir [En-tête du calendrier](/docs-fr/features/calendar-header) pour plus de détails.
+
+### readOnly
+
+- `true` : désactive l'interface de modification intégrée (glisser, créer, éditer).
+- `ReadOnlyConfig` : contrôle fin.
+  - `draggable` : indique si le glisser est autorisé.
+  - `viewable` : indique si l'ouverture du détail des événements est autorisée.
+- Les API programmatiques telles que `calendar.addEvent()`, `calendar.updateEvent()`, `calendar.deleteEvent()` et `calendar.applyEventsChanges()` fonctionnent toujours en lecture seule.
+- Utilisez `calendar.canMutateFromUI()` dans votre interface pour décider d'afficher ou non les commandes de création, d'édition et de suppression.
+- Voir [Mode lecture seule](/docs-fr/features/read-only) pour plus de détails.
+
+### allDaySortComparator
+
+Contrôle l'ordre des lignes d'événements sur la journée entière dans toutes les vues (jour, semaine, mois, agenda, année).
+
+Par défaut, DayFlow :
+
+- regroupe les événements sur la journée entière par `calendarId`, dans leur ordre de première apparition ;
+- place les événements sur plusieurs jours au-dessus de ceux qui ne durent qu'une journée ;
+- garde visuellement groupés les événements du même calendrier.
+
+Ne passez `allDaySortComparator` que si vous souhaitez maîtriser entièrement l'ordre final. Une fois fourni, son résultat est utilisé tel quel.
+
+Passez un comparateur pour prendre le contrôle total : il reçoit deux objets `Event` et fonctionne comme `Array.sort` en JavaScript :
+
+```tsx
+const calendar = useCalendarApp({
+  allDaySortComparator: (a, b) => a.title.localeCompare(b.title),
+});
+```
+
+**Fonction utilitaire exportée** par `@dayflow/core` :
+
+| Utilitaire          | Comportement                                                                                                                  |
+| :------------------ | :---------------------------------------------------------------------------------------------------------------------------- |
+| `sortAllDayByTitle` | Trie les événements sur la journée entière par ordre alphabétique de titre et remplace entièrement le regroupement par défaut |
+
+```tsx
+import { sortAllDayByTitle } from '@dayflow/core';
+
+const calendar = useCalendarApp({
+  allDaySortComparator: sortAllDayByTitle,
+});
+```
+
+Utilisez `updateConfig` pour changer le tri à l'exécution :
+
+```tsx
+calendar.app.updateConfig({ allDaySortComparator: sortAllDayByTitle });
+
+// Restore the default calendar-grouped ordering
+calendar.app.updateConfig({ allDaySortComparator: undefined });
+```
+
+## Exemple de configuration avancée
+
+```tsx
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createMonthView,
+  createWeekView,
+  ViewType,
+} from '@dayflow/react'; // or '@dayflow/vue', '@dayflow/svelte', '@dayflow/angular'
+import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+import '@dayflow/core/dist/styles.css';
+
+const calendars = [
+  {
+    id: 'work',
+    name: 'Work',
+    colors: {
+      eventColor: '#2563eb',
+      eventSelectedColor: '#1d4ed8',
+      lineColor: '#1e40af',
+      textColor: '#ffffff',
+    },
+  },
+  {
+    id: 'personal',
+    name: 'Personal',
+    colors: {
+      eventColor: '#f97316',
+      eventSelectedColor: '#ea580c',
+      lineColor: '#c2410c',
+      textColor: '#ffffff',
+    },
+  },
+];
+
+export function AdvancedCalendar() {
+  const calendar = useCalendarApp({
+    views: [createMonthView(), createWeekView()],
+    defaultView: ViewType.WEEK,
+    initialDate: new Date('2024-10-01'),
+    events: [],
+    calendars,
+    defaultCalendar: 'work',
+    switcherMode: 'select',
+    callbacks: {
+      onEventUpdate: event => api.events.update(event),
+      onVisibleRangeChange: (start, end, reason) =>
+        preloadVisibleRange(start, end, reason),
+    },
+    plugins: [
+      createSidebarPlugin({
+        width: 280,
+        initialCollapsed: false,
+      }),
+    ],
+    useEventDetailDialog: true,
+  });
+
+  return <DayFlowCalendar calendar={calendar} />;
+}
+```
+
+> Astuce : l'objet renvoyé par `useCalendarApp` expose à la fois l'état (`currentView`, `currentDate`, `events`) et les actions. Partagez la même instance avec `DayFlowCalendar`, votre propre barre d'outils et vos panneaux latéraux pour que tout reste synchronisé.

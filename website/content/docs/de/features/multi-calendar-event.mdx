@@ -1,0 +1,44 @@
+---
+title: 'Termin in mehreren Kalendern'
+---
+
+import { MultiCalendarEventShowcase } from '@/components/showcase/MultiCalendarEventShowcase';
+
+# Termin in mehreren Kalendern
+
+DayFlow unterstützt Termine in mehreren Kalendern: Ein einzelner Termin kann mehreren Kalendern zugeordnet sein. Das ist besonders praktisch für teamübergreifende Meetings, gemeinsame Familientermine oder jede Situation, in der ein Termin zu mehr als einer Kategorie gehört.
+
+## Konfiguration
+
+Für einen Termin in mehreren Kalendern geben Sie in der Eigenschaft `calendarIds` des Terminobjekts ein Array von Kalender-IDs an.
+
+```tsx
+const events = [
+  {
+    id: 'multi-cal-1',
+    title: 'Cross-team Planning',
+    start: '2026-04-20T10:00:00',
+    end: '2026-04-20T11:30:00',
+    // ID des primären Kalenders (wird bei Bedarf für den Standardstil verwendet)
+    calendarId: 'team-a',
+    // Den Termin mehreren Kalendern zuordnen
+    calendarIds: ['team-a', 'team-b', 'marketing'],
+  },
+];
+```
+
+Hat ein Termin mehrere `calendarIds`, zeichnet DayFlow ihn mit einem markanten Hintergrund aus diagonalen Streifen – in den Farben der jeweils zugeordneten Kalender.
+
+## Demo
+
+Die folgende Demo zeigt, wie DayFlow Termine darstellt, die mehreren Kalendern zugeordnet sind.
+
+<MultiCalendarEventShowcase />
+
+<Callout title='Empfehlung'>
+  Das eingebaute `eventDetailPanel` und der Dialog unterstützen die Auswahl
+  mehrerer Kalender standardmäßig nicht. Da dieser Anwendungsfall eher selten
+  ist, empfiehlt es sich, stattdessen `eventDetailContent` oder
+  `eventDetailDialog` anzupassen. Weitere Einzelheiten finden Sie unter [Content
+  Slots](./content-slots).
+</Callout>

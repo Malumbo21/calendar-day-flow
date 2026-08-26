@@ -1,0 +1,43 @@
+---
+title: '여러 캘린더에 속한 이벤트'
+---
+
+import { MultiCalendarEventShowcase } from '@/components/showcase/MultiCalendarEventShowcase';
+
+# 여러 캘린더에 속한 이벤트
+
+DayFlow는 하나의 이벤트를 여러 캘린더에 연결할 수 있는 다중 캘린더 이벤트를 지원합니다. 팀 간 회의, 가족이 함께 쓰는 일정처럼 이벤트가 둘 이상의 분류에 속하는 경우에 특히 유용합니다.
+
+## 설정
+
+다중 캘린더 이벤트를 만들려면 이벤트 객체의 `calendarIds` 속성에 캘린더 ID 배열을 지정하세요.
+
+```tsx
+const events = [
+  {
+    id: 'multi-cal-1',
+    title: 'Cross-team Planning',
+    start: '2026-04-20T10:00:00',
+    end: '2026-04-20T11:30:00',
+    // 기본 스타일에 사용할 주 캘린더 ID
+    calendarId: 'team-a',
+    // 이벤트를 여러 캘린더에 연결
+    calendarIds: ['team-a', 'team-b', 'marketing'],
+  },
+];
+```
+
+이벤트에 `calendarIds`가 여러 개 있으면 DayFlow는 연결된 각 캘린더의 색상을 사용해 대각선 줄무늬 배경으로 눈에 띄게 렌더링합니다.
+
+## 데모
+
+아래 데모에서 여러 캘린더에 연결된 이벤트가 어떻게 표시되는지 확인할 수 있습니다.
+
+<MultiCalendarEventShowcase />
+
+<Callout title='권장 사항'>
+  내장 `eventDetailPanel`과 대화상자는 기본적으로 여러 캘린더 선택을 지원하지
+  않습니다. 자주 필요한 기능은 아니므로 `eventDetailContent`나
+  `eventDetailDialog`를 직접 구현하는 편이 좋습니다. 자세한 내용은 [Content
+  Slots](./content-slots) 문서를 참고하세요.
+</Callout>

@@ -1,0 +1,170 @@
+---
+title: '시간대'
+---
+
+# 시간대
+
+DayFlow는 `TimeZone` 열거형을 제공합니다. 덕분에 IANA 문자열을 외우지 않고도 앱 전역의 `timeZone`과 일·주 뷰에서만 쓰이는 `secondaryTimeZone`을 모두 설정할 수 있습니다.
+
+## 시간대 모델
+
+- `timeZone`: 캘린더 전체의 기본 표시·편집 시간대입니다
+- `secondaryTimeZone`: 일 뷰와 주 뷰에서만 표시되는 보조 기준 타임라인입니다
+
+`timeZone`을 바꾸면 모든 뷰가 다시 계산되어 표시됩니다. `secondaryTimeZone`을 바꾸면 일·주 뷰의 보조 시간 축만 달라집니다.
+
+## 콜백 동작 규칙
+
+- `timeZone`은 UI에서 이벤트를 표시하고 편집하는 방식을 바꿉니다.
+- `timeZone`을 바꾸는 것만으로는 `onEventUpdate`, `onEventDrop`, `onEventResize`가 호출되지 않습니다.
+- 업데이트 콜백은 편집이 적용된 뒤의 정규화된 이벤트를 반환합니다.
+- 다시 말해, 시드니 기준으로 만든 이벤트를 상하이에서 보고 그곳에서 크기를 조절하면 편집은 상하이의 벽시계 시각으로 해석되지만, 콜백으로 전달되는 데이터는 저장하기 전에 이벤트의 정규 시간 표현으로 다시 변환됩니다.
+
+## 사용법
+
+```tsx
+import { TimeZone } from '@dayflow/core';
+import {
+  useCalendarApp,
+  createDayView,
+  createWeekView,
+  createMonthView,
+} from '@dayflow/react';
+
+const calendar = useCalendarApp({
+  timeZone: TimeZone.SHANGHAI,
+  views: [
+    createDayView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createWeekView({
+      secondaryTimeZone: TimeZone.NEW_YORK,
+    }),
+    createMonthView(),
+  ],
+});
+```
+
+## 사용 가능한 시간대
+
+| 열거형 키                | IANA 문자열                      |
+| :----------------------- | :------------------------------- |
+| **UTC/GMT**              |                                  |
+| `TimeZone.UTC`           | `UTC`                            |
+| **북아메리카**           |                                  |
+| `TimeZone.NEW_YORK`      | `America/New_York`               |
+| `TimeZone.CHICAGO`       | `America/Chicago`                |
+| `TimeZone.DENVER`        | `America/Denver`                 |
+| `TimeZone.LOS_ANGELES`   | `America/Los_Angeles`            |
+| `TimeZone.TORONTO`       | `America/Toronto`                |
+| `TimeZone.VANCOUVER`     | `America/Vancouver`              |
+| `TimeZone.PHOENIX`       | `America/Phoenix`                |
+| `TimeZone.ANCHORAGE`     | `America/Anchorage`              |
+| `TimeZone.HONOLULU`      | `Pacific/Honolulu`               |
+| `TimeZone.MEXICO_CITY`   | `America/Mexico_City`            |
+| `TimeZone.WINNIPEG`      | `America/Winnipeg`               |
+| `TimeZone.HALIFAX`       | `America/Halifax`                |
+| `TimeZone.ST_JOHNS`      | `America/St_Johns`               |
+| `TimeZone.DETROIT`       | `America/Detroit`                |
+| `TimeZone.MIAMI`         | `America/Miami`                  |
+| **유럽**                 |                                  |
+| `TimeZone.LONDON`        | `Europe/London`                  |
+| `TimeZone.PARIS`         | `Europe/Paris`                   |
+| `TimeZone.BERLIN`        | `Europe/Berlin`                  |
+| `TimeZone.MADRID`        | `Europe/Madrid`                  |
+| `TimeZone.ROME`          | `Europe/Rome`                    |
+| `TimeZone.AMSTERDAM`     | `Europe/Amsterdam`               |
+| `TimeZone.ZURICH`        | `Europe/Zurich`                  |
+| `TimeZone.STOCKHOLM`     | `Europe/Stockholm`               |
+| `TimeZone.OSLO`          | `Europe/Oslo`                    |
+| `TimeZone.COPENHAGEN`    | `Europe/Copenhagen`              |
+| `TimeZone.MOSCOW`        | `Europe/Moscow`                  |
+| `TimeZone.ISTANBUL`      | `Europe/Istanbul`                |
+| `TimeZone.DUBLIN`        | `Europe/Dublin`                  |
+| `TimeZone.LISBON`        | `Europe/Lisbon`                  |
+| `TimeZone.PRAGUE`        | `Europe/Prague`                  |
+| `TimeZone.VIENNA`        | `Europe/Vienna`                  |
+| `TimeZone.WARSAW`        | `Europe/Warsaw`                  |
+| `TimeZone.BRUSSELS`      | `Europe/Brussels`                |
+| `TimeZone.ATHENS`        | `Europe/Athens`                  |
+| `TimeZone.BUCHAREST`     | `Europe/Bucharest`               |
+| `TimeZone.HELSINKI`      | `Europe/Helsinki`                |
+| `TimeZone.KYIV`          | `Europe/Kyiv`                    |
+| `TimeZone.BUDAPEST`      | `Europe/Budapest`                |
+| `TimeZone.BELGRADE`      | `Europe/Belgrade`                |
+| `TimeZone.LUXEMBOURG`    | `Europe/Luxembourg`              |
+| `TimeZone.MONACO`        | `Europe/Monaco`                  |
+| `TimeZone.REYKJAVIK`     | `Atlantic/Reykjavik`             |
+| **아시아**               |                                  |
+| `TimeZone.TOKYO`         | `Asia/Tokyo`                     |
+| `TimeZone.SHANGHAI`      | `Asia/Shanghai`                  |
+| `TimeZone.HONG_KONG`     | `Asia/Hong_Kong`                 |
+| `TimeZone.TAIPEI`        | `Asia/Taipei`                    |
+| `TimeZone.SEOUL`         | `Asia/Seoul`                     |
+| `TimeZone.SINGAPORE`     | `Asia/Singapore`                 |
+| `TimeZone.HANOI`         | `Asia/Ho_Chi_Minh`               |
+| `TimeZone.BANGKOK`       | `Asia/Bangkok`                   |
+| `TimeZone.JAKARTA`       | `Asia/Jakarta`                   |
+| `TimeZone.KUALA_LUMPUR`  | `Asia/Kuala_Lumpur`              |
+| `TimeZone.MANILA`        | `Asia/Manila`                    |
+| `TimeZone.DUBAI`         | `Asia/Dubai`                     |
+| `TimeZone.KOLKATA`       | `Asia/Kolkata`                   |
+| `TimeZone.RIYADH`        | `Asia/Riyadh`                    |
+| `TimeZone.TEHRAN`        | `Asia/Tehran`                    |
+| `TimeZone.JERUSALEM`     | `Asia/Jerusalem`                 |
+| `TimeZone.TEL_AVIV`      | `Asia/Tel_Aviv`                  |
+| `TimeZone.BAGHDAD`       | `Asia/Baghdad`                   |
+| `TimeZone.DHAKA`         | `Asia/Dhaka`                     |
+| `TimeZone.KARACHI`       | `Asia/Karachi`                   |
+| `TimeZone.KABUL`         | `Asia/Kabul`                     |
+| `TimeZone.KATHMANDU`     | `Asia/Kathmandu`                 |
+| `TimeZone.COLOMBO`       | `Asia/Colombo`                   |
+| `TimeZone.TASHKENT`      | `Asia/Tashkent`                  |
+| `TimeZone.ALMATY`        | `Asia/Almaty`                    |
+| `TimeZone.PHNOM_PENH`    | `Asia/Phnom_Penh`                |
+| `TimeZone.VIENTIANE`     | `Asia/Vientiane`                 |
+| `TimeZone.MUSCAT`        | `Asia/Muscat`                    |
+| **오세아니아**           |                                  |
+| `TimeZone.SYDNEY`        | `Australia/Sydney`               |
+| `TimeZone.MELBOURNE`     | `Australia/Melbourne`            |
+| `TimeZone.BRISBANE`      | `Australia/Brisbane`             |
+| `TimeZone.PERTH`         | `Australia/Perth`                |
+| `TimeZone.ADELAIDE`      | `Australia/Adelaide`             |
+| `TimeZone.DARWIN`        | `Australia/Darwin`               |
+| `TimeZone.HOBART`        | `Australia/Hobart`               |
+| `TimeZone.AUCKLAND`      | `Pacific/Auckland`               |
+| `TimeZone.FIJI`          | `Pacific/Fiji`                   |
+| `TimeZone.GUAM`          | `Pacific/Guam`                   |
+| `TimeZone.NOUMEA`        | `Pacific/Noumea`                 |
+| `TimeZone.PAGO_PAGO`     | `Pacific/Pago_Pago`              |
+| `TimeZone.PORT_MORESBY`  | `Pacific/Port_Moresby`           |
+| **남아메리카**           |                                  |
+| `TimeZone.SAO_PAULO`     | `America/Sao_Paulo`              |
+| `TimeZone.BUENOS_AIRES`  | `America/Argentina/Buenos_Aires` |
+| `TimeZone.SANTIAGO`      | `America/Santiago`               |
+| `TimeZone.LIMA`          | `America/Lima`                   |
+| `TimeZone.BOGOTA`        | `America/Bogota`                 |
+| `TimeZone.CARACAS`       | `America/Caracas`                |
+| `TimeZone.LA_PAZ`        | `America/La_Paz`                 |
+| `TimeZone.MONTEVIDEO`    | `America/Montevideo`             |
+| `TimeZone.QUITO`         | `America/Quito`                  |
+| `TimeZone.ASUNCION`      | `America/Asuncion`               |
+| `TimeZone.GEORGETOWN`    | `America/Guyana`                 |
+| **아프리카**             |                                  |
+| `TimeZone.CAIRO`         | `Africa/Cairo`                   |
+| `TimeZone.JOHANNESBURG`  | `Africa/Johannesburg`            |
+| `TimeZone.LAGOS`         | `Africa/Lagos`                   |
+| `TimeZone.NAIROBI`       | `Africa/Nairobi`                 |
+| `TimeZone.CASABLANCA`    | `Africa/Casablanca`              |
+| `TimeZone.ALGIERS`       | `Africa/Algiers`                 |
+| `TimeZone.TUNIS`         | `Africa/Tunis`                   |
+| `TimeZone.ADDIS_ABABA`   | `Africa/Addis_Ababa`             |
+| `TimeZone.ACCRA`         | `Africa/Accra`                   |
+| `TimeZone.DAKAR`         | `Africa/Dakar`                   |
+| `TimeZone.LUANDA`        | `Africa/Luanda`                  |
+| `TimeZone.ANTANANARIVO`  | `Indian/Antananarivo`            |
+| `TimeZone.KINSHASA`      | `Africa/Kinshasa`                |
+| `TimeZone.DAR_ES_SALAAM` | `Africa/Dar_es_Salaam`           |
+| **남극**                 |                                  |
+| `TimeZone.MCMURDO`       | `Antarctica/McMurdo`             |
+| `TimeZone.CASEY`         | `Antarctica/Casey`               |

@@ -1,0 +1,194 @@
+---
+title: 'Plugin i18n'
+---
+
+# Plugin i18n
+
+Le plugin i18n ajoute la prise en charge de plusieurs langues et locales. Par défaut, le cœur de DayFlow n'inclut que la locale anglaise (`en-US`) afin de garder le bundle aussi léger que possible.
+
+## Installation
+
+Installez le paquet du plugin i18n :
+
+<PackageTabs pkg='@dayflow/plugin-localization' />
+
+## Utilisation
+
+Pour activer d'autres langues, enregistrez le plugin et fournissez-lui les locales voulues. La propriété `locale` accepte aussi bien une chaîne de code de langue (par exemple `'zh-CN'`) qu'un objet `Locale` importé directement (par exemple `zh`).
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import {
+      createLocalizationPlugin,
+      zh,
+      ja,
+      fr,
+    } from '@dayflow/plugin-localization';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createLocalizationPlugin({
+            locales: [zh, ja, fr], // Register the languages you need
+          }),
+        ],
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import {
+      createLocalizationPlugin,
+      zh,
+      ja,
+      fr,
+    } from '@dayflow/plugin-localization';
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [
+        createLocalizationPlugin({
+          locales: [zh, ja, fr], // Register the languages you need
+        }),
+      ],
+      locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import {
+      createLocalizationPlugin,
+      zh,
+      ja,
+      fr,
+    } from '@dayflow/plugin-localization';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createLocalizationPlugin({
+            locales: [zh, ja, fr], // Register the languages you need
+          })
+        ],
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import {
+        createLocalizationPlugin,
+        zh,
+        ja,
+        fr,
+      } from '@dayflow/plugin-localization';
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createLocalizationPlugin({
+            locales: [zh, ja, fr], // Register the languages you need
+          }),
+        ],
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Configuration
+
+Le plugin accepte une liste d'objets `Locale` à enregistrer dans le registre global des locales.
+
+```tsx
+interface LocalizationConfig {
+  locales: Locale[];
+}
+```
+
+## Locales disponibles
+
+Les locales suivantes sont actuellement disponibles dans le paquet `@dayflow/plugin-localization` :
+
+| Export | Langue   | Code de locale                       |
+| :----- | :------- | :----------------------------------- |
+| `zh`   | Chinois  | `zh-CN`                              |
+| `ja`   | Japonais | `ja-JP`                              |
+| `ko`   | Coréen   | `ko-KR`                              |
+| `fr`   | Français | `fr-FR`                              |
+| `de`   | Allemand | `de-DE`                              |
+| `es`   | Espagnol | `es-ES`                              |
+| `en`   | Anglais  | `en-US` (également intégrée au cœur) |
+
+Pour la propriété `locale`, vous pouvez passer :
+
+- **un objet `Locale`** : l'objet de locale importé directement (par exemple `locale: zh`) ;
+- **une chaîne de code** : un code de langue (par exemple `locale: 'zh-CN'` ou `'zh'`), automatiquement mis en correspondance avec les locales enregistrées.
+
+## Locales personnalisées
+
+Vous pouvez aussi enregistrer vos propres locales sans passer par le plugin, ou les lui fournir :
+
+```tsx
+const myCustomLocale = {
+  code: 'pt-BR',
+  messages: {
+    today: 'Hoje',
+    day: 'Dia',
+    week: 'Semana',
+    month: 'Mês',
+    // ... all other translation keys
+  },
+};
+
+const calendar = useCalendarApp({
+  plugins: [
+    createLocalizationPlugin({
+      locales: [myCustomLocale],
+    }),
+  ],
+  locale: myCustomLocale, // Pass the custom Locale object directly (or code string 'pt-BR')
+});
+```

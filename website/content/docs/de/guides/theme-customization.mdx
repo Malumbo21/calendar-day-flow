@@ -1,0 +1,350 @@
+---
+title: 'Leitfaden zur Theme-Anpassung'
+---
+
+# Leitfaden zur Theme-Anpassung
+
+Das Erscheinungsbild von DayFlow Calendar steuert eine Reihe benannter CSS-Custom-Properties (`--df-color-*`). Alle Tokens sind in `@layer df-theme` definiert, sodass Host-Anwendungen sie ohne `!important` überschreiben können – ganz gleich, ob sie Tailwind oder reines CSS verwenden.
+
+Die gemeinsame Basis-CSS von DayFlow ist die alleinige Quelle für Theme-Tokens, Komponenten-Primitive und semantische Hilfsklassen wie `df-fill-primary` und `df-focus-ring`.
+
+## Inhaltsübersicht
+
+- [Eigene Farben je Kalendertyp](#eigene-farben-je-kalendertyp)
+- [Referenz der CSS-Variablen](#referenz-der-css-variablen)
+- [Wege zum Überschreiben](#wege-zum-überschreiben)
+- [Tailwind-v4-Integration](#tailwind-v4-integration)
+- [Ein eigenes Theme erstellen](#ein-eigenes-theme-erstellen)
+
+## Eigene Farben je Kalendertyp
+
+### Grundlegende eigene Farben
+
+Legen Sie für jeden Kalendertyp eigene Farben fest, mit getrennten Varianten für hell und dunkel:
+
+```tsx
+const calendar = useCalendarApp({
+  calendars: [
+    {
+      id: 'personal',
+      name: 'Personal',
+      colors: {
+        lineColor: '#0891b2', // cyan-600
+        eventColor: '#cffafe', // cyan-100
+        eventSelectedColor: '#a5f3fc', // cyan-200
+        textColor: '#164e63', // cyan-900
+      },
+      darkColors: {
+        lineColor: '#22d3ee', // cyan-400
+        eventColor: '#164e63', // cyan-900
+        eventSelectedColor: '#083344', // cyan-950
+        textColor: '#cffafe', // cyan-100
+      },
+    },
+  ],
+});
+```
+
+### Was die Farbeigenschaften bedeuten
+
+- **lineColor**: Rahmen- und Akzentfarbe (die linke Leiste an Terminen)
+- **eventColor**: Hintergrundfüllung des Termins
+- **eventSelectedColor**: Hintergrundfüllung im ausgewählten Zustand
+- **textColor**: Textfarbe für Titel und Uhrzeit des Termins
+
+### Markenfarben einbinden
+
+```tsx
+{
+  id: 'brand',
+  name: 'Brand Events',
+  colors: {
+    lineColor: '#6366f1',       // Brand indigo
+    eventColor: '#e0e7ff', // Indigo-100
+    eventSelectedColor: '#c7d2fe', // Indigo-200
+    textColor: '#312e81',       // Indigo-900
+  },
+  darkColors: {
+    lineColor: '#a5b4fc',       // Indigo-300
+    eventColor: '#312e81', // Indigo-900
+    eventSelectedColor: '#1e1b4b', // Indigo-950
+    textColor: '#e0e7ff',       // Indigo-100
+  },
+}
+```
+
+### Hilfsfunktion zur Farberzeugung
+
+```tsx
+// utils/colorGenerator.ts
+interface ColorSet {
+  lineColor: string;
+  eventColor: string;
+  eventSelectedColor: string;
+  textColor: string;
+}
+
+export function generateLightColors(baseColor: string): ColorSet {
+  return {
+    lineColor: baseColor,
+    eventColor: lighten(baseColor, 0.9),
+    eventSelectedColor: lighten(baseColor, 0.8),
+    textColor: darken(baseColor, 0.4),
+  };
+}
+
+export function generateDarkColors(baseColor: string): ColorSet {
+  return {
+    lineColor: lighten(baseColor, 0.3),
+    eventColor: darken(baseColor, 0.6),
+    eventSelectedColor: darken(baseColor, 0.7),
+    textColor: lighten(baseColor, 0.8),
+  };
+}
+```
+
+## Referenz der CSS-Variablen
+
+Alle Theme-Tokens von DayFlow tragen das Präfix `--df-color-`, damit sie nicht mit Variablen der Host-Anwendung kollidieren.
+
+| Variable                            | Zweck                                             |
+| ----------------------------------- | ------------------------------------------------- |
+| `--df-color-background`             | Kalenderhintergrund                               |
+| `--df-color-foreground`             | Farbe des Haupttextes                             |
+| `--df-color-hover`                  | Hintergrund im Hover-Zustand                      |
+| `--df-color-border`                 | Rahmen und Trennlinien                            |
+| `--df-color-card`                   | Hintergrund von Karten und Panels                 |
+| `--df-color-card-foreground`        | Textfarbe auf Karten                              |
+| `--df-color-muted`                  | Zurückhaltende Hintergrundflächen                 |
+| `--df-color-muted-foreground`       | Gedämpfter bzw. sekundärer Text                   |
+| `--df-color-primary`                | Hauptakzent (Schaltflächen, ausgewählte Zustände) |
+| `--df-color-primary-foreground`     | Text auf Flächen in der Primärfarbe               |
+| `--df-color-secondary`              | Sekundärer Akzent                                 |
+| `--df-color-secondary-foreground`   | Text auf Flächen in der Sekundärfarbe             |
+| `--df-color-destructive`            | Destruktive Aktionen                              |
+| `--df-color-destructive-foreground` | Text auf destruktiven Flächen                     |
+
+## Semantische Hilfsklassen
+
+Neben den CSS-Variablen stellt DayFlow inzwischen theme-bewusste semantische Hilfsklassen bereit. Sie sind praktisch, wenn Sie eigene Inhalte in Slots, in Plugin-Oberflächen oder in Wrappern rendern, die zu den eingebauten Bedienelementen passen sollen.
+
+| Klassenname              | Bedeutung                                                             |
+| ------------------------ | --------------------------------------------------------------------- |
+| `df-fill-primary`        | In der Primärfarbe gefüllte Fläche mit automatischer Textfarbe        |
+| `df-fill-secondary`      | In der Sekundärfarbe gefüllte Fläche mit automatischer Textfarbe      |
+| `df-fill-destructive`    | In der destruktiven Farbe gefüllte Fläche mit automatischer Textfarbe |
+| `df-tint-primary`        | Dezente Auswahltönung in der Primärfarbe                              |
+| `df-hover-primary`       | Hover-Zustand in der Primärfarbe                                      |
+| `df-hover-primary-solid` | Hover-Zustand für gefüllte Primärschaltflächen                        |
+| `df-text-primary`        | Primäre Textfarbe                                                     |
+| `df-border-primary`      | Primäre Rahmenfarbe                                                   |
+| `df-ring-primary`        | Farbtoken für den primären Ring                                       |
+| `df-focus-ring`          | Fokus-Hilfsklasse, die primären Rahmen und Ring zugleich setzt        |
+
+Verwenden Sie beim Gestalten von DayFlow bevorzugt diese `df-*`-Hilfsklassen oder Überschreibungen von `--df-color-*`. Verlassen Sie sich nicht auf die alten internen Tailwind-Namen wie `bg-primary`, `text-primary` oder `hover:bg-primary/90`.
+
+## Wege zum Überschreiben
+
+### Methode 1 – Überschreiben am Container (funktioniert überall)
+
+Setzen Sie die Variablen direkt auf `.df-calendar-container`. Da diese Regel außerhalb jedes `@layer` steht, gewinnt sie immer gegen die Vorgaben der Bibliothek – unabhängig von Tailwind-Version oder CSS-Aufbau.
+
+In der Praxis werden Sie meist sowohl `.df-calendar-container` als auch `.df-portal` ansprechen wollen:
+
+- `.df-calendar-container` ist der Wurzelcontainer der sichtbaren Kalenderfläche.
+- `.df-portal` ist die Wurzelklasse, die DayFlow für schwebende UI verwendet, die per Portal in `document.body` gerendert wird – Dialoge, Auswahlmenüs und einige Picker-Panels.
+
+Überschreiben Sie nur `.df-calendar-container`, übernimmt der Hauptkalender zwar Ihr Theme, portalbasierte Overlays können aber weiterhin die Standard-Tokens nutzen.
+
+```css
+/* styles/globals.css */
+.df-calendar-container,
+.df-portal {
+  --df-color-primary: #6366f1;
+  --df-color-background: #f9fafb;
+  --df-color-border: #e0e7ff;
+}
+
+/* Dark mode — target the container when the .dark class is on an ancestor */
+.dark .df-calendar-container,
+.dark .df-portal {
+  --df-color-primary: #a5b4fc;
+  --df-color-background: #1e1e2e;
+  --df-color-border: #312e81;
+}
+```
+
+Für die meisten Projekte ist das der empfohlene Weg. Die Variablen bleiben auf den Kalender beschränkt und wirken sich auf nichts außerhalb aus.
+
+## Tailwind-v4-Integration
+
+Tailwind v4 wird vollständig über CSS konfiguriert – eine `tailwind.config.js` gibt es nicht mehr. Die ausgelieferte CSS von DayFlow enthält die gemeinsame Basisschicht bereits, Theme-Tokens und semantische Hilfsklassen stehen also unmittelbar nach dem Import zur Verfügung.
+
+### Die richtige CSS-Datei wählen
+
+DayFlow liefert zwei CSS-Bundles aus:
+
+| Datei                   | Inhalt                                                        | Wann verwenden              |
+| ----------------------- | ------------------------------------------------------------- | --------------------------- |
+| `styles.css`            | Vollständiges Bundle inklusive Tailwind-Preflight (CSS-Reset) | Sie nutzen kein Tailwind    |
+| `styles.components.css` | Nur Komponenten-Styles, **ohne CSS-Reset**                    | Sie nutzen bereits Tailwind |
+
+### Minimale Einrichtung
+
+```css
+/* app.css — for Tailwind projects */
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+Wenn Ihr Projekt **kein** Tailwind verwendet, importieren Sie stattdessen das vollständige Bundle:
+
+```css
+/* app.css — for non-Tailwind projects */
+@import '@dayflow/core/dist/styles.css';
+```
+
+### Dunkler Modus
+
+DayFlow berücksichtigt die Klasse `.dark` an jedem übergeordneten Element, auch an `<html>`. Setzen Sie sie per JavaScript:
+
+```ts
+document.documentElement.classList.toggle('dark', isDark);
+```
+
+Der dunkle Modus nach Systemeinstellung – ganz ohne Klasse – wird ebenfalls automatisch unterstützt.
+
+**`theme.mode` zusammen mit Tailwind v4 verwenden**
+
+Die ausgelieferte CSS von DayFlow enthält bereits die `.dark`-Variante, die `theme.mode` benötigt. In Tailwind-v4-Projekten genügt der Import von `@dayflow/core/dist/styles.components.css`, damit DayFlow selbst auf die Klasse `.dark` an `<html>` reagiert.
+
+Sollen auch die `dark:`-Utilities Ihrer eigenen Anwendung demselben Klassenschalter folgen, ergänzen Sie die klassenbasierte Variante in Ihrer CSS-Einstiegsdatei:
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+
+/* Optional: only needed for your app's own Tailwind dark: utilities */
+@variant dark (.dark &);
+```
+
+Ohne diese Zusatzzeile schaltet DayFlow trotzdem korrekt über `theme.mode` um; lediglich Ihre eigenen `dark:`-Utilities bleiben beim Standardverhalten von Tailwind über Media Queries.
+
+### Praktische Empfehlung
+
+Für die meisten Anwendungen gilt diese Rangfolge:
+
+1. Überschreiben Sie die `--df-color-*`-Tokens an `.df-calendar-container`, `.df-portal` oder Ihrem eigenen Wrapper.
+2. Verwenden Sie in eigenem Slot- und Plugin-Markup die semantischen Hilfsklassen von DayFlow wie `df-fill-primary` und `df-focus-ring`.
+3. Greifen Sie erst dann zu Low-Level-Utility-Überschreibungen, wenn Sie das Layout und nicht das Theme ändern.
+
+### Überschreibungen mit `@theme` anwenden
+
+```css
+@import '@dayflow/core/dist/styles.css' layer(dayflow);
+@import 'tailwindcss';
+
+@theme {
+  --df-color-primary: #6366f1;
+  --df-color-primary-foreground: #ffffff;
+  --df-color-secondary: #8b5cf6;
+  --df-color-secondary-foreground: #ffffff;
+}
+```
+
+### Den Kalender mit Tailwind-Utilities umschließen
+
+```tsx
+function ThemedCalendar({ calendar }) {
+  return (
+    <div className='rounded-2xl shadow-xl ring-1 ring-gray-200 dark:ring-gray-700'>
+      <DayFlowCalendar calendar={calendar} />
+    </div>
+  );
+}
+```
+
+## Ein eigenes Theme erstellen
+
+```tsx
+// themes/oceanTheme.ts
+export const oceanTheme = {
+  mode: 'light' as const,
+  calendars: [
+    {
+      id: 'deep-ocean',
+      name: 'Deep Ocean',
+      colors: {
+        lineColor: '#0369a1',
+        eventColor: '#e0f2fe',
+        eventSelectedColor: '#bae6fd',
+        textColor: '#0c4a6e',
+      },
+      darkColors: {
+        lineColor: '#7dd3fc',
+        eventColor: '#0c4a6e',
+        eventSelectedColor: '#083344',
+        textColor: '#e0f2fe',
+      },
+    },
+    {
+      id: 'coral-reef',
+      name: 'Coral Reef',
+      colors: {
+        lineColor: '#ea580c',
+        eventColor: '#ffedd5',
+        eventSelectedColor: '#fed7aa',
+        textColor: '#7c2d12',
+      },
+      darkColors: {
+        lineColor: '#fb923c',
+        eventColor: '#7c2d12',
+        eventSelectedColor: '#431407',
+        textColor: '#ffedd5',
+      },
+    },
+  ],
+};
+```
+
+Kombinieren Sie es mit Überschreibungen der CSS-Variablen, damit alles optisch zusammenpasst:
+
+```css
+/* Ocean theme CSS tokens */
+.df-calendar-container {
+  --df-color-primary: #0369a1;
+  --df-color-background: #f0f9ff;
+  --df-color-border: #bae6fd;
+}
+
+.dark .df-calendar-container {
+  --df-color-primary: #7dd3fc;
+  --df-color-background: #0c1220;
+  --df-color-border: #0c4a6e;
+}
+```
+
+## Ressourcen
+
+### Werkzeuge
+
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) – Farbkontrast prüfen
+- [Coolors](https://coolors.co/) – Farbpaletten erzeugen
+- [Color Contrast Analyzer](https://www.tpgi.com/color-contrast-checker/) – Desktop-Werkzeug
+
+### Bibliotheken
+
+- [chroma-js](https://gka.github.io/chroma.js/) – Farbmanipulation
+- [tinycolor2](https://github.com/bgrins/TinyColor) – Farbwerkzeuge
+- [color](https://github.com/Qix-/color) – Farbkonvertierung
+
+### Tailwind-Ressourcen
+
+- [Tailwind-v4-Upgrade-Leitfaden](https://tailwindcss.com/docs/upgrade-guide) – Umstieg von v3 auf v4
+- [Tailwind-CSS-Layer](https://tailwindcss.com/docs/adding-custom-styles#using-css-and-layer) – Dokumentation zu Layern
+
+## Verwandte Dokumentation
+
+- [Dunkler Modus](/docs-de/features/dark-mode) – Überblick und API des dunklen Modus
+- [Kalendertypen](/docs-de/introduction/events#termine-über-kalendertypen-gestalten) – Kategorisierung von Terminen
+- [Kalender-App konfigurieren](/docs-de/introduction/use-calendar-app) – zentrale Konfiguration

@@ -1,0 +1,925 @@
+---
+title: Eventos
+---
+
+# Trabajar con eventos
+
+Los eventos son la estructura de datos central de DayFlow. Aquí aprenderás a crearlos, actualizarlos, eliminarlos y gestionarlos.
+
+## La interfaz Event
+
+La biblioteca usa la API Temporal para todo el manejo de fechas y horas. Los eventos admiten tres tipos de Temporal:
+
+- **PlainDate**: para eventos de día completo (sin hora)
+- **PlainDateTime**: para eventos locales (fecha + hora, sin zona horaria). Recomendado en la mayoría de los casos
+- **ZonedDateTime**: para eventos con zona horaria (reuniones internacionales, vuelos, etc.)
+
+```tsx
+import { Temporal } from 'temporal-polyfill';
+import { Event } from '@dayflow/core';
+```
+
+| Propiedad     | Tipo                                                                     | Descripción                                                                                                                                                                                                                                     | Obligatorio |
+| ------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `id`          | `string`                                                                 | Identificador único del evento                                                                                                                                                                                                                  | Obligatorio |
+| `title`       | `string`                                                                 | Título del evento que se muestra en el calendario                                                                                                                                                                                               | Obligatorio |
+| `start`       | `Temporal.PlainDate \| Temporal.PlainDateTime \| Temporal.ZonedDateTime` | Fecha/hora de inicio del evento. Usa `PlainDate` para día completo, `PlainDateTime` para eventos locales y `ZonedDateTime` cuando importe la zona horaria                                                                                       | Obligatorio |
+| `end`         | `Temporal.PlainDate \| Temporal.PlainDateTime \| Temporal.ZonedDateTime` | Fecha/hora de fin del evento                                                                                                                                                                                                                    | Obligatorio |
+| `description` | `string`                                                                 | Descripción o notas del evento                                                                                                                                                                                                                  | Opcional    |
+| `allDay`      | `boolean`                                                                | Indica si el evento ocupa todo el día (valor por defecto: `false`)                                                                                                                                                                              | Opcional    |
+| `icon`        | `boolean \| Node`                                                        | Icono personalizado del evento. `true` (por defecto): muestra el icono estándar; `false`: lo oculta; `Node`: icono propio                                                                                                                       | Opcional    |
+| `calendarId`  | `string`                                                                 | Referencia al tipo de calendario cuando el evento pertenece a uno solo                                                                                                                                                                          | Opcional    |
+| `calendarIds` | `string[]`                                                               | Lista de IDs de calendario a los que pertenece el evento. Si se define, tiene prioridad sobre `calendarId`. El evento es visible si **alguno** de los calendarios listados lo está. Se representa con un patrón de rayas diagonales multicolor. | Opcional    |
+| `meta`        | `Record<string, any>`                                                    | Metadatos personalizados adicionales (ubicación, asistentes, campos propios, etc.)                                                                                                                                                              | Opcional    |
+
+## Crear eventos
+
+### Creación sencilla (recomendado)
+
+En la mayoría de los casos, usa los helpers `createEvent()` y `createAllDayEvent()`:
+
+```tsx
+import { createEvent, createAllDayEvent } from '@dayflow/core';
+import '@dayflow/core/dist/styles.css';
+
+// Local timed event (no timezone complexity)
+const meeting = createEvent({
+  id: '1',
+  title: 'Team Meeting',
+  start: new Date(2024, 9, 15, 10, 0), // October 15, 2024, 10:00 AM
+  end: new Date(2024, 9, 15, 11, 0), // October 15, 2024, 11:00 AM
+  calendarId: 'work',
+});
+
+// All-day event
+const holiday = createAllDayEvent({
+  id: '2',
+  title: 'Conference',
+  start: new Date(2024, 9, 20),
+  calendarId: 'work',
+});
+```
+
+### Avanzado: usar la API Temporal directamente
+
+Si necesitas más control, trabaja directamente con la API Temporal:
+
+```tsx
+import { Temporal } from 'temporal-polyfill';
+import { Event } from '@dayflow/core';
+
+// Local event with PlainDateTime (recommended)
+const localEvent: Event = {
+  id: '1',
+  title: 'Team Meeting',
+  start: Temporal.PlainDateTime.from({
+    year: 2024,
+    month: 10,
+    day: 15,
+    hour: 10,
+    minute: 0,
+  }),
+  end: Temporal.PlainDateTime.from({
+    year: 2024,
+    month: 10,
+    day: 15,
+    hour: 11,
+    minute: 0,
+  }),
+};
+
+// All-day event with PlainDate
+const allDayEvent: Event = {
+  id: '2',
+  title: 'Conference',
+  start: Temporal.PlainDate.from('2024-10-20'),
+  end: Temporal.PlainDate.from('2024-10-22'),
+  allDay: true,
+};
+
+// Timezone-aware event with ZonedDateTime
+const timezoneEvent: Event = {
+  id: '3',
+  title: 'International Call',
+  start: Temporal.ZonedDateTime.from('2024-10-16T14:00:00[America/New_York]'),
+  end: Temporal.ZonedDateTime.from('2024-10-16T15:00:00[America/New_York]'),
+};
+```
+
+### Evento con metadatos
+
+```tsx
+import { createEvent } from '@dayflow/core';
+
+const event = createEvent({
+  id: '3',
+  title: 'Client Call',
+  description: 'Discuss Q4 roadmap',
+  start: new Date(2024, 9, 16, 14, 0),
+  end: new Date(2024, 9, 16, 15, 0),
+  calendarId: 'work',
+  meta: {
+    location: 'Zoom',
+    attendees: ['john@example.com', 'jane@example.com'],
+    recurring: false,
+  },
+});
+```
+
+## Gestionar eventos
+
+### Añadir eventos
+
+```tsx
+// Add a single event
+calendar.addEvent(event);
+
+// Add multiple events during initialization
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  calendars: [
+    {
+      id: 'work',
+      name: 'Work',
+      colors: {
+        lineColor: '#2563eb',
+        eventColor: '#dbeafe',
+        eventSelectedColor: '#bfdbfe',
+        textColor: '#1e3a8a',
+      },
+    },
+  ],
+  events: [event1, event2, event3],
+});
+```
+
+### Actualizar eventos
+
+```tsx
+// Update an event
+calendar.updateEvent('event-id', {
+  title: 'Updated Meeting Title',
+  start: new Date(2024, 9, 15, 11, 0),
+  end: new Date(2024, 9, 15, 12, 0),
+});
+
+// Update with pending state (for resize operations)
+calendar.updateEvent('event-id', updatedEvent, true);
+```
+
+### Eliminar eventos
+
+```tsx
+// Delete an event by ID
+calendar.deleteEvent('event-id');
+```
+
+### Obtener eventos
+
+```tsx
+// Get all events
+const events = calendar.getEvents();
+
+// Get current events from state
+const { events } = calendar;
+```
+
+## Callbacks de eventos
+
+DayFlow ofrece callbacks para gestionar el ciclo de vida de los eventos:
+
+```tsx
+import { useCalendarApp, createMonthView, Event } from '@dayflow/react';
+
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  events: initialEvents,
+  callbacks: {
+    onEventCreate: (event: Event) => {
+      console.log('New event created:', event);
+      // Sync with backend
+      api.createEvent(event);
+    },
+    onEventUpdate: (event: Event) => {
+      console.log('Event updated:', event);
+      // Sync with backend
+      api.updateEvent(event);
+    },
+    onEventDelete: (eventId: string) => {
+      console.log('Event deleted:', eventId);
+      // Sync with backend
+      api.deleteEvent(eventId);
+    },
+    onEventDoubleClick: (event: Event, e: MouseEvent) => {
+      console.log('Event double-clicked:', event);
+      // Use e.currentTarget as an anchor for a custom popover
+    },
+  },
+});
+```
+
+## Gestión del estado de los eventos
+
+### Uso básico
+
+Puedes gestionar los eventos con el sistema de estado nativo de tu framework (React, Vue, Svelte o Angular).
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useState } from 'react';
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createMonthView,
+      Event,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const [events, setEvents] = useState<Event[]>([]);
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        events,
+        callbacks: {
+          onEventCreate: (event: Event) => {
+            setEvents(prev => [...prev, event]);
+          },
+          onEventUpdate: (event: Event) => {
+            setEvents(prev => prev.map(e => (e.id === event.id ? event : e)));
+          },
+          onEventDelete: (eventId: string) => {
+            setEvents(prev => prev.filter(e => e.id !== eventId));
+          },
+        },
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { ref } from 'vue';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createMonthView } from '@dayflow/core';
+
+    const events = ref([]);
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      events,
+      callbacks: {
+        onEventCreate: (event) => {
+          events.value = [...events.value, event];
+        },
+        onEventUpdate: (event) => {
+          events.value = events.value.map(e => (e.id === event.id ? event : e));
+        },
+        onEventDelete: (eventId) => {
+          events.value = events.value.filter(e => e.id !== eventId);
+        },
+      },
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createMonthView, Event } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      events: Event[] = [];
+
+      calendar = {
+        views: [createMonthView()],
+        events: this.events,
+        callbacks: {
+          onEventCreate: (event: Event) => {
+            this.events = [...this.events, event];
+            this.calendar.events = this.events;
+          },
+          onEventUpdate: (event: Event) => {
+            this.events = this.events.map(e => (e.id === event.id ? event : e));
+            this.calendar.events = this.events;
+          },
+          onEventDelete: (eventId: string) => {
+            this.events = this.events.filter(e => e.id !== eventId);
+            this.calendar.events = this.events;
+          },
+        },
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+
+      let events = $state([]);
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        events,
+        callbacks: {
+          onEventCreate: (event) => {
+            events = [...events, event];
+          },
+          onEventUpdate: (event) => {
+            events = events.map(e => (e.id === event.id ? event : e));
+          },
+          onEventDelete: (eventId) => {
+            events = events.filter(e => e.id !== eventId);
+          },
+        },
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Sincronizar con el backend
+
+```tsx
+import { useCalendarApp, createMonthView, Event } from '@dayflow/react';
+
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  events,
+  callbacks: {
+    onEventCreate: async (event: Event) => {
+      try {
+        // Create event in backend
+        const savedEvent = await api.createEvent(event);
+
+        // Update local state with backend response
+        setEvents(prev => [...prev, savedEvent]);
+      } catch (error) {
+        console.error('Failed to create event:', error);
+        // Optionally remove the optimistic update
+      }
+    },
+    onEventUpdate: async (event: Event) => {
+      try {
+        await api.updateEvent(event);
+        setEvents(prev => prev.map(e => (e.id === event.id ? event : e)));
+      } catch (error) {
+        console.error('Failed to update event:', error);
+      }
+    },
+    onEventDelete: async (eventId: string) => {
+      try {
+        await api.deleteEvent(eventId);
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+      } catch (error) {
+        console.error('Failed to delete event:', error);
+      }
+    },
+  },
+});
+```
+
+## Dar estilo a los eventos con tipos de calendario
+
+Personaliza el aspecto de los eventos asignándolos a distintos tipos de calendario mediante `calendarId`. Cada tipo puede tener su propia paleta y estilo:
+
+```tsx
+import { createEvent } from '@dayflow/core';
+
+// Work event
+const workEvent = createEvent({
+  id: '1',
+  title: 'Design Review',
+  start: new Date(2024, 9, 15, 14, 0),
+  end: new Date(2024, 9, 15, 15, 0),
+  calendarId: 'work', // Links to work calendar styling
+});
+
+// Personal event
+const personalEvent = createEvent({
+  id: '2',
+  title: 'Dentist Appointment',
+  start: new Date(2024, 9, 16, 10, 0),
+  end: new Date(2024, 9, 16, 11, 0),
+  calendarId: 'personal', // Links to personal calendar styling
+});
+
+// Configure calendar types with colors
+const calendars = [
+  {
+    id: 'work',
+    name: 'Work',
+    colors: {
+      eventColor: '#3b82f6',
+      eventSelectedColor: '#2563eb',
+      lineColor: '#3b82f6',
+      textColor: '#ffffff',
+    },
+    isVisible: true,
+  },
+  {
+    id: 'personal',
+    name: 'Personal',
+    colors: {
+      eventColor: '#10b981',
+      eventSelectedColor: '#059669',
+      lineColor: '#10b981',
+      textColor: '#ffffff',
+    },
+    isVisible: true,
+  },
+];
+
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  events: [workEvent, personalEvent],
+  calendars,
+});
+```
+
+## Eventos en varios calendarios
+
+### Cómo funciona
+
+- Si defines ambos, `calendarIds` tiene prioridad sobre `calendarId`.
+- **Visibilidad**: el evento se muestra mientras al menos uno de los calendarios listados esté visible.
+- **Indicador visual**: los eventos con varios calendarios se dibujan con un fondo de **rayas diagonales** (una raya por color de calendario) y una barra lateral izquierda con **degradado multicolor**, de modo que se distinguen a simple vista de los eventos de un solo calendario.
+- **Estado seleccionado**: vuelve al color sólido del calendario principal.
+
+### Ejemplo
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { createEvent, useCalendarApp, createWeekView } from '@dayflow/react';
+    import { Temporal } from 'temporal-polyfill';
+
+    // This event belongs to both "team" and "marketing" calendars
+    const sharedEvent = createEvent({
+      id: 'shared-1',
+      title: 'Company All-Hands',
+      start: new Date(2024, 9, 15, 10, 0),
+      end: new Date(2024, 9, 15, 11, 30),
+      calendarIds: ['team', 'marketing'], // multi-calendar
+    });
+
+    // All-day event spanning three calendars
+    const crossCalendarDay = {
+      id: 'shared-2',
+      title: 'Team Offsite',
+      start: Temporal.PlainDate.from('2024-10-20'),
+      end: Temporal.PlainDate.from('2024-10-22'),
+      allDay: true,
+      calendarIds: ['team', 'personal', 'travel'],
+    };
+
+    const calendars = [
+      {
+        id: 'team',
+        name: 'Team',
+        colors: {
+          eventColor: '#3b82f6',
+          lineColor: '#3b82f6',
+          eventSelectedColor: '#2563eb',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+      {
+        id: 'marketing',
+        name: 'Marketing',
+        colors: {
+          eventColor: '#f59e0b',
+          lineColor: '#f59e0b',
+          eventSelectedColor: '#d97706',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+      {
+        id: 'personal',
+        name: 'Personal',
+        colors: {
+          eventColor: '#10b981',
+          lineColor: '#10b981',
+          eventSelectedColor: '#059669',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+      {
+        id: 'travel',
+        name: 'Travel',
+        colors: {
+          eventColor: '#8b5cf6',
+          lineColor: '#8b5cf6',
+          eventSelectedColor: '#7c3aed',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+    ];
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      events: [sharedEvent, crossCalendarDay],
+      calendars,
+    });
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createEvent, createWeekView } from '@dayflow/core';
+    import { Temporal } from 'temporal-polyfill';
+
+    const sharedEvent = createEvent({
+      id: 'shared-1',
+      title: 'Company All-Hands',
+      start: new Date(2024, 9, 15, 10, 0),
+      end: new Date(2024, 9, 15, 11, 30),
+      calendarIds: ['team', 'marketing'],
+    });
+
+    const crossCalendarDay = {
+      id: 'shared-2',
+      title: 'Team Offsite',
+      start: Temporal.PlainDate.from('2024-10-20'),
+      end: Temporal.PlainDate.from('2024-10-22'),
+      allDay: true,
+      calendarIds: ['team', 'personal', 'travel'],
+    };
+
+    const calendars = [
+      {
+        id: 'team',
+        name: 'Team',
+        colors: {
+          eventColor: '#3b82f6',
+          lineColor: '#3b82f6',
+          eventSelectedColor: '#2563eb',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+      {
+        id: 'marketing',
+        name: 'Marketing',
+        colors: {
+          eventColor: '#f59e0b',
+          lineColor: '#f59e0b',
+          eventSelectedColor: '#d97706',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+      {
+        id: 'personal',
+        name: 'Personal',
+        colors: {
+          eventColor: '#10b981',
+          lineColor: '#10b981',
+          eventSelectedColor: '#059669',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+      {
+        id: 'travel',
+        name: 'Travel',
+        colors: {
+          eventColor: '#8b5cf6',
+          lineColor: '#8b5cf6',
+          eventSelectedColor: '#7c3aed',
+          textColor: '#fff',
+        },
+        isVisible: true,
+      },
+    ];
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      events: [sharedEvent, crossCalendarDay],
+      calendars,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createEvent, createWeekView } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { Temporal } from 'temporal-polyfill';
+
+    const sharedEvent = createEvent({
+      id: 'shared-1',
+      title: 'Company All-Hands',
+      start: new Date(2024, 9, 15, 10, 0),
+      end: new Date(2024, 9, 15, 11, 30),
+      calendarIds: ['team', 'marketing'],
+    });
+
+    const crossCalendarDay = {
+      id: 'shared-2',
+      title: 'Team Offsite',
+      start: Temporal.PlainDate.from('2024-10-20'),
+      end: Temporal.PlainDate.from('2024-10-22'),
+      allDay: true,
+      calendarIds: ['team', 'personal', 'travel'],
+    };
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createWeekView()],
+        events: [sharedEvent, crossCalendarDay],
+        calendars: [
+          {
+            id: 'team',
+            name: 'Team',
+            colors: {
+              eventColor: '#3b82f6',
+              lineColor: '#3b82f6',
+              eventSelectedColor: '#2563eb',
+              textColor: '#fff',
+            },
+            isVisible: true,
+          },
+          {
+            id: 'marketing',
+            name: 'Marketing',
+            colors: {
+              eventColor: '#f59e0b',
+              lineColor: '#f59e0b',
+              eventSelectedColor: '#d97706',
+              textColor: '#fff',
+            },
+            isVisible: true,
+          },
+          {
+            id: 'personal',
+            name: 'Personal',
+            colors: {
+              eventColor: '#10b981',
+              lineColor: '#10b981',
+              eventSelectedColor: '#059669',
+              textColor: '#fff',
+            },
+            isVisible: true,
+          },
+          {
+            id: 'travel',
+            name: 'Travel',
+            colors: {
+              eventColor: '#8b5cf6',
+              lineColor: '#8b5cf6',
+              eventSelectedColor: '#7c3aed',
+              textColor: '#fff',
+            },
+            isVisible: true,
+          },
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createEvent, createWeekView } from '@dayflow/core';
+      import { Temporal } from 'temporal-polyfill';
+
+      const sharedEvent = createEvent({
+        id: 'shared-1',
+        title: 'Company All-Hands',
+        start: new Date(2024, 9, 15, 10, 0),
+        end: new Date(2024, 9, 15, 11, 30),
+        calendarIds: ['team', 'marketing'],
+      });
+
+      const crossCalendarDay = {
+        id: 'shared-2',
+        title: 'Team Offsite',
+        start: Temporal.PlainDate.from('2024-10-20'),
+        end: Temporal.PlainDate.from('2024-10-22'),
+        allDay: true,
+        calendarIds: ['team', 'personal', 'travel'],
+      };
+
+      const calendars = [
+        {
+          id: 'team',
+          name: 'Team',
+          colors: {
+            eventColor: '#3b82f6',
+            lineColor: '#3b82f6',
+            eventSelectedColor: '#2563eb',
+            textColor: '#fff',
+          },
+          isVisible: true,
+        },
+        {
+          id: 'marketing',
+          name: 'Marketing',
+          colors: {
+            eventColor: '#f59e0b',
+            lineColor: '#f59e0b',
+            eventSelectedColor: '#d97706',
+            textColor: '#fff',
+          },
+          isVisible: true,
+        },
+        {
+          id: 'personal',
+          name: 'Personal',
+          colors: {
+            eventColor: '#10b981',
+            lineColor: '#10b981',
+            eventSelectedColor: '#059669',
+            textColor: '#fff',
+          },
+          isVisible: true,
+        },
+        {
+          id: 'travel',
+          name: 'Travel',
+          colors: {
+            eventColor: '#8b5cf6',
+            lineColor: '#8b5cf6',
+            eventSelectedColor: '#7c3aed',
+            textColor: '#fff',
+          },
+          isVisible: true,
+        },
+      ];
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        events: [sharedEvent, crossCalendarDay],
+        calendars,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Eventos de varios días
+
+Un evento puede abarcar varios días:
+
+```tsx
+import { Temporal } from 'temporal-polyfill';
+import { Event } from '@dayflow/core';
+
+// Conference spanning 3 days (all-day event)
+const multiDayEvent: Event = {
+  id: '1',
+  title: 'Tech Conference 2024',
+  start: Temporal.PlainDate.from('2024-10-20'),
+  end: Temporal.PlainDate.from('2024-10-22'),
+  allDay: true,
+  calendarId: 'conferences',
+};
+
+// Meeting spanning across midnight (timed event)
+const crossMidnightEvent: Event = {
+  id: '2',
+  title: 'Night Shift',
+  start: Temporal.ZonedDateTime.from('2024-10-15T22:00:00[America/New_York]'), // 10 PM
+  end: Temporal.ZonedDateTime.from('2024-10-16T06:00:00[America/New_York]'), // 6 AM next day
+  calendarId: 'shifts',
+};
+```
+
+## Metadatos del evento
+
+Guarda información adicional en el campo `meta`:
+
+```tsx
+import { Temporal } from 'temporal-polyfill';
+import { Event } from '@dayflow/core';
+
+const event: Event = {
+  id: '1',
+  title: 'Project Kickoff',
+  start: Temporal.ZonedDateTime.from('2024-10-15T10:00:00[America/New_York]'),
+  end: Temporal.ZonedDateTime.from('2024-10-15T11:00:00[America/New_York]'),
+  meta: {
+    // Meeting details
+    location: 'Conference Room A',
+    meetingUrl: 'https://zoom.us/j/123456',
+
+    // Attendees
+    organizer: 'john@example.com',
+    attendees: ['jane@example.com', 'bob@example.com'],
+
+    // Custom fields
+    project: 'Project X',
+    priority: 'high',
+    tags: ['planning', 'kickoff'],
+
+    // Recurring info
+    recurring: true,
+    recurrenceRule: 'FREQ=WEEKLY;BYDAY=MO',
+
+    // Any other data
+    customField: 'custom value',
+  },
+};
+```
+
+## Eventos recurrentes
+
+El panel de detalle y el diálogo integrados leen y escriben la configuración de repetición mediante `event.meta`. Establece `recurring: true` y proporciona una `recurrenceRule` con formato RRULE:
+
+| Parte de la regla | Significado                                                           | Ejemplo          |
+| :---------------- | :-------------------------------------------------------------------- | :--------------- |
+| `FREQ`            | Frecuencia obligatoria: `DAILY`, `WEEKLY`, `MONTHLY` o `YEARLY`       | `FREQ=WEEKLY`    |
+| `INTERVAL`        | Repetir cada N unidades de frecuencia; el valor predeterminado es `1` | `INTERVAL=2`     |
+| `BYDAY`           | Días de la semana para una regla semanal personalizada                | `BYDAY=MO,WE,FR` |
+| `UNTIL`           | Fecha final inclusiva con formato `YYYYMMDD`                          | `UNTIL=20261231` |
+| `COUNT`           | Número máximo de repeticiones, incluido el inicio de la serie         | `COUNT=10`       |
+
+```tsx
+const recurringEvent: Event = {
+  id: 'team-sync',
+  title: 'Sincronización del equipo',
+  start: Temporal.PlainDateTime.from('2026-08-26T09:30'),
+  end: Temporal.PlainDateTime.from('2026-08-26T10:00'),
+  meta: {
+    recurring: true,
+    recurrenceRule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE;UNTIL=20261231',
+  },
+};
+```
+
+La vista Mes expande estas reglas dentro de su intervalo visible. Las repeticiones generadas solo se utilizan para la visualización y mantienen un vínculo con el evento principal de la serie, por lo que actualmente las ediciones y eliminaciones afectan a toda la serie. El editor integrado conserva las partes de RRULE no compatibles siempre que sea posible, pero solo las partes indicadas arriba afectan a la expansión de la vista Mes. Todavía no se admiten excepciones para una sola repetición.
+
+## Buenas prácticas
+
+1. **Usa siempre IDs únicos**: emplea UUID o los IDs de tu base de datos (en formato string)
+2. **Recurre a los helpers**: `createEvent()` es preferible a construir objetos Temporal a mano (cubre el 90 % de los casos)
+3. **Elige el tipo adecuado**:
+   - `PlainDate` para eventos de día completo (cumpleaños, festivos)
+   - `PlainDateTime` para eventos locales (reuniones, citas). **Opción recomendada por defecto**
+   - `ZonedDateTime` solo cuando la zona horaria importe (llamadas internacionales, vuelos)
+4. **Valida los valores de tiempo**: los helpers comprueban automáticamente la hora (0-23) y los minutos (0-59)
+5. **Usa tipos de calendario para el estilo**: asigna `calendarId` para clasificar y dar estilo de forma coherente; usa `calendarIds` cuando un evento pertenezca a varios calendarios
+6. **Aprovecha el campo `meta`**: guarda datos propios sin tocar la interfaz Event
+7. **Valida los datos del evento**: en eventos con hora, asegúrate de que el inicio sea anterior al fin
+8. **Optimiza las actualizaciones**: agrupa los cambios siempre que puedas
+
+## Referencia de tipos
+
+Para más detalles sobre el manejo de fechas y horas, consulta:
+
+- Interfaz Event: `/src/types/event.ts`
+
+## Documentación relacionada
+
+- [Vistas](/docs-es/introduction/views): entender las vistas del calendario
+- [Plugins](/docs-es/plugins/overview): gestión de eventos con plugins
+- [Primeros pasos](/docs-es/introduction): ejemplos de uso básico

@@ -1,0 +1,332 @@
+---
+title: Línea de tiempo de recursos
+description: Vista horizontal de línea de tiempo de recursos de DayFlow Pro, con recursos agrupados, hitos, cambio de escala e interacciones al estilo de un planificador.
+status: pro
+---
+
+# Línea de tiempo de recursos
+
+`@dayflow-pro/resource-timeline` añade a DayFlow una línea de tiempo horizontal al estilo de un planificador. El tiempo avanza de izquierda a derecha, cada recurso ocupa su propia fila y la vista está pensada para planificar trabajo entre personas, salas, proyectos o equipamiento.
+
+Prueba la [demo en vivo](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_timeline)
+
+Frente a las vistas de calendario integradas, la línea de tiempo de recursos está optimizada para:
+
+- Tareas de larga duración y planes de proyecto
+- Asignación de recursos en varios carriles
+- Hitos y seguimiento del progreso
+- Listas de recursos jerárquicas o agrupadas
+
+## Instalación
+
+<PackageTabs pkg='@dayflow-pro/resource-timeline' />
+
+Consulta la guía de [instalación de Pro](/docs-es/introduction/pro-installation) para conocer los pasos de instalación.
+
+## Uso básico
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: event =>
+              (event as { resourceId?: string }).resourceId ?? event.calendarId,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceTimelineView({
+          resources: [
+            {
+              id: 'eng-alice',
+              name: 'Alice Chen',
+              groupId: 'engineering',
+              groupName: 'Engineering',
+              subtitle: 'Frontend',
+            },
+            {
+              id: 'eng-bob',
+              name: 'Bob Torres',
+              groupId: 'engineering',
+              groupName: 'Engineering',
+              subtitle: 'Platform',
+            },
+          ],
+          defaultView: 'week',
+          height: 640,
+          getResourceId: event => event.resourceId ?? event.calendarId,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: (event: any) => event.resourceId ?? event.calendarId,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: event => event.resourceId ?? event.calendarId,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Escalas de la línea de tiempo
+
+| Escala    | Descripción                                            |
+| :-------- | :----------------------------------------------------- |
+| `day`     | Un día con columnas por hora.                          |
+| `week`    | Una semana con columnas por día.                       |
+| `month`   | Un mes con columnas por día.                           |
+| `quarter` | Tres meses agrupados por semana o mes.                 |
+| `year`    | Un año completo, para planificación tipo hoja de ruta. |
+
+Usa `defaultView` para elegir la escala inicial. También puedes controlar cómo se muestra el cambio de escala con `viewSwitcherMode`, que admite `buttons`, `select` y `filter`.
+
+## Modelo de recursos
+
+Los recursos son objetos planos. El código admite bastante más que `id` y `name`:
+
+```ts
+type Resource = {
+  id: string;
+  name: string;
+  parentId?: string;
+  collapsed?: boolean;
+  groupId?: string;
+  groupName?: string;
+  order?: number;
+  subtitle?: string;
+  avatar?: string;
+  color?: string;
+  style?: {
+    colors: { color: string; textColor?: string };
+    darkColors?: { color: string; textColor?: string };
+    opacity?: number;
+    borderRadius?: number;
+  };
+  meta?: Record<string, unknown>;
+};
+```
+
+Campos útiles:
+
+- `groupId` y `groupName` te permiten organizar los recursos en secciones agrupadas.
+- `parentId` y `collapsed` dan soporte a árboles jerárquicos de recursos.
+- `subtitle`, `avatar`, `color` y `style` enriquecen la presentación en el panel lateral.
+- `meta` se usa a menudo para guardar un identificador externo, como `calendarId`.
+
+## Vincular eventos con recursos
+
+La vista determina la fila de cada evento en este orden:
+
+1. `getResourceId(event)`, si se proporciona
+2. `event.resourceId`
+3. `event.meta?.resourceId`
+4. `event.calendarId`
+
+Es decir, puedes guardar `resourceId` directamente en tus objetos de evento o asignar eventos de DayFlow ya existentes a recursos mediante una función de retorno.
+
+```tsx
+const event = {
+  id: 'task-1',
+  title: 'Build export flow',
+  start: new Date(2026, 4, 10, 9, 0),
+  end: new Date(2026, 4, 12, 18, 0),
+  resourceId: 'eng-alice',
+  progress: 65,
+};
+```
+
+## Hitos y estilo de los eventos
+
+Los eventos cuyo `start` y `end` coinciden se representan automáticamente como hitos.
+
+```tsx
+const milestone = {
+  id: 'release-gate',
+  title: 'Release approval',
+  start: new Date(2026, 4, 14, 10, 0),
+  end: new Date(2026, 4, 14, 10, 0),
+  resourceId: 'eng-bob',
+};
+```
+
+| Propiedad               | Tipo                             | Notas                                                                                            |
+| :---------------------- | :------------------------------- | :----------------------------------------------------------------------------------------------- |
+| `milestoneLabelDisplay` | `'hover' \| 'always'`            | Controla si las etiquetas de los hitos aparecen solo al pasar el ratón o permanecen visibles.    |
+| `milestoneLaneBehavior` | `'smart' \| 'overlay'`           | Controla si los hitos comparten los carriles normales cuando es posible o se superponen a ellos. |
+| `getEventType`          | `(event) => ResourceEventType`   | Asigna a cada evento un tipo específico de la línea de tiempo.                                   |
+| `getEventTooltip`       | `(event) => string \| undefined` | Proporciona el texto del tooltip de un evento.                                                   |
+| `styleRegistry`         | `Record<string, EventStyle>`     | Registra presets de estilo personalizados.                                                       |
+| `getEventStyleId`       | `(event) => string \| undefined` | Selecciona el preset de estilo de un evento.                                                     |
+
+## ResourceTimelineViewConfig
+
+### Básico
+
+| Propiedad          | Tipo                                      | Notas                                                         |
+| :----------------- | :---------------------------------------- | :------------------------------------------------------------ |
+| `resources`        | `Resource[]`                              | Lista de recursos de la línea de tiempo (obligatoria).        |
+| `license`          | `PackageLicenseConfig`                    | Sustitución opcional cuando no usas el registro global.       |
+| `defaultView`      | `day \| week \| month \| quarter \| year` | Escala inicial de la línea de tiempo.                         |
+| `views`            | `SchedulerTimelineView[]`                 | Redefine las escalas disponibles para cambiar.                |
+| `viewType`         | `ViewType \| string`                      | Tipo de vista personalizado al integrarla en hosts avanzados. |
+| `viewSwitcherMode` | `'buttons' \| 'select' \| 'filter'`       | Controla la interfaz del selector de escala.                  |
+| `height`           | `number \| string`                        | Altura de la vista renderizada.                               |
+
+### Diseño
+
+| Propiedad               | Tipo     | Notas                                                                   |
+| :---------------------- | :------- | :---------------------------------------------------------------------- |
+| `resourcePanelWidth`    | `number` | Anchura preferida del panel lateral.                                    |
+| `resourcePanelMinWidth` | `number` | Anchura mínima del panel lateral.                                       |
+| `resourcePanelMaxWidth` | `number` | Anchura máxima del panel lateral.                                       |
+| `rowHeight`             | `number` | Altura de cada fila de recurso.                                         |
+| `headerHeight`          | `number` | Altura de la cabecera de la línea de tiempo.                            |
+| `hourWidth`             | `number` | Anchura de la escala horaria en el modo `day`.                          |
+| `weekDayWidth`          | `number` | Anchura por día en el modo `week`.                                      |
+| `dayWidth`              | `number` | Anchura por día en el modo `month`.                                     |
+| `monthDayWidth`         | `number` | Anchura por día al renderizar rangos mensuales densos.                  |
+| `quarterMonthWidth`     | `number` | Anchura por mes en el modo `quarter`.                                   |
+| `yearCellWidth`         | `number` | Anchura por unidad en el modo `year`.                                   |
+| `yearRangePast`         | `number` | Años adicionales antes del año actual.                                  |
+| `yearRangeFuture`       | `number` | Años adicionales después del año actual.                                |
+| `overscanRows`          | `number` | Filas adicionales que se renderizan fuera de la ventana visible.        |
+| `bufferCells`           | `number` | Celdas de tiempo adicionales para que el desplazamiento sea más fluido. |
+
+### Visibilidad y sincronización de recursos
+
+| Propiedad                             | Tipo                                | Notas                                                                   |
+| :------------------------------------ | :---------------------------------- | :---------------------------------------------------------------------- |
+| `resourceSorter`                      | `(left, right) => number`           | Orden personalizado de las filas.                                       |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | Oculta la fila de un recurso cuando su calendario asociado está oculto. |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | Redefine cómo se asocia un recurso a la visibilidad de un calendario.   |
+| `onResourcesUpdate`                   | `(resources) => void`               | Se dispara al reordenar o plegar recursos desde la interfaz.            |
+
+Cuando la sincronización con calendarios está activada, la correspondencia de reserva entre recurso y calendario es `resource.meta?.calendarId ?? resource.id`.
+
+## Foco, panel lateral e integraciones
+
+La línea de tiempo expone algunos puntos de integración fáciles de pasar por alto:
+
+- `focusRequest` permite a la aplicación anfitriona desplazar la línea de tiempo por código hasta un evento y una fecha concretos.
+- `sidebar` da acceso a la configuración del panel lateral del planificador, como las acciones del menú contextual.
+- `customDetailPanelContent` y `customEventDetailDialog` pueden pasarse por las props de la vista cuando necesitas una interfaz de detalle propia.
+- `timeFormat` admite `24h` y `12h`.
+- `resizeTimeFormat` personaliza la etiqueta que se muestra mientras se redimensiona un evento.

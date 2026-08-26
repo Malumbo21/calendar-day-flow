@@ -1,0 +1,298 @@
+---
+title: '事件对话框'
+---
+
+import { EventDialogShowcase } from '@/components/showcase/FeatureShowcase';
+
+# 事件对话框
+
+DayFlow 自带的事件对话框涵盖了大多数团队需要的 CRUD 流程：创建/编辑/删除、全天与定时切换、日历颜色选择、备注输入等，都在同一个模态中完成。
+
+<EventDialogShowcase />
+
+## 内置重复设置
+
+事件可编辑时，默认浮动详情面板和模态对话框都会显示相同的重复设置控件。
+
+- **重复**：可选择不重复、每天、每周、每月、每年或自定义。
+- **自定义**：打开独立弹窗，可设置频率、间隔；选择每周时还可多选星期。
+- **结束重复**：可选择永不、指定日期或重复指定次数后结束。
+
+重复设置会保存到事件的 `meta.recurring` 和 `meta.recurrenceRule`。月视图会将支持的规则展开为可见事件，并按日历配置时区中的开始时间排列定时事件。目前编辑或删除生成的重复事件会作用于整个系列，暂不支持只修改单次事件。
+
+```tsx
+import { Temporal } from 'temporal-polyfill';
+
+const weeklyReview = {
+  id: 'review',
+  title: '设计评审',
+  start: Temporal.PlainDateTime.from('2026-08-26T09:30'),
+  end: Temporal.PlainDateTime.from('2026-08-26T10:30'),
+  meta: {
+    recurring: true,
+    recurrenceRule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE;COUNT=10',
+  },
+};
+```
+
+## 使用方法
+
+DayFlow 默认打开的是内置浮动详情面板。如果您想使用内置模态对话框，需要先在 `useCalendarApp` 中开启 `useEventDetailDialog`，然后正常渲染 `DayFlowCalendar`。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+
+    const calendar = useCalendarApp({
+      views: [/* 视图 */],
+      useEventDetailDialog: true,
+    });
+
+    <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      views: [/* 视图 */],
+      useEventDetailDialog: true,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [/* 视图 */],
+        useEventDetailDialog: true,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        views: [/* 视图 */],
+        useEventDetailDialog: true,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 自定义
+
+### 替换对话框 UI
+
+使用 `eventDetailDialog` 插槽，可以在保留 DayFlow 开关状态管理的同时，换入您自定义的对话框组件。需要在 `useCalendarApp` 配置中设置 `useEventDetailDialog: true` 才能激活此功能。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    // 1. 在日历配置中启用对话框模式
+    const calendar = useCalendarApp({
+      views: [/* 视图 */],
+      useEventDetailDialog: true,
+    });
+
+    // 2. 通过插槽提供您自己的对话框
+    <DayFlowCalendar
+      calendar={calendar}
+      eventDetailDialog={({ event, isOpen, onClose }) => (
+        <MyDialog isOpen={isOpen} onClose={onClose}>
+          <EventForm event={event} />
+        </MyDialog>
+      )}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #eventDetailDialog="{ event, isOpen, onClose }">
+          <MyDialog :isOpen="isOpen" @close="onClose">
+            <EventForm :event="event" />
+          </MyDialog>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      views: [/* 视图 */],
+      useEventDetailDialog: true,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar
+          [calendar]="calendar"
+          [eventDetailDialog]="customDialog"
+        >
+        </dayflow-calendar>
+
+        <ng-template #customDialog let-args>
+          <my-dialog [isOpen]="args.isOpen" (close)="args.onClose()">
+            <event-form [event]="args.event"></event-form>
+          </my-dialog>
+        </ng-template>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [/* 视图 */],
+        useEventDetailDialog: true,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <!-- App.svelte -->
+    <script lang="ts">
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import CustomDialog from './CustomDialog.svelte';
+
+      const calendar = useCalendarApp({
+        views: [/* 视图 */],
+        useEventDetailDialog: true,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} eventDetailDialog={CustomDialog} />
+
+    <!-- CustomDialog.svelte -->
+    <script lang="ts">
+      import type { EventDetailDialogProps } from '@dayflow/core';
+      import MyDialog from './MyDialog.svelte';
+      import EventForm from './EventForm.svelte';
+
+      let { event, isOpen, onClose } = $props<EventDetailDialogProps>();
+    </script>
+
+    <MyDialog {isOpen} onclose={onClose}>
+      <EventForm {event} />
+    </MyDialog>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### 完全关闭内置面板
+
+如果您的应用通过回调或全局状态管理事件详情，可以通过在 `useCalendarApp` 中设置 `useEventDetailPanel: false` 来完全隐藏内置浮动面板，无需提供替代组件：
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      // ...
+      useEventDetailPanel: false,
+    });
+
+    <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      // ...
+      useEventDetailPanel: false,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        // ...
+        useEventDetailPanel: false,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        // ...
+        useEventDetailPanel: false,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+适用于 React、Vue、Svelte 和 Angular 适配器。

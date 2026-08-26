@@ -1,0 +1,367 @@
+---
+title: Pro 설치
+description: DayFlow Pro 패키지를 설치하고, 비공개 레지스트리 접근을 설정하고, 라이선스를 활성화하고, 알맞은 스타일을 불러오는 방법을 설명합니다.
+status: pro
+---
+
+# Pro 설치
+
+DayFlow Pro는 두 가지 자격 증명을 사용합니다:
+
+- `@dayflow-pro/*` 패키지를 설치하기 위한 비공개 npm 토큰
+- 애플리케이션에서 Pro 기능을 활성화할 때 사용하는 서명된 DayFlow Pro 라이선스 키
+
+npm 토큰은 다운로드용 자격 증명입니다. 로컬 셸이나 CI 시크릿 저장소에
+보관하고, 클라이언트 측 환경 변수로는 절대 노출하지 마세요. 서명된
+Pro 라이선스 키는 이와 별개로 클라이언트에서 사용하는 활성화 토큰입니다.
+
+## 1. 비공개 레지스트리 접근 설정
+
+프로젝트 루트의 `.npmrc` 파일에 레지스트리 설정을 추가하세요:
+
+```ini
+@dayflow-pro:registry=https://gitlab.com/api/v4/projects/81880038/packages/npm/
+//gitlab.com/api/v4/projects/81880038/packages/npm/:_authToken=${DAYFLOW_PRO_NPM_TOKEN}
+```
+
+패키지를 설치하기 전에 npm 토큰을 내보냅니다. 예를 들면 다음과 같습니다:
+
+```bash
+export DAYFLOW_PRO_NPM_TOKEN="your-pro-package-token"
+```
+
+애플리케이션에서 실제로 사용하는 패키지만 설치하세요:
+
+```bash
+pnpm add @dayflow-pro/license \
+  @dayflow-pro/resource-timeline \
+  @dayflow-pro/resource-grid \
+  @dayflow-pro/plugin-print
+```
+
+## 2. 라이선스 제공 방식 선택
+
+DayFlow Pro는 전역 등록과 명시적인 `license` 옵션을 모두
+지원합니다. 애플리케이션이 서명된 라이선스 키를 어떻게 확보하는지에 따라 방식을 선택하세요.
+
+### 방식 A: 시작할 때 한 번 등록하기
+
+페이지가 살아 있는 동안 라이선스 키가 바뀌지 않는다면 전역 등록을 사용하세요. 프레임워크가
+애플리케이션을 렌더링하기 전에 `registerDayflowProLicense()`를 호출합니다:
+
+```tsx title="src/main.tsx (Vite)"
+import { registerDayflowProLicense } from '@dayflow-pro/license';
+
+const token = import.meta.env.VITE_DAYFLOW_PRO_LICENSE_TOKEN;
+
+if (!token) {
+  throw new Error('Missing VITE_DAYFLOW_PRO_LICENSE_TOKEN');
+}
+
+registerDayflowProLicense({ token });
+
+// Render React, Vue, Angular, or Svelte after registration.
+```
+
+Next.js 클라이언트 코드에서는
+`process.env.NEXT_PUBLIC_DAYFLOW_PRO_LICENSE_TOKEN`처럼 클라이언트에 노출되는 변수를 사용하세요.
+
+한 번 등록하면 Pro 뷰와 플러그인이 라이선스를 자동으로
+읽습니다. 전역 등록은 반응형이 아니므로 첫 렌더링 이전에 이루어져야
+합니다. 애플리케이션이 실행되는 중에 사용자가 라이선스를 입력하거나
+교체하거나 전환할 수 있다면, 아래의 명시적 방식을 사용하세요.
+
+### 방식 B: 라이선스를 명시적으로 전달하기
+
+런타임에 라이선스를 입력받거나, 계정을 전환하거나, 멀티테넌트
+애플리케이션이거나, 브라우저 저장소에서 토큰을 복원하는 경우에는 명시적 설정을 사용하세요:
+
+```tsx
+import type { PackageLicenseConfig } from '@dayflow-pro/license';
+
+const license: PackageLicenseConfig = {
+  token,
+  onTokenRefresh: nextToken => {
+    localStorage.setItem('dayflow-pro-license', nextToken);
+  },
+};
+
+const timelineView = createResourceTimelineView({
+  license,
+  resources: timelineResources,
+});
+
+const gridView = createResourceGridView({
+  license,
+  mode: 'resourceView',
+  resources: gridResources,
+});
+
+const printPlugin = createPrintPlugin({ license });
+```
+
+명시적으로 지정한 `license` 옵션은 해당 뷰 또는
+플러그인에 한해 전역 등록 라이선스보다 우선합니다.
+
+## 3. Pro 패키지를 평소처럼 사용하기
+
+Pro 뷰는 `views` 배열에, Pro 플러그인은 `plugins`
+배열에 추가합니다. 공개 DayFlow 패키지와 방식이 같습니다:
+
+| 패키지                           | 팩토리                         | 추가할 위치 |
+| -------------------------------- | ------------------------------ | ----------- |
+| `@dayflow-pro/resource-timeline` | `createResourceTimelineView()` | `views`     |
+| `@dayflow-pro/resource-grid`     | `createResourceGridView()`     | `views`     |
+| `@dayflow-pro/plugin-print`      | `createPrintPlugin()`          | `plugins`   |
+
+Pro 팩토리는 프레임워크에 의존하지 않습니다. 공통 설정을 한
+모듈에 모아 두고, 그것을 프레임워크 어댑터에 연결하세요:
+
+```ts title="src/dayflow-pro.ts"
+import {
+  createEvent,
+  createWeekView,
+  type CalendarAppConfig,
+  type Event,
+} from '@dayflow/core';
+import type { PackageLicenseConfig } from '@dayflow-pro/license';
+import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+import { createResourceGridView } from '@dayflow-pro/resource-grid';
+import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+const getResourceId = (event: Event) =>
+  typeof event.meta?.resourceId === 'string'
+    ? event.meta.resourceId
+    : event.calendarId;
+
+export function createProCalendar(license?: PackageLicenseConfig) {
+  const timelineView = createResourceTimelineView({
+    license,
+    resources: [
+      {
+        id: 'design',
+        name: 'Design',
+        groupId: 'delivery',
+        groupName: 'Delivery',
+        subtitle: 'Product design',
+      },
+      {
+        id: 'engineering',
+        name: 'Engineering',
+        groupId: 'delivery',
+        groupName: 'Delivery',
+        subtitle: 'Frontend engineering',
+      },
+    ],
+    defaultView: 'week',
+    height: 640,
+    getResourceId,
+  });
+
+  const gridView = createResourceGridView({
+    license,
+    mode: 'resourceView',
+    resources: [
+      { id: 'design', title: 'Design' },
+      { id: 'engineering', title: 'Engineering' },
+    ],
+    visibleDays: 3,
+    firstHour: 8,
+    lastHour: 18,
+    getResourceId,
+  });
+
+  const printPlugin = createPrintPlugin({
+    license,
+    defaultOptions: {
+      miniCalendar: true,
+      calendarKeys: true,
+      textSize: 'medium',
+    },
+  });
+
+  const config: CalendarAppConfig = {
+    views: [createWeekView(), timelineView, gridView],
+    plugins: [printPlugin],
+    defaultView: 'resource',
+    events: [
+      createEvent({
+        id: 'launch-plan',
+        title: 'Launch planning',
+        start: new Date(2026, 6, 29, 9),
+        end: new Date(2026, 6, 29, 11),
+        calendarId: 'design',
+        meta: { resourceId: 'design' },
+      }),
+    ],
+  };
+
+  return { config, printPlugin };
+}
+```
+
+아래 예시는 방식 A의 전역 라이선스 등록을 사용합니다. 방식 B를 쓴다면 명시적
+라이선스 객체를 넘겨 `createProCalendar(license)`를 호출하세요.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx title="src/App.tsx"
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createProCalendar } from './dayflow-pro';
+
+    const { config, printPlugin } = createProCalendar();
+
+    export default function App() {
+      const calendar = useCalendarApp(config);
+
+      return (
+        <>
+          <button type='button' onClick={() => printPlugin.api.open()}>
+            Print
+          </button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue title="src/App.vue"
+    <template>
+      <button type="button" @click="printPlugin.api.open()">Print</button>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup lang="ts">
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createProCalendar } from './dayflow-pro';
+
+    const { config, printPlugin } = createProCalendar();
+    const calendar = useCalendarApp(config);
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript title="src/app/app.component.ts"
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createProCalendar } from '../dayflow-pro';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <button type="button" (click)="printPlugin.api.open()">Print</button>
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `,
+    })
+    export class AppComponent {
+      private readonly pro = createProCalendar();
+      readonly calendar = this.pro.config;
+      readonly printPlugin = this.pro.printPlugin;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte title="src/App.svelte"
+    <script lang="ts">
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createProCalendar } from './dayflow-pro';
+
+      const { config, printPlugin } = createProCalendar();
+      const calendar = useCalendarApp(config);
+    </script>
+
+    <button type="button" onclick={() => printPlugin.api.open()}>Print</button>
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+Resource Timeline은 리소스 레이블로 `name`을, Resource Grid는
+`title`을 사용합니다. 모든 이벤트는 리소스 ID와 연결할 수 있어야 합니다. 기본적으로 두
+뷰 모두 `event.resourceId`를 먼저 읽고, 값이 없으면
+`event.calendarId`를 사용합니다. 데이터가 이 값을 다른 곳에 저장한다면 `getResourceId`를 사용하세요.
+
+## 4. Pro 스타일 올바르게 불러오기
+
+설치한 뷰와 플러그인에는 각각의 스타일시트가 필요합니다. 완전한
+`styles.css` 기반은 정확히 하나만 고르고, 나머지 DayFlow
+패키지에는 모두 `styles.components.css`를 사용하세요.
+
+### Tailwind 없이 Resource Timeline을 사용하는 경우
+
+Resource Timeline을 유일한 완전 CSS 기반으로
+사용하세요. 이 뷰에 필요한 스타일이 모두 들어 있습니다:
+
+```css title="src/index.css"
+@import '@dayflow-pro/resource-timeline/dist/styles.css';
+@import '@dayflow/core/dist/styles.components.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+```
+
+이 구성에서는 `@dayflow/core/dist/styles.css`를 함께
+불러오지 마세요. 완전한 스타일시트를 둘 다 로드하면 CSS 기반과 리셋이 이중으로
+적용됩니다. 뷰 전환 버튼에 스타일이 빠지거나, 그리드 선이 지나치게 어둡거나,
+간격이 어긋나거나, 이벤트 내용이 사라진 것처럼 보이는 증상이 대표적입니다.
+
+### Tailwind 없이 Resource Timeline을 쓰지 않는 경우
+
+DayFlow Core를 완전 기반으로 사용하고, 그
+뒤에 Pro 패키지의 컴포넌트 스타일을 불러오세요:
+
+```css title="src/index.css"
+@import '@dayflow/core/dist/styles.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+```
+
+애플리케이션이 설치하지 않는 패키지의 import는 삭제하세요.
+
+### Tailwind CSS v4를 사용하는 경우
+
+애플리케이션이 이미 CSS 기반을 제공하므로, 모든
+DayFlow 패키지에 컴포넌트 전용 진입점을 사용하세요:
+
+```css title="src/app.css"
+@import '@dayflow/core/dist/styles.components.css';
+@import '@dayflow-pro/resource-grid/dist/styles.components.css';
+@import '@dayflow-pro/resource-timeline/dist/styles.components.css';
+@import '@dayflow-pro/plugin-print/dist/styles.components.css';
+@import 'tailwindcss';
+
+@source '../node_modules/@dayflow/core/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/resource-grid/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/resource-timeline/dist/**/*.js';
+@source '../node_modules/@dayflow-pro/plugin-print/dist/**/*.js';
+```
+
+`@source`의 상대 경로는 CSS 파일 위치에 맞게 조정하세요. 이
+Tailwind 구성에는 어떤 패키지의 완전한 `styles.css`도 함께 넣지 마세요.
+
+## 문제 해결
+
+### Resource Timeline 설치가 실패합니다
+
+`.npmrc`에 `@dayflow-pro` 레지스트리가 들어
+있는지, 그리고 패키지 매니저를 실행하는 셸이나 CI 작업에서
+`DAYFLOW_PRO_NPM_TOKEN`을 사용할 수 있는지 확인하세요. 그다음
+패키지 이름과 레지스트리 URL이 위 설정과 일치하는지 확인합니다.
+
+### Pro 뷰가 라이선스가 없다고 표시합니다
+
+전역 등록을 사용한다면
+`registerDayflowProLicense()`가 첫 렌더링 이전에 실행되는지 확인하세요. 명시적 설정을 사용한다면
+모든 Pro 뷰·플러그인 팩토리에 `license`를 전달해야 합니다.
+
+### 뷰는 렌더링되는데 스타일이 적용되지 않습니다
+
+설치한 Pro 패키지마다 대응하는 스타일시트 import가 있는지 확인하세요.
+그다음 애플리케이션이 완전한 `styles.css` 기반을 하나만 사용하고, 나머지
+import는 모두 `styles.components.css`를 쓰는지 점검합니다.

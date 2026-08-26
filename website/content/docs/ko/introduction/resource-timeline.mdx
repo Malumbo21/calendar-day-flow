@@ -1,0 +1,332 @@
+---
+title: 리소스 타임라인
+description: 리소스 그룹화, 마일스톤 표시, 스케일 전환, 스케줄러 방식의 상호작용을 제공하는 DayFlow Pro의 가로형 리소스 타임라인 뷰입니다.
+status: pro
+---
+
+# 리소스 타임라인
+
+`@dayflow-pro/resource-timeline`은 DayFlow에 스케줄러 방식의 가로형 타임라인을 추가합니다. 시간이 왼쪽에서 오른쪽으로 흐르고 리소스마다 고유한 행을 가지며, 사람·회의실·프로젝트·장비에 걸친 업무 계획에 맞게 설계되었습니다.
+
+[라이브 데모](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_timeline)를 사용해 보세요
+
+기본 캘린더 뷰와 비교했을 때, 리소스 타임라인은 다음에 최적화되어 있습니다:
+
+- 장기간 이어지는 작업과 프로젝트 계획
+- 여러 레인에 걸친 리소스 배분
+- 마일스톤과 진행 상황 추적
+- 계층형 또는 그룹화된 리소스 목록
+
+## 설치
+
+<PackageTabs pkg='@dayflow-pro/resource-timeline' />
+
+설치 단계는 [Pro 설치](/docs-ko/introduction/pro-installation) 가이드를 참고하세요.
+
+## 기본 사용법
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: event =>
+              (event as { resourceId?: string }).resourceId ?? event.calendarId,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceTimelineView({
+          resources: [
+            {
+              id: 'eng-alice',
+              name: 'Alice Chen',
+              groupId: 'engineering',
+              groupName: 'Engineering',
+              subtitle: 'Frontend',
+            },
+            {
+              id: 'eng-bob',
+              name: 'Bob Torres',
+              groupId: 'engineering',
+              groupName: 'Engineering',
+              subtitle: 'Platform',
+            },
+          ],
+          defaultView: 'week',
+          height: 640,
+          getResourceId: event => event.resourceId ?? event.calendarId,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: (event: any) => event.resourceId ?? event.calendarId,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: event => event.resourceId ?? event.calendarId,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 타임라인 스케일
+
+| 스케일    | 설명                                        |
+| :-------- | :------------------------------------------ |
+| `day`     | 하루를 시간 단위 열로 표시합니다.           |
+| `week`    | 한 주를 날짜 단위 열로 표시합니다.          |
+| `month`   | 한 달을 날짜 단위 열로 표시합니다.          |
+| `quarter` | 3개월을 주 또는 월 단위로 묶어 표시합니다.  |
+| `year`    | 로드맵 형태의 계획에 적합한 1년 전체입니다. |
+
+`defaultView`로 초기 스케일을 지정하세요. `viewSwitcherMode`로 전환 UI의 형태도 정할 수 있으며 `buttons`, `select`, `filter`를 지원합니다.
+
+## 리소스 모델
+
+리소스는 평범한 객체입니다. 실제 코드는 `id`와 `name` 외에도 더 많은 필드를 지원합니다:
+
+```ts
+type Resource = {
+  id: string;
+  name: string;
+  parentId?: string;
+  collapsed?: boolean;
+  groupId?: string;
+  groupName?: string;
+  order?: number;
+  subtitle?: string;
+  avatar?: string;
+  color?: string;
+  style?: {
+    colors: { color: string; textColor?: string };
+    darkColors?: { color: string; textColor?: string };
+    opacity?: number;
+    borderRadius?: number;
+  };
+  meta?: Record<string, unknown>;
+};
+```
+
+유용한 필드:
+
+- `groupId`와 `groupName`으로 리소스를 그룹 구획으로 묶을 수 있습니다.
+- `parentId`와 `collapsed`는 계층형 리소스 트리를 지원합니다.
+- `subtitle`, `avatar`, `color`, `style`로 사이드바 표현을 풍부하게 만들 수 있습니다.
+- `meta`는 보통 `calendarId` 같은 외부 식별자를 저장하는 데 사용합니다.
+
+## 이벤트와 리소스 연결
+
+뷰는 다음 순서로 각 이벤트가 놓일 행을 결정합니다:
+
+1. `getResourceId(event)` (제공된 경우)
+2. `event.resourceId`
+3. `event.meta?.resourceId`
+4. `event.calendarId`
+
+즉, 이벤트 객체에 `resourceId`를 직접 저장하거나, 콜백을 사용해 기존 DayFlow 이벤트를 리소스에 매핑할 수 있습니다.
+
+```tsx
+const event = {
+  id: 'task-1',
+  title: 'Build export flow',
+  start: new Date(2026, 4, 10, 9, 0),
+  end: new Date(2026, 4, 12, 18, 0),
+  resourceId: 'eng-alice',
+  progress: 65,
+};
+```
+
+## 마일스톤과 이벤트 스타일
+
+`start`와 `end`가 같은 이벤트는 자동으로 마일스톤으로 렌더링됩니다.
+
+```tsx
+const milestone = {
+  id: 'release-gate',
+  title: 'Release approval',
+  start: new Date(2026, 4, 14, 10, 0),
+  end: new Date(2026, 4, 14, 10, 0),
+  resourceId: 'eng-bob',
+};
+```
+
+| 속성                    | 타입                             | 설명                                                                           |
+| :---------------------- | :------------------------------- | :----------------------------------------------------------------------------- |
+| `milestoneLabelDisplay` | `'hover' \| 'always'`            | 마일스톤 레이블을 마우스를 올렸을 때만 보여 줄지, 항상 표시할지 결정합니다.    |
+| `milestoneLaneBehavior` | `'smart' \| 'overlay'`           | 마일스톤이 가능한 경우 일반 레인을 공유할지, 그 위에 겹쳐 표시할지 결정합니다. |
+| `getEventType`          | `(event) => ResourceEventType`   | 이벤트를 타임라인 전용 이벤트 타입으로 매핑합니다.                             |
+| `getEventTooltip`       | `(event) => string \| undefined` | 이벤트의 툴팁 문구를 제공합니다.                                               |
+| `styleRegistry`         | `Record<string, EventStyle>`     | 사용자 정의 스타일 프리셋을 등록합니다.                                        |
+| `getEventStyleId`       | `(event) => string \| undefined` | 이벤트에 적용할 스타일 프리셋을 선택합니다.                                    |
+
+## ResourceTimelineViewConfig
+
+### 기본
+
+| 속성               | 타입                                      | 설명                                                        |
+| :----------------- | :---------------------------------------- | :---------------------------------------------------------- |
+| `resources`        | `Resource[]`                              | 타임라인에 표시할 리소스 목록입니다(필수).                  |
+| `license`          | `PackageLicenseConfig`                    | 전역 등록을 사용하지 않을 때 지정하는 선택적 설정입니다.    |
+| `defaultView`      | `day \| week \| month \| quarter \| year` | 타임라인의 초기 스케일입니다.                               |
+| `views`            | `SchedulerTimelineView[]`                 | 전환 가능한 타임라인 스케일 목록을 재정의합니다.            |
+| `viewType`         | `ViewType \| string`                      | 고급 호스트에 통합할 때 사용하는 사용자 정의 뷰 타입입니다. |
+| `viewSwitcherMode` | `'buttons' \| 'select' \| 'filter'`       | 스케일 전환 UI의 형태를 제어합니다.                         |
+| `height`           | `number \| string`                        | 렌더링되는 뷰의 높이입니다.                                 |
+
+### 레이아웃
+
+| 속성                    | 타입     | 설명                                                          |
+| :---------------------- | :------- | :------------------------------------------------------------ |
+| `resourcePanelWidth`    | `number` | 사이드바의 기본 너비입니다.                                   |
+| `resourcePanelMinWidth` | `number` | 사이드바의 최소 너비입니다.                                   |
+| `resourcePanelMaxWidth` | `number` | 사이드바의 최대 너비입니다.                                   |
+| `rowHeight`             | `number` | 각 리소스 행의 높이입니다.                                    |
+| `headerHeight`          | `number` | 타임라인 헤더의 높이입니다.                                   |
+| `hourWidth`             | `number` | `day` 모드의 시간 스케일 너비입니다.                          |
+| `weekDayWidth`          | `number` | `week` 모드에서 하루당 너비입니다.                            |
+| `dayWidth`              | `number` | `month` 모드에서 하루당 너비입니다.                           |
+| `monthDayWidth`         | `number` | 조밀한 월 범위를 렌더링할 때 하루당 너비입니다.               |
+| `quarterMonthWidth`     | `number` | `quarter` 모드에서 한 달당 너비입니다.                        |
+| `yearCellWidth`         | `number` | `year` 모드에서 단위당 너비입니다.                            |
+| `yearRangePast`         | `number` | 현재 연도 이전에 추가로 표시할 연수입니다.                    |
+| `yearRangeFuture`       | `number` | 현재 연도 이후에 추가로 표시할 연수입니다.                    |
+| `overscanRows`          | `number` | 화면 밖에 추가로 렌더링할 행 수입니다.                        |
+| `bufferCells`           | `number` | 스크롤을 부드럽게 하기 위해 추가로 렌더링할 시간 셀 수입니다. |
+
+### 리소스 표시와 동기화
+
+| 속성                                  | 타입                                | 설명                                                      |
+| :------------------------------------ | :---------------------------------- | :-------------------------------------------------------- |
+| `resourceSorter`                      | `(left, right) => number`           | 행 정렬 순서를 직접 지정합니다.                           |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | 연결된 캘린더가 숨겨지면 해당 리소스 행도 숨깁니다.       |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | 리소스를 캘린더 표시 여부에 연결하는 방식을 재정의합니다. |
+| `onResourcesUpdate`                   | `(resources) => void`               | UI에서 리소스 순서를 바꾸거나 접었을 때 호출됩니다.       |
+
+캘린더 동기화가 활성화되면 리소스와 캘린더 간 대체 매핑은 `resource.meta?.calendarId ?? resource.id`입니다.
+
+## 포커스, 사이드바, 연동
+
+타임라인에는 놓치기 쉬운 몇 가지 연동 지점이 있습니다:
+
+- `focusRequest`를 사용하면 호스트 앱이 코드로 타임라인을 특정 이벤트와 날짜로 이동시킬 수 있습니다.
+- `sidebar`는 컨텍스트 메뉴 동작 등 스케줄러 사이드바 설정을 그대로 전달합니다.
+- 상세 UI를 직접 만들어야 한다면 `customDetailPanelContent`와 `customEventDetailDialog`를 뷰 props로 전달할 수 있습니다.
+- `timeFormat`은 `24h`와 `12h`를 지원합니다.
+- `resizeTimeFormat`은 이벤트 크기를 조절하는 동안 표시되는 레이블을 바꿉니다.

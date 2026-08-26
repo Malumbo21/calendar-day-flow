@@ -1,0 +1,115 @@
+---
+title: '캘린더 헤더'
+---
+
+# 캘린더 헤더
+
+캘린더 헤더는 이동 컨트롤, 뷰 전환기, 검색 기능을 제공합니다. 동작을 조정하거나 통째로 교체할 수 있습니다.
+
+## 헤더 숨기기
+
+직접 내비게이션을 만들 생각이거나 기본 헤더가 필요 없다면 헤더를 끌 수 있습니다.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  useCalendarHeader: false, // 기본 헤더 숨기기
+});
+```
+
+## 헤더 직접 만들기
+
+<Callout title='v3.4.1부터 적용된 호환성 변경' type='warn'>
+  `useCalendarHeader`에 함수를 전달하는 방식은 더 이상 지원되지 않습니다. 아래
+  예시처럼 직접 만든 헤더를 `DayFlowCalendar`의 `calendarHeader` 슬롯으로
+  옮기세요.
+</Callout>
+
+`calendarHeader` 콘텐츠 슬롯을 사용하면 기본 헤더를 직접 만든 컴포넌트로 교체할 수 있습니다. 렌더러는 캘린더의 상태와 헬퍼 메서드를 전달받으므로, 직접 만든 UI에서 이동과 검색을 제어할 수 있습니다.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+    });
+
+    <DayFlowCalendar
+      calendar={calendar}
+      calendarHeader={() => (
+        <div className='custom-header'>
+          <button onClick={() => calendar.goToPrevious()}>‹</button>
+          <button onClick={() => calendar.goToToday()}>Today</button>
+          <button onClick={() => calendar.goToNext()}>›</button>
+        </div>
+      )}
+    />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <DayFlowCalendar :calendar="calendar">
+      <template #calendarHeader="{ calendar }">
+        <div class="custom-header">
+          <button @click="calendar.goToPrevious()">‹</button>
+          <button @click="calendar.goToToday()">Today</button>
+          <button @click="calendar.goToNext()">›</button>
+        </div>
+      </template>
+    </DayFlowCalendar>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [calendarHeader]="header"
+    >
+    </dayflow-calendar>
+
+    <ng-template #header let-args>
+      <div class="custom-header">
+        <button (click)="args.calendar.goToPrevious()">‹</button>
+        <button (click)="args.calendar.goToToday()">Today</button>
+        <button (click)="args.calendar.goToNext()">›</button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} calendarHeader={CustomHeader} />
+
+    <!-- CustomHeader.svelte -->
+    <script lang="ts">
+      import type { CalendarHeaderProps } from '@dayflow/core';
+      let { calendar } = $props<CalendarHeaderProps>();
+    </script>
+
+    <div class="custom-header">
+      <button onclick={() => calendar.goToPrevious()}>‹</button>
+      <button onclick={() => calendar.goToToday()}>Today</button>
+      <button onclick={() => calendar.goToNext()}>›</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### 슬롯 인자
+
+슬롯 렌더러는 다음 인자를 전달받습니다:
+
+| 인자             | 설명                                                        |
+| :--------------- | :---------------------------------------------------------- |
+| `calendar`       | `CalendarApp` 인스턴스입니다.                               |
+| `switcherMode`   | 현재 뷰 전환기 모드입니다(`buttons` 또는 `select`).         |
+| `onAddCalendar`  | 새 캘린더를 추가하는 핸들러입니다.                          |
+| `onSearchChange` | 검색어를 갱신하는 핸들러입니다.                             |
+| `onSearchClick`  | 검색 아이콘을 클릭했을 때의 핸들러입니다.                   |
+| `searchValue`    | 현재 검색 문자열입니다.                                     |
+| `isSearchOpen`   | 검색 UI가 열려 있는지 여부입니다.                           |
+| `isEditable`     | 캘린더가 현재 편집 가능한 상태인지 여부입니다.              |
+| `safeAreaLeft`   | macOS에서 창 버튼과 겹치지 않도록 두는 왼쪽 여백(px)입니다. |

@@ -1,0 +1,377 @@
+---
+title: 'ダークモード'
+---
+
+import { DefaultColorPalette } from '@/components/ColorPalette';
+
+# ダークモード
+
+DayFlow にはライト/ダーク/自動の 3 つのテーマモードが標準搭載されており、ビューやサイドバー、イベントカード、ダイアログまで一貫して切り替わります。システム設定に合わせたり、アプリ独自のトグルから制御するのも簡単です。
+
+## 特徴
+
+- **3 モード対応**：`light` / `dark` / `auto`
+- **シームレスな切替**：ちらつきやレイアウト崩れなし
+- **システム連動**：`auto` で OS のテーマと同期
+- **イベントカラー最適化**：背景に応じたコントラスト調整
+- **API 完備**：`getTheme` / `setTheme` / `subscribeThemeChange`
+- **カレンダー単位の色替え**：各 `calendarId` にライト/ダーク用の色を設定可能
+
+## クイックスタート
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        theme: { mode: 'dark' }, // 'light' | 'dark' | 'auto'
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      theme: { mode: 'dark' }, // 'light' | 'dark' | 'auto'
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        theme: { mode: 'dark' as const }, // 'light' | 'dark' | 'auto'
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        theme: { mode: 'dark' }, // 'light' | 'dark' | 'auto'
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+モードを切り替えるときは `mode` を変更するだけです。
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    // ライト
+    useCalendarApp({ theme: { mode: 'light' } });
+
+    // ダーク
+    useCalendarApp({ theme: { mode: 'dark' } });
+
+    // OSに追従
+    useCalendarApp({ theme: { mode: 'auto' } });
+    ```
+
+  </Tab>
+  <Tab>
+    ```javascript
+    // ライト
+    useCalendarApp({ theme: { mode: 'light' } });
+
+    // ダーク
+    useCalendarApp({ theme: { mode: 'dark' } });
+
+    // OSに追従
+    useCalendarApp({ theme: { mode: 'auto' } });
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    // ライト
+    calendar = { theme: { mode: 'light' } };
+
+    // ダーク
+    calendar = { theme: { mode: 'dark' } };
+
+    // OSに追従
+    calendar = { theme: { mode: 'auto' } };
+    ```
+
+  </Tab>
+  <Tab>
+    ```javascript
+    // ライト
+    useCalendarApp({ theme: { mode: 'light' } });
+
+    // ダーク
+    useCalendarApp({ theme: { mode: 'dark' } });
+
+    // OSに追従
+    useCalendarApp({ theme: { mode: 'auto' } });
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## プログラムからの切り替え
+
+```tsx
+const calendar = useCalendarApp({ theme: { mode: 'light' } });
+
+const toggleTheme = () => {
+  const current = calendar.app.getTheme();
+  calendar.app.setTheme(current === 'light' ? 'dark' : 'light');
+};
+```
+
+購読 API を使えば、アプリ全体でテーマを共有できます。
+
+```tsx
+useEffect(() => {
+  const handler = (mode: ThemeMode) => setTheme(mode);
+  calendar.app.subscribeThemeChange(handler);
+  return () => calendar.app.unsubscribeThemeChange(handler);
+}, [calendar.app]);
+```
+
+## カレンダータイプごとの色を調整
+
+```tsx
+const calendars = [
+  {
+    id: 'work',
+    name: '仕事',
+    colors: {
+      lineColor: '#0066cc',
+      eventColor: '#e6f2ff',
+      eventSelectedColor: '#cce4ff',
+      textColor: '#003d7a',
+    },
+    darkColors: {
+      lineColor: '#4da6ff',
+      eventColor: '#1a3d5c',
+      eventSelectedColor: '#2a5a8a',
+      textColor: '#b3d9ff',
+    },
+  },
+];
+
+const calendar = useCalendarApp({
+  theme: { mode: 'auto' },
+  calendars,
+});
+```
+
+`darkColors` を省略するとライトモードの色がそのまま使われます。暗い背景でも読みやすいよう、必ずトーンを調整しましょう。
+
+## デフォルト色セット
+
+<DefaultColorPalette />
+
+## API リファレンス
+
+```ts
+interface ThemeConfig {
+  mode: 'light' | 'dark' | 'auto';
+}
+
+app.getTheme(): ThemeMode;
+app.setTheme(mode: ThemeMode): void;
+app.subscribeThemeChange((mode: ThemeMode) => void): void;
+app.unsubscribeThemeChange((mode: ThemeMode) => void): void;
+```
+
+## Tailwind / CSS 変数との併用
+
+- Tailwind で `darkMode: 'class'` にしている場合、ページのルートに付与している `dark` クラスと DayFlow の `theme.mode` を同期させると整合性が取れます。
+- `--dayflow-bg-primary` などの CSS カスタムプロパティを上書きすれば、より細かいトークンレベルでブランドカラーを適用できます（[テーマカスタマイズガイド](/docs-ja/guides/theme-customization) 参照）。
+
+## テストのヒント
+
+1. ライト/ダークの両方でイベント文字のコントラストが十分か確認する（4.5:1 以上が目安）。
+2. ドラッグ&ドロップ、ポップアップ、サイドバーなど動的 UI がモード切り替え時に崩れないかテストする。
+3. `auto` モードを使う場合は、OS のテーマ変更イベントを実機で試し、即時反映されるかチェックする。
+
+この仕組みを使えば、DayFlow を既存アプリのテーマ戦略にスムーズに統合できます。
+
+## カラー推奨事項
+
+読みやすさとアクセシビリティを最適化するために：
+
+**ライトモード：**
+
+- 線の色：鮮やかで彩度の高い色 (#0066cc、#16a34a)
+- イベント色：明るいティント (#e6f2ff、#dcfce7)
+- テキスト色：コントラストのための暗い色調 (#003d7a、#14532d)
+
+**ダークモード：**
+
+- 線の色：より明るく発光感のある色 (#4da6ff、#4ade80)
+- イベント色：暗く彩度を落とした背景 (#1a3d5c、#1e4d2b)
+- テキスト色：読みやすい明るい色調 (#b3d9ff、#bbf7d0)
+
+## 使用例
+
+### シンプルなテーマ切り替え
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useState } from 'react';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { Sun, Moon } from 'lucide-react';
+
+    function SimpleThemeToggle() {
+      const calendar = useCalendarApp({
+        theme: { mode: 'light' },
+      });
+
+      const [isDark, setIsDark] = useState(false);
+
+      const toggleTheme = () => {
+        const nextTheme = isDark ? 'light' : 'dark';
+        calendar.app.setTheme(nextTheme);
+        setIsDark(!isDark);
+      };
+
+      return (
+        <div>
+          <button onClick={toggleTheme}>{isDark ? <Sun /> : <Moon />}</button>
+          <DayFlowCalendar calendar={calendar} />
+        </div>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <div>
+        <button @click="toggleTheme">
+          <Sun v-if="isDark" />
+          <Moon v-else />
+        </button>
+        <DayFlowCalendar :calendar="calendar" />
+      </div>
+    </template>
+
+    <script setup>
+    import { ref } from 'vue';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { Sun, Moon } from 'lucide-vue-next';
+
+    const calendar = useCalendarApp({
+      theme: { mode: 'light' },
+    });
+
+    const isDark = ref(false);
+
+    const toggleTheme = () => {
+      const nextTheme = isDark.value ? 'light' : 'dark';
+      calendar.app.setTheme(nextTheme);
+      isDark.value = !isDark.value;
+    };
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <div>
+          <button (click)="toggleTheme()">
+            {{ isDark ? 'ライトモード' : 'ダークモード' }}
+          </button>
+          <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+        </div>
+      `
+    })
+    export class AppComponent {
+      isDark = false;
+      calendar = {
+        theme: { mode: 'light' as const },
+      };
+
+      toggleTheme() {
+        this.isDark = !this.isDark;
+        const mode = this.isDark ? 'dark' : 'light';
+        this.calendar = {
+          ...this.calendar,
+          theme: { mode }
+        };
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        theme: { mode: 'light' },
+      });
+
+      let isDark = $state(false);
+
+      function toggleTheme() {
+        isDark = !isDark;
+        const nextTheme = isDark ? 'dark' : 'light';
+        calendar.app.setTheme(nextTheme);
+      }
+    </script>
+
+    <div>
+      <button onclick={toggleTheme}>
+        {isDark ? 'ライトモード' : 'ダークモード'}
+      </button>
+      <DayFlowCalendar {calendar} />
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 関連ドキュメント
+
+- [useCalendarApp](/docs-ja/introduction/use-calendar-app) - コアカレンダー設定
+- [カレンダータイプ](/docs-ja/introduction/events#calendar-types) - イベントのカテゴリと色
+- [テーマカスタマイズガイド](/docs-ja/guides/theme-customization) - 高度なテーマ設定

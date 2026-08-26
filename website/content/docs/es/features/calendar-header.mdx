@@ -1,0 +1,115 @@
+---
+title: 'Cabecera del calendario'
+---
+
+# Cabecera del calendario
+
+La cabecera del calendario reúne los controles de navegación, el selector de vista y la búsqueda. Puedes adaptar su comportamiento o sustituirla por completo.
+
+## Ocultar la cabecera
+
+Si prefieres construir tu propia navegación, o simplemente no necesitas la cabecera predeterminada, puedes desactivarla.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  useCalendarHeader: false, // Oculta la cabecera predeterminada
+});
+```
+
+## Cabecera propia
+
+<Callout title='Cambio incompatible desde v3.4.1' type='warn'>
+  Ya no se admite pasar una función a `useCalendarHeader`. Traslada tu cabecera
+  personalizado al slot `calendarHeader` de `DayFlowCalendar`, como se muestra
+  abajo.
+</Callout>
+
+Puedes sustituir la cabecera predeterminada por tu propio componente mediante el slot de contenido `calendarHeader`. El renderizador recibe el estado del calendario y sus métodos auxiliares, para que puedas controlar la navegación y la búsqueda desde tu propia interfaz.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+    });
+
+    <DayFlowCalendar
+      calendar={calendar}
+      calendarHeader={() => (
+        <div className='custom-header'>
+          <button onClick={() => calendar.goToPrevious()}>‹</button>
+          <button onClick={() => calendar.goToToday()}>Today</button>
+          <button onClick={() => calendar.goToNext()}>›</button>
+        </div>
+      )}
+    />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <DayFlowCalendar :calendar="calendar">
+      <template #calendarHeader="{ calendar }">
+        <div class="custom-header">
+          <button @click="calendar.goToPrevious()">‹</button>
+          <button @click="calendar.goToToday()">Today</button>
+          <button @click="calendar.goToNext()">›</button>
+        </div>
+      </template>
+    </DayFlowCalendar>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [calendarHeader]="header"
+    >
+    </dayflow-calendar>
+
+    <ng-template #header let-args>
+      <div class="custom-header">
+        <button (click)="args.calendar.goToPrevious()">‹</button>
+        <button (click)="args.calendar.goToToday()">Today</button>
+        <button (click)="args.calendar.goToNext()">›</button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} calendarHeader={CustomHeader} />
+
+    <!-- CustomHeader.svelte -->
+    <script lang="ts">
+      import type { CalendarHeaderProps } from '@dayflow/core';
+      let { calendar } = $props<CalendarHeaderProps>();
+    </script>
+
+    <div class="custom-header">
+      <button onclick={() => calendar.goToPrevious()}>‹</button>
+      <button onclick={() => calendar.goToToday()}>Today</button>
+      <button onclick={() => calendar.goToNext()}>›</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Argumentos del slot
+
+El renderizador del slot recibe los siguientes argumentos:
+
+| Argumento        | Descripción                                                             |
+| :--------------- | :---------------------------------------------------------------------- |
+| `calendar`       | La instancia de `CalendarApp`.                                          |
+| `switcherMode`   | El modo actual del selector de vista (`buttons` o `select`).            |
+| `onAddCalendar`  | Manejador para añadir un calendario nuevo.                              |
+| `onSearchChange` | Manejador para actualizar el texto de búsqueda.                         |
+| `onSearchClick`  | Manejador para cuando se pulsa el icono de búsqueda.                    |
+| `searchValue`    | El texto de búsqueda actual.                                            |
+| `isSearchOpen`   | Indica si la interfaz de búsqueda está abierta.                         |
+| `isEditable`     | Indica si el calendario está en estado editable.                        |
+| `safeAreaLeft`   | Relleno izquierdo (px) para no solapar los botones de ventana en macOS. |

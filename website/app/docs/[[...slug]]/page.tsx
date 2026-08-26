@@ -1,67 +1,27 @@
-import { DocsBody, DocsPage } from 'fumadocs-ui/layouts/docs/page';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
 import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
 
-import { getPageImage, source } from '@/lib/source';
-import { getMDXComponents } from '@/mdx-components';
+import {
+  DocsLocalePage,
+  generateDocsMetadata,
+  generateDocsParams,
+} from '@/components/docs/DocsLocalePage';
+
+const LOCALE = 'en';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
-  const params = await props.params;
+  const { slug } = await props.params;
 
-  if (!params.slug || params.slug.length === 0) {
-    const first = source.getPages()[0];
-    redirect(first ? `/docs/${first.slugs.join('/')}` : '/docs/introduction');
-  }
-
-  const page = source.getPage(params.slug);
-  if (!page) notFound();
-
-  const { body: MDX, toc } = await page.data.load();
-
-  const full = page.data.full ?? params.slug?.[0] === 'features';
-
-  return (
-    <DocsPage
-      toc={toc}
-      full={full}
-      breadcrumb={{ enabled: false }}
-      tableOfContent={{ style: 'clerk' }}
-    >
-      <DocsBody>
-        <MDX
-          components={getMDXComponents({
-            // this allows you to link to other pages with relative file paths
-            a: createRelativeLink(source, page),
-          })}
-        />
-      </DocsBody>
-    </DocsPage>
-  );
+  return <DocsLocalePage locale={LOCALE} slug={slug} />;
 }
 
 export function generateStaticParams() {
-  return [{ slug: [] as string[] }, ...source.generateParams()];
+  return generateDocsParams(LOCALE);
 }
 
 export async function generateMetadata(
   props: PageProps<'/docs/[[...slug]]'>
 ): Promise<Metadata> {
-  const params = await props.params;
-  const page = source.getPage(params.slug);
-  if (!page) return {};
+  const { slug } = await props.params;
 
-  return {
-    title: page.data.title,
-    description: page.data.description,
-    alternates: {
-      canonical: page.url,
-    },
-    openGraph: {
-      title: page.data.title,
-      description: page.data.description,
-      url: page.url,
-      images: getPageImage(page).url,
-    },
-  };
+  return generateDocsMetadata(LOCALE, slug);
 }

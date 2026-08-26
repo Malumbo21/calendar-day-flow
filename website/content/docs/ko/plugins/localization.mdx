@@ -1,0 +1,194 @@
+---
+title: 'i18n 플러그인'
+---
+
+# i18n 플러그인
+
+i18n 플러그인은 여러 언어와 로케일을 지원합니다. 기본적으로 DayFlow 코어에는 번들 크기를 최대한 줄이기 위해 영어(`en-US`) 로케일만 포함되어 있습니다.
+
+## 설치
+
+i18n 플러그인 패키지를 설치하세요:
+
+<PackageTabs pkg='@dayflow/plugin-localization' />
+
+## 사용법
+
+다른 언어를 사용하려면 플러그인을 등록하고 원하는 로케일 객체를 전달하세요. `locale` 속성은 로케일 코드 문자열(예: `'zh-CN'`)과 가져온 `Locale` 객체(예: `zh`)를 모두 받습니다.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import {
+      createLocalizationPlugin,
+      zh,
+      ja,
+      fr,
+    } from '@dayflow/plugin-localization';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createLocalizationPlugin({
+            locales: [zh, ja, fr], // Register the languages you need
+          }),
+        ],
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import {
+      createLocalizationPlugin,
+      zh,
+      ja,
+      fr,
+    } from '@dayflow/plugin-localization';
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [
+        createLocalizationPlugin({
+          locales: [zh, ja, fr], // Register the languages you need
+        }),
+      ],
+      locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import {
+      createLocalizationPlugin,
+      zh,
+      ja,
+      fr,
+    } from '@dayflow/plugin-localization';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createLocalizationPlugin({
+            locales: [zh, ja, fr], // Register the languages you need
+          })
+        ],
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import {
+        createLocalizationPlugin,
+        zh,
+        ja,
+        fr,
+      } from '@dayflow/plugin-localization';
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createLocalizationPlugin({
+            locales: [zh, ja, fr], // Register the languages you need
+          }),
+        ],
+        locale: zh, // Set the current locale (pass the locale object 'zh' or code string 'zh-CN')
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 설정
+
+이 플러그인은 전역 로케일 레지스트리에 등록할 `Locale` 객체 목록을 받습니다.
+
+```tsx
+interface LocalizationConfig {
+  locales: Locale[];
+}
+```
+
+## 사용 가능한 로케일
+
+`@dayflow/plugin-localization` 패키지에서 현재 제공하는 로케일은 다음과 같습니다:
+
+| Export | 언어     | 로케일 코드                  |
+| :----- | :------- | :--------------------------- |
+| `zh`   | 중국어   | `zh-CN`                      |
+| `ja`   | 일본어   | `ja-JP`                      |
+| `ko`   | 한국어   | `ko-KR`                      |
+| `fr`   | 프랑스어 | `fr-FR`                      |
+| `de`   | 독일어   | `de-DE`                      |
+| `es`   | 스페인어 | `es-ES`                      |
+| `en`   | 영어     | `en-US` (코어에도 기본 포함) |
+
+`locale` 속성에는 다음 중 하나를 전달할 수 있습니다:
+
+- **`Locale` 객체**: 가져온 로케일 객체를 그대로 전달합니다(예: `locale: zh`).
+- **로케일 코드 문자열**: 언어 코드를 전달하면(예: `locale: 'zh-CN'` 또는 `'zh'`) 등록된 로케일과 자동으로 매칭됩니다.
+
+## 사용자 정의 로케일
+
+플러그인을 쓰지 않고 직접 로케일을 등록하거나, 플러그인에 전달할 수도 있습니다:
+
+```tsx
+const myCustomLocale = {
+  code: 'pt-BR',
+  messages: {
+    today: 'Hoje',
+    day: 'Dia',
+    week: 'Semana',
+    month: 'Mês',
+    // ... all other translation keys
+  },
+};
+
+const calendar = useCalendarApp({
+  plugins: [
+    createLocalizationPlugin({
+      locales: [myCustomLocale],
+    }),
+  ],
+  locale: myCustomLocale, // Pass the custom Locale object directly (or code string 'pt-BR')
+});
+```

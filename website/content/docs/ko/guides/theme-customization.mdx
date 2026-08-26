@@ -1,0 +1,350 @@
+---
+title: '테마 커스터마이징 가이드'
+---
+
+# 테마 커스터마이징 가이드
+
+DayFlow Calendar의 외형은 네임스페이스가 붙은 CSS 커스텀 속성(`--df-color-*`) 모음으로 제어됩니다. 모든 토큰이 `@layer df-theme` 안에 정의되어 있어, 호스트 애플리케이션은 Tailwind를 쓰든 순수 CSS를 쓰든 `!important` 없이 값을 재정의할 수 있습니다.
+
+DayFlow의 공용 기반 CSS는 테마 토큰, 컴포넌트 프리미티브, `df-fill-primary`·`df-focus-ring` 같은 의미 기반 헬퍼 클래스의 단일 기준입니다.
+
+## 목차
+
+- [캘린더 타입별 사용자 지정 색상](#캘린더-타입별-사용자-지정-색상)
+- [CSS 변수 레퍼런스](#css-변수-레퍼런스)
+- [재정의 방법](#재정의-방법)
+- [Tailwind v4 연동](#tailwind-v4-연동)
+- [사용자 지정 테마 만들기](#사용자-지정-테마-만들기)
+
+## 캘린더 타입별 사용자 지정 색상
+
+### 기본적인 색상 지정
+
+캘린더 타입마다 고유한 색상을 라이트·다크 변형으로 나누어 지정할 수 있습니다:
+
+```tsx
+const calendar = useCalendarApp({
+  calendars: [
+    {
+      id: 'personal',
+      name: 'Personal',
+      colors: {
+        lineColor: '#0891b2', // cyan-600
+        eventColor: '#cffafe', // cyan-100
+        eventSelectedColor: '#a5f3fc', // cyan-200
+        textColor: '#164e63', // cyan-900
+      },
+      darkColors: {
+        lineColor: '#22d3ee', // cyan-400
+        eventColor: '#164e63', // cyan-900
+        eventSelectedColor: '#083344', // cyan-950
+        textColor: '#cffafe', // cyan-100
+      },
+    },
+  ],
+});
+```
+
+### 색상 속성 설명
+
+- **lineColor**: 테두리와 강조 색상입니다(이벤트 왼쪽 바)
+- **eventColor**: 이벤트 배경 채움 색상입니다
+- **eventSelectedColor**: 이벤트가 선택되었을 때의 배경 채움 색상입니다
+- **textColor**: 이벤트 제목과 시간의 글자 색상입니다
+
+### 브랜드 색상 적용하기
+
+```tsx
+{
+  id: 'brand',
+  name: 'Brand Events',
+  colors: {
+    lineColor: '#6366f1',       // Brand indigo
+    eventColor: '#e0e7ff', // Indigo-100
+    eventSelectedColor: '#c7d2fe', // Indigo-200
+    textColor: '#312e81',       // Indigo-900
+  },
+  darkColors: {
+    lineColor: '#a5b4fc',       // Indigo-300
+    eventColor: '#312e81', // Indigo-900
+    eventSelectedColor: '#1e1b4b', // Indigo-950
+    textColor: '#e0e7ff',       // Indigo-100
+  },
+}
+```
+
+### 색상 생성 헬퍼
+
+```tsx
+// utils/colorGenerator.ts
+interface ColorSet {
+  lineColor: string;
+  eventColor: string;
+  eventSelectedColor: string;
+  textColor: string;
+}
+
+export function generateLightColors(baseColor: string): ColorSet {
+  return {
+    lineColor: baseColor,
+    eventColor: lighten(baseColor, 0.9),
+    eventSelectedColor: lighten(baseColor, 0.8),
+    textColor: darken(baseColor, 0.4),
+  };
+}
+
+export function generateDarkColors(baseColor: string): ColorSet {
+  return {
+    lineColor: lighten(baseColor, 0.3),
+    eventColor: darken(baseColor, 0.6),
+    eventSelectedColor: darken(baseColor, 0.7),
+    textColor: lighten(baseColor, 0.8),
+  };
+}
+```
+
+## CSS 변수 레퍼런스
+
+DayFlow의 모든 테마 토큰은 호스트 애플리케이션의 변수와 충돌하지 않도록 `--df-color-` 접두사를 사용합니다.
+
+| 변수                                | 용도                         |
+| ----------------------------------- | ---------------------------- |
+| `--df-color-background`             | 캘린더 배경                  |
+| `--df-color-foreground`             | 기본 글자 색상               |
+| `--df-color-hover`                  | 호버 상태 배경               |
+| `--df-color-border`                 | 테두리와 구분선              |
+| `--df-color-card`                   | 카드·패널 배경               |
+| `--df-color-card-foreground`        | 카드 글자 색상               |
+| `--df-color-muted`                  | 은은한 배경 영역             |
+| `--df-color-muted-foreground`       | 흐린 색 또는 보조 텍스트     |
+| `--df-color-primary`                | 주요 강조색(버튼, 선택 상태) |
+| `--df-color-primary-foreground`     | 주요 강조색 배경 위의 텍스트 |
+| `--df-color-secondary`              | 보조 강조색                  |
+| `--df-color-secondary-foreground`   | 보조 강조색 배경 위의 텍스트 |
+| `--df-color-destructive`            | 파괴적 동작                  |
+| `--df-color-destructive-foreground` | 파괴적 동작 배경 위의 텍스트 |
+
+## 의미 기반 헬퍼 클래스
+
+DayFlow는 CSS 변수 외에도 테마를 인식하는 의미 기반 헬퍼 클래스를 제공합니다. 슬롯이나 플러그인 UI, 혹은 내장 컨트롤과 시각적으로 어울려야 하는 래퍼 안에 직접 만든 콘텐츠를 렌더링할 때 유용합니다.
+
+| 클래스 이름              | 의미                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| `df-fill-primary`        | 주요 색으로 채운 표면. 전경 텍스트 색상 자동 적용        |
+| `df-fill-secondary`      | 보조 색으로 채운 표면. 전경 텍스트 색상 자동 적용        |
+| `df-fill-destructive`    | 파괴적 동작 색으로 채운 표면. 전경 텍스트 색상 자동 적용 |
+| `df-tint-primary`        | 은은한 주요 색 선택 틴트                                 |
+| `df-hover-primary`       | 주요 색 계열의 호버 상태                                 |
+| `df-hover-primary-solid` | 주요 색으로 채운 버튼의 호버 상태                        |
+| `df-text-primary`        | 주요 글자 색상                                           |
+| `df-border-primary`      | 주요 테두리 색상                                         |
+| `df-ring-primary`        | 주요 링 색상 토큰                                        |
+| `df-focus-ring`          | 주요 테두리와 링을 함께 적용하는 포커스 헬퍼             |
+
+DayFlow에 스타일을 입힐 때는 이 `df-*` 헬퍼나 `--df-color-*` 재정의를 사용하세요. `bg-primary`, `text-primary`, `hover:bg-primary/90` 같은 예전 내부 Tailwind 이름에 의존하지 마세요.
+
+## 재정의 방법
+
+### 방법 1 — 컨테이너 수준에서 재정의하기 (어디서든 동작)
+
+변수를 `.df-calendar-container`에 직접 지정하세요. 이 규칙은 어떤 `@layer`에도 속하지 않으므로, Tailwind 버전이나 CSS 구성과 무관하게 항상 라이브러리 기본값보다 우선합니다.
+
+실제로는 `.df-calendar-container`와 `.df-portal`을 함께 지정하고 싶을 때가 많습니다:
+
+- `.df-calendar-container`는 눈에 보이는 캘린더 영역의 루트 컨테이너입니다
+- `.df-portal`은 대화상자, 드롭다운, 일부 선택 패널처럼 포털을 통해 `document.body`에 렌더링되는 플로팅 UI에 DayFlow가 사용하는 루트 클래스입니다
+
+`.df-calendar-container`만 재정의하면 캘린더 본체는 테마를 따르지만, 포털로 렌더링되는 오버레이는 기본 토큰을 그대로 쓸 수 있습니다.
+
+```css
+/* styles/globals.css */
+.df-calendar-container,
+.df-portal {
+  --df-color-primary: #6366f1;
+  --df-color-background: #f9fafb;
+  --df-color-border: #e0e7ff;
+}
+
+/* Dark mode — target the container when the .dark class is on an ancestor */
+.dark .df-calendar-container,
+.dark .df-portal {
+  --df-color-primary: #a5b4fc;
+  --df-color-background: #1e1e2e;
+  --df-color-border: #312e81;
+}
+```
+
+대부분의 프로젝트에는 이 방법을 권장합니다. 변수의 적용 범위가 캘린더로 한정되므로 바깥에는 영향을 주지 않습니다.
+
+## Tailwind v4 연동
+
+Tailwind v4는 전적으로 CSS로 설정하며 `tailwind.config.js`가 없습니다. DayFlow가 배포하는 CSS에는 공용 기반 레이어가 이미 포함되어 있어, 불러오는 즉시 테마 토큰과 의미 기반 헬퍼 클래스를 사용할 수 있습니다.
+
+### 알맞은 CSS 파일 고르기
+
+DayFlow는 두 가지 CSS 번들을 제공합니다:
+
+| 파일                    | 내용                                            | 사용 시점                    |
+| ----------------------- | ----------------------------------------------- | ---------------------------- |
+| `styles.css`            | Tailwind preflight(CSS 리셋)를 포함한 전체 번들 | Tailwind를 쓰지 않을 때      |
+| `styles.components.css` | 컴포넌트 스타일만, **CSS 리셋 없음**            | 이미 Tailwind를 쓰고 있을 때 |
+
+### 최소 설정
+
+```css
+/* app.css — for Tailwind projects */
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+프로젝트에서 Tailwind를 **쓰지 않는다면** 전체 번들을 가져오세요:
+
+```css
+/* app.css — for non-Tailwind projects */
+@import '@dayflow/core/dist/styles.css';
+```
+
+### 다크 모드
+
+DayFlow는 `<html>`을 포함한 모든 상위 요소의 `.dark` 클래스를 인식합니다. JavaScript로 적용하세요:
+
+```ts
+document.documentElement.classList.toggle('dark', isDark);
+```
+
+클래스를 명시하지 않는 시스템 설정 기반 다크 모드도 자동으로 지원됩니다.
+
+**Tailwind v4에서 `theme.mode` 사용하기**
+
+DayFlow가 배포하는 CSS에는 `theme.mode`에 필요한 `.dark` 변형이 이미 들어 있습니다. Tailwind v4 프로젝트에서는 `@dayflow/core/dist/styles.components.css`를 가져오는 것만으로 DayFlow가 `<html>`의 `.dark` 클래스에 반응합니다.
+
+앱에서 직접 쓰는 Tailwind `dark:` 유틸리티까지 같은 클래스 토글을 따르게 하려면, CSS 진입점에 클래스 기반 변형을 추가하세요:
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+
+/* Optional: only needed for your app's own Tailwind dark: utilities */
+@variant dark (.dark &);
+```
+
+이 한 줄이 없어도 DayFlow는 `theme.mode`로 정상적으로 전환됩니다. 다만 여러분이 작성한 `dark:` 유틸리티만 Tailwind 기본값인 미디어 쿼리 방식으로 남습니다.
+
+### 실용적인 권장 사항
+
+대부분의 앱에서는 다음 우선순위를 따르세요:
+
+1. `.df-calendar-container`, `.df-portal` 또는 직접 만든 래퍼에서 `--df-color-*` 토큰을 재정의합니다.
+2. 직접 작성한 슬롯·플러그인 마크업에서는 `df-fill-primary`, `df-focus-ring` 같은 DayFlow의 의미 기반 헬퍼를 재사용합니다.
+3. 저수준 유틸리티 재정의는 테마가 아니라 레이아웃을 바꿀 때만 사용합니다.
+
+### `@theme`으로 재정의 적용하기
+
+```css
+@import '@dayflow/core/dist/styles.css' layer(dayflow);
+@import 'tailwindcss';
+
+@theme {
+  --df-color-primary: #6366f1;
+  --df-color-primary-foreground: #ffffff;
+  --df-color-secondary: #8b5cf6;
+  --df-color-secondary-foreground: #ffffff;
+}
+```
+
+### Tailwind 유틸리티로 캘린더 감싸기
+
+```tsx
+function ThemedCalendar({ calendar }) {
+  return (
+    <div className='rounded-2xl shadow-xl ring-1 ring-gray-200 dark:ring-gray-700'>
+      <DayFlowCalendar calendar={calendar} />
+    </div>
+  );
+}
+```
+
+## 사용자 지정 테마 만들기
+
+```tsx
+// themes/oceanTheme.ts
+export const oceanTheme = {
+  mode: 'light' as const,
+  calendars: [
+    {
+      id: 'deep-ocean',
+      name: 'Deep Ocean',
+      colors: {
+        lineColor: '#0369a1',
+        eventColor: '#e0f2fe',
+        eventSelectedColor: '#bae6fd',
+        textColor: '#0c4a6e',
+      },
+      darkColors: {
+        lineColor: '#7dd3fc',
+        eventColor: '#0c4a6e',
+        eventSelectedColor: '#083344',
+        textColor: '#e0f2fe',
+      },
+    },
+    {
+      id: 'coral-reef',
+      name: 'Coral Reef',
+      colors: {
+        lineColor: '#ea580c',
+        eventColor: '#ffedd5',
+        eventSelectedColor: '#fed7aa',
+        textColor: '#7c2d12',
+      },
+      darkColors: {
+        lineColor: '#fb923c',
+        eventColor: '#7c2d12',
+        eventSelectedColor: '#431407',
+        textColor: '#ffedd5',
+      },
+    },
+  ],
+};
+```
+
+시각적 일관성을 완전히 맞추려면 CSS 변수 재정의와 함께 사용하세요:
+
+```css
+/* Ocean theme CSS tokens */
+.df-calendar-container {
+  --df-color-primary: #0369a1;
+  --df-color-background: #f0f9ff;
+  --df-color-border: #bae6fd;
+}
+
+.dark .df-calendar-container {
+  --df-color-primary: #7dd3fc;
+  --df-color-background: #0c1220;
+  --df-color-border: #0c4a6e;
+}
+```
+
+## 참고 자료
+
+### 도구
+
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) – 색상 대비 확인
+- [Coolors](https://coolors.co/) – 색상 팔레트 생성
+- [Color Contrast Analyzer](https://www.tpgi.com/color-contrast-checker/) – 데스크톱 도구
+
+### 라이브러리
+
+- [chroma-js](https://gka.github.io/chroma.js/) – 색상 조작
+- [tinycolor2](https://github.com/bgrins/TinyColor) – 색상 유틸리티
+- [color](https://github.com/Qix-/color) – 색상 변환
+
+### Tailwind 자료
+
+- [Tailwind v4 업그레이드 가이드](https://tailwindcss.com/docs/upgrade-guide) – v3 → v4 마이그레이션
+- [Tailwind CSS 레이어](https://tailwindcss.com/docs/adding-custom-styles#using-css-and-layer) – 레이어 문서
+
+## 관련 문서
+
+- [다크 모드](/docs-ko/features/dark-mode) – 다크 모드 개요와 API
+- [캘린더 타입](/docs-ko/introduction/events#캘린더-타입으로-이벤트-스타일-지정) – 이벤트 분류
+- [캘린더 앱 설정](/docs-ko/introduction/use-calendar-app) – 핵심 설정

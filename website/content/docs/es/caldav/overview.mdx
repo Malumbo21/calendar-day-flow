@@ -1,0 +1,447 @@
+---
+title: 'Sincronización remota: resumen'
+---
+
+# Sincronización remota: resumen
+
+DayFlow ofrece paquetes de sincronización headless para conectar tu calendario con servidores remotos:
+
+- **[`@dayflow/caldav`](/docs-es/caldav/caldav)**: motor de sincronización CalDAV. Funciona con iCloud Calendar, Nextcloud, Radicale, Fastmail y cualquier servidor CalDAV compatible con RFC 4791.
+- **[`@dayflow/google-sync`](/docs-es/caldav/google-sync)**: motor de sincronización con la API REST de Google Calendar.
+- **[`@dayflow/outlook-sync`](/docs-es/caldav/outlook-sync)**: motor de sincronización con Microsoft Outlook Calendar mediante la API de Microsoft Graph.
+- **[`@dayflow/sync-core`](/docs-es/caldav/sync-core)**: funciones de reconciliación independientes del proveedor, para proveedores propios y sincronización dirigida por el backend.
+
+La mayoría de las aplicaciones deberían empezar por un paquete de proveedor (`@dayflow/caldav`, `@dayflow/google-sync` o `@dayflow/outlook-sync`). Recurre a `@dayflow/sync-core` solo si estás creando tu propio paquete de proveedor, reconciliando datos remotos en una tarea de backend o necesitas cambios de auditoría o historial independientes del proveedor.
+
+## Principios de diseño
+
+### Sin credenciales en el navegador
+
+Los paquetes de proveedor no aceptan contraseñas, tokens ni secretos de OAuth directamente. Toda la autenticación vive en tu backend. El navegador solo habla con tu propio servidor proxy.
+
+```
+Browser (DayFlow)  →  Your backend proxy  →  CalDAV / Google / Outlook API
+```
+
+Es decir, DayFlow nunca ve las credenciales de tus usuarios y tú mantienes el control total de tu estrategia de autenticación.
+
+### El transporte, ante todo con adaptadores
+
+Cada paquete de proveedor recibe una función `fetch` que tú proporcionas para el transporte. Tú inyectas un fetch autenticado y el motor de sincronización ejecuta las peticiones a través de él, sin saber qué credenciales lleva.
+
+```ts
+const adapter = createCalDAVAdapter({
+  calendarHomeUrl: 'https://caldav.example.com/calendars/alice/',
+  fetch: (url, init) =>
+    fetch('/api/caldav-proxy', {
+      method: 'POST',
+      body: JSON.stringify({ url, init }),
+    }),
+});
+```
+
+### Observable, no impositivo
+
+Los paquetes de proveedor emiten callbacks estructurados en lugar de encargarse de la persistencia:
+
+- **`onSyncComplete(delta)`**: se llama tras cada sincronización con los recuentos de lo que ha cambiado, para que tu almacén reaccione sin recalcular diferencias.
+- **`onWriteComplete(operation, event)`**: se llama tras cada escritura correcta, para que puedas actualizar tu base de datos local con los IDs que asigna el servidor.
+- **`getInitialSnapshot()`**: se llama una vez al arrancar para precargar DayFlow desde tu caché local antes de cualquier petición a la API, de modo que el calendario aparezca al instante.
+
+El almacenamiento es cosa tuya. Los paquetes solo te cuentan qué ha pasado.
+
+### Headless
+
+Los paquetes de proveedor no incluyen formularios de inicio de sesión, popups de OAuth, almacenamiento de credenciales ni un servicio de sincronización alojado. Exponen la infraestructura de sincronización; la experiencia de autenticación es responsabilidad de tu aplicación.
+
+### Solo lectura o sincronización bidireccional
+
+Los paquetes de proveedor admiten:
+
+- **Modo de solo lectura** (`writable: false`): sincroniza los eventos del servidor hacia DayFlow, sin escribir de vuelta.
+- **Modo de escritura** (`writable: true`, el predeterminado): escribe en el servidor las creaciones, actualizaciones y borrados locales.
+
+## Ejemplo completo de CalDAV
+
+Este ejemplo muestra la forma completa de una integración CalDAV de estilo productivo:
+
+1. Un proxy en el backend guarda las credenciales y reenvía los métodos CalDAV.
+2. El frontend crea una función fetch que pasa por el proxy.
+3. El adaptador CalDAV descubre o recibe la URL del calendar home del usuario.
+4. DayFlow se precarga desde una caché local y después se sincroniza en segundo plano.
+5. Los cambios locales solo se envían al proveedor si el calendario remoto permite la escritura.
+
+### 1. Instalación
+
+<PackageTabs pkg='@dayflow/caldav' />
+
+### 2. Configurar el backend
+
+Usa contraseñas de aplicación específicas del proveedor cuando estén disponibles. No envíes estos valores al navegador.
+
+```bash
+# iCloud
+CALDAV_BASE_URL=https://caldav.icloud.com/
+CALDAV_USERNAME=alice@icloud.com
+CALDAV_PASSWORD=xxxx-xxxx-xxxx-xxxx
+
+# Nextcloud
+# CALDAV_BASE_URL=https://nextcloud.example.com/remote.php/dav/
+# CALDAV_USERNAME=alice
+# CALDAV_PASSWORD=nextcloud-app-password
+
+# Radicale
+# CALDAV_BASE_URL=https://radicale.example.com/
+
+# Fastmail
+# CALDAV_BASE_URL=https://caldav.fastmail.com/dav/
+```
+
+Notas por proveedor:
+
+| Proveedor     | Configuración recomendada                                                                                                                                   |
+| :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **iCloud**    | Usa una contraseña específica de aplicación de Apple y `createCalDAVAdapterFromServer(ICLOUD_CALDAV_SERVER, ...)` para el descubrimiento dinámico del home. |
+| **Nextcloud** | Usa `nextcloudConfig(host, username)` cuando ya conozcas el nombre de usuario; genera una contraseña de aplicación en los ajustes personales.               |
+| **Radicale**  | Algunos servidores no informan de los permisos. DayFlow trata como de solo lectura los calendarios ambiguos, salvo que el adaptador indique lo contrario.   |
+| **Fastmail**  | Usa `fastmailConfig('https://caldav.fastmail.com/dav', email)` con un proxy en tu backend.                                                                  |
+
+### 3. Añadir una ruta de proxy
+
+Esta ruta del App Router de Next.js acepta peticiones CalDAV envueltas en JSON desde el navegador, inyecta la autenticación básica, restringe la URL de destino a la URL base de CalDAV que hayas configurado y devuelve la respuesta XML/ICS del servidor.
+
+```ts title="app/api/caldav/route.ts"
+export const runtime = 'nodejs';
+
+const ALLOWED_METHODS = new Set(['PROPFIND', 'REPORT', 'PUT', 'DELETE']);
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required`);
+  return value;
+}
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin':
+      process.env.APP_ORIGIN ?? 'http://localhost:3000',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Expose-Headers': 'ETag, DAV',
+  };
+}
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders() });
+}
+
+export async function POST(request: Request) {
+  const baseUrl = requireEnv('CALDAV_BASE_URL');
+  const username = requireEnv('CALDAV_USERNAME');
+  const password = requireEnv('CALDAV_PASSWORD');
+  const { url, init = {} } = (await request.json()) as {
+    url: string;
+    init?: RequestInit;
+  };
+
+  const target = new URL(url);
+  const base = new URL(baseUrl);
+  const method = init.method ?? 'PROPFIND';
+
+  if (!target.href.startsWith(base.href)) {
+    return new Response('Forbidden upstream URL', {
+      status: 403,
+      headers: corsHeaders(),
+    });
+  }
+  if (!ALLOWED_METHODS.has(method)) {
+    return new Response('Method not allowed', {
+      status: 405,
+      headers: corsHeaders(),
+    });
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set(
+    'Authorization',
+    `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
+  );
+
+  const upstream = await fetch(target.href, {
+    method,
+    headers,
+    body: typeof init.body === 'string' ? init.body : undefined,
+  });
+
+  const responseHeaders = new Headers(corsHeaders());
+  for (const name of ['Content-Type', 'ETag', 'DAV', 'Last-Modified']) {
+    const value = upstream.headers.get(name);
+    if (value) responseHeaders.set(name, value);
+  }
+
+  return new Response(await upstream.text(), {
+    status: upstream.status,
+    headers: responseHeaders,
+  });
+}
+```
+
+En productos multiusuario, carga las credenciales desde el registro cifrado de la cuenta que ha iniciado sesión, en lugar de usar variables de entorno del proceso. La regla importante no cambia: DayFlow envía las peticiones del protocolo CalDAV a tu backend, y es tu backend quien añade las credenciales.
+
+### 4. Crear un almacenamiento de sincronización duradero
+
+`createCalDAVSync` puede funcionar con almacenamiento en memoria, pero las aplicaciones en producción deberían conservar los tokens de sincronización, los ETags y las referencias remotas de los eventos. Sin almacenamiento duradero, cada recarga pierde el estado de sincronización incremental y los metadatos de escritura condicional.
+
+```ts title="caldav-storage.ts"
+import type { CalDAVStorage } from '@dayflow/caldav';
+
+const key = (accountId: string, name: string, id: string) =>
+  `dayflow:caldav:${accountId}:${name}:${id}`;
+
+export function createLocalCalDAVStorage(accountId: string): CalDAVStorage {
+  return {
+    getSyncToken: async calendarId =>
+      localStorage.getItem(key(accountId, 'sync-token', calendarId)),
+    setSyncToken: async (calendarId, token) => {
+      const storageKey = key(accountId, 'sync-token', calendarId);
+      if (token) localStorage.setItem(storageKey, token);
+      else localStorage.removeItem(storageKey);
+    },
+    getCtag: async calendarId =>
+      localStorage.getItem(key(accountId, 'ctag', calendarId)),
+    setCtag: async (calendarId, ctag) => {
+      localStorage.setItem(key(accountId, 'ctag', calendarId), ctag);
+    },
+    getEtag: async href => localStorage.getItem(key(accountId, 'etag', href)),
+    setEtag: async (href, etag) => {
+      localStorage.setItem(key(accountId, 'etag', href), etag);
+    },
+    deleteEtag: async href => {
+      localStorage.removeItem(key(accountId, 'etag', href));
+    },
+    getEventState: async eventId =>
+      JSON.parse(
+        localStorage.getItem(key(accountId, 'event-state', eventId)) ?? 'null'
+      ),
+    setEventState: async (eventId, state) => {
+      localStorage.setItem(
+        key(accountId, 'event-state', eventId),
+        JSON.stringify(state)
+      );
+    },
+    deleteEventState: async eventId => {
+      localStorage.removeItem(key(accountId, 'event-state', eventId));
+    },
+    clearCalendar: async calendarId => {
+      const prefix = `dayflow:caldav:${accountId}:`;
+      for (const storageKey of Object.keys(localStorage)) {
+        if (!storageKey.startsWith(prefix)) continue;
+
+        const value = localStorage.getItem(storageKey);
+        const isCalendarKey =
+          storageKey === key(accountId, 'sync-token', calendarId) ||
+          storageKey === key(accountId, 'ctag', calendarId) ||
+          storageKey.startsWith(key(accountId, 'etag', calendarId));
+        let isEventStateForCalendar = false;
+        if (storageKey.startsWith(`${prefix}event-state:`) && value) {
+          try {
+            isEventStateForCalendar =
+              JSON.parse(value).calendarId === calendarId;
+          } catch {
+            isEventStateForCalendar = false;
+          }
+        }
+
+        if (isCalendarKey || isEventStateForCalendar) {
+          localStorage.removeItem(storageKey);
+        }
+      }
+    },
+  };
+}
+```
+
+Usa IndexedDB o tu propia base de datos si necesitas una caché de sincronización entre dispositivos, cifrado, historiales de eventos extensos o limpieza a nivel de cuenta.
+
+### 5. Conectar CalDAV con DayFlow
+
+Este ejemplo de React usa el descubrimiento al estilo iCloud. Sustituye el bloque de creación del adaptador por `nextcloudConfig`, `radicaleConfig` o `fastmailConfig` cuando ya conozcas la URL del calendar home del proveedor.
+
+```tsx title="CalDAVCalendar.tsx"
+import { useEffect, useRef } from 'react';
+import {
+  DayFlowCalendar,
+  createMonthView,
+  useCalendarApp,
+} from '@dayflow/react';
+import {
+  ICLOUD_CALDAV_SERVER,
+  attachCalDAVToDayFlow,
+  createCalDAVAdapter,
+  createCalDAVAdapterFromServer,
+  createCalDAVSync,
+  createNamespacedCalDAVEventId,
+  nextcloudConfig,
+  type CalDAVDayFlowController,
+  type CalDAVSyncStatus,
+} from '@dayflow/caldav';
+import { createLocalCalDAVStorage } from './caldav-storage';
+
+type Provider = 'icloud' | 'nextcloud';
+
+type Props = {
+  accountId: string;
+  provider: Provider;
+  nextcloudHost?: string;
+  nextcloudUsername?: string;
+  onStatusChange?: (status: CalDAVSyncStatus) => void;
+};
+
+export function CalDAVCalendar({
+  accountId,
+  provider,
+  nextcloudHost,
+  nextcloudUsername,
+  onStatusChange,
+}: Props) {
+  const calendar = useCalendarApp({
+    views: [createMonthView()],
+    calendars: [],
+    events: [],
+  });
+  const controllerRef = useRef<CalDAVDayFlowController | null>(null);
+
+  useEffect(() => {
+    let disposed = false;
+
+    const proxiedFetch = (url: string, init?: RequestInit) =>
+      fetch('/api/caldav', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, init }),
+      });
+
+    async function startSync() {
+      const adapter =
+        provider === 'icloud'
+          ? await createCalDAVAdapterFromServer(ICLOUD_CALDAV_SERVER, {
+              fetch: proxiedFetch,
+            })
+          : createCalDAVAdapter({
+              ...nextcloudConfig(nextcloudHost!, nextcloudUsername!),
+              fetch: proxiedFetch,
+            });
+
+      if (disposed) return;
+
+      const sync = createCalDAVSync({
+        adapter,
+        storage: createLocalCalDAVStorage(accountId),
+        rangeChunkDays: 31,
+      });
+
+      const controller = attachCalDAVToDayFlow(calendar.app, sync, {
+        writable: true,
+        refreshOnVisibleRangeChange: true,
+        maxConcurrentCalendars: 4,
+        createEventId: createNamespacedCalDAVEventId,
+        eventMode: {
+          recurring: 'read-only',
+        },
+        getInitialSnapshot: async () => {
+          const cached = await loadCachedCalDAVSnapshot(accountId);
+          return cached ?? { calendars: [], events: [] };
+        },
+        onSyncComplete: async delta => {
+          await persistSyncedDayFlowState(accountId, calendar.app);
+          console.info('CalDAV sync complete', delta);
+        },
+        onWriteComplete: async () => {
+          await persistSyncedDayFlowState(accountId, calendar.app);
+        },
+        onError: (error, context) => {
+          console.error('CalDAV sync failed', context, error);
+          onStatusChange?.(controller.getStatus());
+        },
+      });
+
+      controllerRef.current = controller;
+      await controller.start();
+      onStatusChange?.(controller.getStatus());
+    }
+
+    startSync().catch(error => {
+      console.error('Failed to start CalDAV sync', error);
+    });
+
+    return () => {
+      disposed = true;
+      controllerRef.current?.stop();
+      controllerRef.current = null;
+    };
+  }, [
+    accountId,
+    calendar.app,
+    nextcloudHost,
+    nextcloudUsername,
+    onStatusChange,
+    provider,
+  ]);
+
+  return <DayFlowCalendar calendar={calendar} />;
+}
+```
+
+El ejemplo hace referencia a dos funciones de persistencia que pertenecen a la aplicación:
+
+```ts
+import type { ICalendarApp } from '@dayflow/core';
+
+async function loadCachedCalDAVSnapshot(accountId: string) {
+  // Return { calendars, events } from IndexedDB, Supabase, your backend, etc.
+  // Return null when there is no cache yet.
+  return null;
+}
+
+async function persistSyncedDayFlowState(accountId: string, app: ICalendarApp) {
+  // Persist app.getCalendars() and app.getAllEvents() into your local store.
+  // Keep this separate from CalDAVStorage, which stores sync metadata only.
+}
+```
+
+### 6. Verificar el comportamiento de escritura
+
+Antes de activar la escritura para usuarios reales, prueba estos flujos contra el proveedor de destino:
+
+| Flujo                                   | Resultado esperado                                                                                                |
+| :-------------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| Carga inicial                           | Aparecen los calendarios remotos y después se cargan los eventos del rango visible.                               |
+| Navegar al mes siguiente                | `refreshOnVisibleRangeChange` descarga ese rango.                                                                 |
+| Crear un evento local                   | Se crea un recurso `.ics` en el servidor y el evento local recibe los metadatos CalDAV `href` y `etag`.           |
+| Editar un evento local                  | La actualización usa el ETag más reciente y refresca los metadatos CalDAV locales tras la respuesta del servidor. |
+| Eliminar un evento local                | El recurso remoto se borra si el calendario permite escritura.                                                    |
+| Editar un evento recurrente             | El binding de DayFlow trata los eventos recurrentes como de solo lectura.                                         |
+| Editar en un calendario de solo lectura | No se intenta ninguna escritura si el calendario remoto no tiene permisos de creación, actualización o borrado.   |
+
+### Lista de comprobación para producción
+
+| Área                           | Qué comprobar                                                                                                                                                              |
+| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Credenciales                   | Guarda las credenciales del proveedor solo en el servidor; usa contraseñas de aplicación cuando existan; rótalas o revócalas al desconectar.                               |
+| Lista blanca del proxy         | Restringe las URLs de destino a la URL base del proveedor configurada por el usuario; permite solo `PROPFIND`, `REPORT`, `PUT` y `DELETE`.                                 |
+| Almacenamiento duradero        | Persiste `CalDAVStorage` por cuenta para que los tokens de sincronización, los ETags y los hrefs remotos sobrevivan a las recargas.                                        |
+| Caché local                    | Usa `getInitialSnapshot` para que la primera pintura sea rápida, pero mantén las credenciales y los metadatos de sincronización fuera de la caché de eventos.              |
+| Identidad de los eventos       | Conserva `createNamespacedCalDAVEventId` salvo que tengas un plan de migración; evita colisiones con eventos locales y con otros proveedores.                              |
+| Instantáneas parciales         | Mantén el modo de instantánea parcial predeterminado para respuestas limitadas por rango; usa `snapshotMode: 'authoritative'` solo con instantáneas completas.             |
+| Particularidades del proveedor | iCloud necesita descubrimiento; Nextcloud debería usar contraseñas de aplicación; Radicale puede parecer de solo lectura; Fastmail usa la ruta `/dav/principals/user/...`. |
+
+## Qué no está soportado
+
+| Limitación                         | Detalle                                                                                                                  |
+| :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
+| **Edición de eventos recurrentes** | Los eventos recurrentes son de solo lectura. Editarlos, arrastrarlos o eliminar instancias está bloqueado.               |
+| **OAuth integrado**                | Los flujos de OAuth, la renovación de tokens y el almacenamiento de credenciales son responsabilidad tuya.               |
+| **Soporte sin conexión**           | Los paquetes de proveedor requieren conexión de red activa.                                                              |
+| **Interfaz de conflictos**         | Los conflictos de ETag (412) se reintentan automáticamente; no se incluye una interfaz de resolución manual.             |
+| **CORS en CalDAV**                 | Los servidores CalDAV no admiten CORS desde el navegador: hace falta un proxy en el backend.                             |
+| **CORS en Google**                 | La API de Google Calendar sí admite CORS, pero enviar tokens desde el navegador es un riesgo de seguridad: usa un proxy. |

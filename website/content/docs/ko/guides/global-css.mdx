@@ -1,0 +1,523 @@
+---
+title: '전역 CSS 클래스'
+---
+
+# 전역 CSS 클래스
+
+DayFlow는 캘린더 컴포넌트의 외형을 조정할 수 있도록 `df-` 접두사가 붙은 CSS 클래스 모음을 제공합니다. 코어 라이브러리를 고치지 않고도 손쉽게 스타일을 입힐 수 있게 설계되었습니다.
+
+## 알맞은 CSS 진입점 고르기
+
+애플리케이션이 이미 Tailwind CSS를 쓰는지에 따라 스타일시트를 고르세요:
+
+| 진입점                  | 포함 내용                             | 사용 시점                    |
+| ----------------------- | ------------------------------------- | ---------------------------- |
+| `styles.css`            | Tailwind preflight를 포함한 전체 번들 | Tailwind를 쓰지 않을 때      |
+| `styles.components.css` | CSS 리셋 없이 컴포넌트 스타일만       | 이미 Tailwind를 쓰고 있을 때 |
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+테마를 재정의할 때는 `--df-color-*` 변수나 아래에 문서화된 안정적인 `df-*` 의미 기반 클래스를 사용하는 편이 좋습니다.
+
+## 목차
+
+- [공통 클래스](#공통-클래스)
+- [의미 기반 유틸리티 클래스](#의미-기반-유틸리티-클래스)
+- [레이아웃과 모션 헬퍼](#레이아웃과-모션-헬퍼)
+- [일 뷰 클래스](#일-뷰)
+- [주 뷰 클래스](#주-뷰)
+- [월 뷰 클래스](#월-뷰)
+- [연간 뷰 클래스](#연간-뷰)
+- [미니 캘린더 클래스](#미니-캘린더)
+- [사이드바 클래스](#사이드바)
+- [내비게이션 클래스](#내비게이션)
+- [이벤트 상세 클래스](#이벤트-상세)
+- [Content Slot 클래스](#content-slots)
+- [이벤트 상태 속성](#이벤트-상태-속성)
+
+---
+
+## 공통 클래스
+
+모든 캘린더 뷰에서 공통으로 사용하는 CSS 클래스입니다.
+
+| 클래스 이름                | 설명                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| `df-calendar-container`    | 사이드바와 캘린더를 감싸는 최외곽 루트 컨테이너입니다. `--df-calendar-height`를 지원합니다. |
+| `df-calendar`              | 캘린더의 주 컨테이너입니다(헤더와 뷰 내용 포함)                                             |
+| `df-header`                | 캘린더 헤더 영역입니다(제목, 오늘 버튼, 뷰 전환기 포함)                                     |
+| `df-header-left`           | 헤더의 왼쪽 영역입니다(제목과 이동 버튼)                                                    |
+| `df-header-mid`            | 헤더의 가운데 영역입니다(현재 날짜 범위 제목)                                               |
+| `df-header-right`          | 헤더의 오른쪽 영역입니다(뷰 전환기와 검색)                                                  |
+| `df-navigation`            | 이동 컨트롤을 담는 컨테이너입니다                                                           |
+| `df-view-header-container` | 뷰의 보조 헤더 영역에서 공통으로 쓰는 컨테이너입니다                                        |
+| `df-view-header-title`     | 뷰 헤더의 제목에 쓰이는 공통 텍스트 클래스입니다                                            |
+| `df-view-header-subtitle`  | 뷰 헤더의 부제목에 쓰이는 공통 텍스트 클래스입니다                                          |
+| `df-event`                 | 모든 이벤트의 기본 클래스입니다                                                             |
+| `df-event-title`           | 이벤트 제목 텍스트입니다                                                                    |
+| `df-event-time`            | 이벤트 시간 텍스트입니다                                                                    |
+| `df-event-color-bar`       | 이벤트 왼쪽의 색상 바입니다(일·주 뷰)                                                       |
+| `df-month-event-color-bar` | 일반 이벤트의 색상 표시자입니다(월 뷰)                                                      |
+| `df-all-day-row`           | 종일 이벤트 행 컨테이너입니다                                                               |
+| `df-all-day-label`         | 종일 레이블 텍스트입니다                                                                    |
+| `df-all-day-content`       | 종일 이벤트 콘텐츠 영역입니다                                                               |
+| `df-all-day-cell`          | 개별 종일 이벤트 셀입니다                                                                   |
+| `df-date-number`           | 날짜 숫자 표시입니다                                                                        |
+| `df-current-time-line`     | 현재 시각 표시선 컨테이너입니다                                                             |
+| `df-current-time-label`    | 현재 시각 레이블 텍스트입니다                                                               |
+| `df-current-time-bar`      | 현재 시각을 나타내는 가로선입니다                                                           |
+| `df-calendar-checkbox`     | 캘린더 목록과 관련 컨트롤이 공유하는 체크박스 스타일입니다                                  |
+| `df-portal`                | 포털로 렌더링되는 플로팅 오버레이의 루트 범위 클래스입니다                                  |
+| `df-range-picker`          | 범위 선택기 팝업과 트리거 래퍼의 루트 범위 클래스입니다                                     |
+
+---
+
+## 의미 기반 유틸리티 클래스
+
+DayFlow는 선택된 버튼, 강조된 날짜, 파괴적 동작, 포커스 링 같은 내부 상태를 위해 안정적인 `df-*` 의미 기반 클래스를 제공합니다. 공용 기반 CSS에 정의되어 있으므로 직접 만든 스타일시트에서 안심하고 대상으로 삼을 수 있습니다.
+
+직접 만든 콘텐츠, 플러그인 UI, content slot 출력이 DayFlow의 테마 토큰과 어울리게 하고 싶을 때 이 클래스들을 사용하세요:
+
+| 클래스 이름               | 용도                                                          |
+| ------------------------- | ------------------------------------------------------------- |
+| `df-fill-primary`         | 주요 색으로 채운 배경 + 어울리는 전경 텍스트                  |
+| `df-fill-secondary`       | 보조 색으로 채운 배경 + 어울리는 전경 텍스트                  |
+| `df-fill-destructive`     | 파괴적 동작 색으로 채운 배경 + 어울리는 전경 텍스트           |
+| `df-tint-primary`         | 주요 색 10% 틴트 + 주요 텍스트 색                             |
+| `df-tint-primary-md`      | 주요 색 20% 틴트 + 주요 텍스트 색                             |
+| `df-tint-primary-lg`      | 주요 색 30% 틴트 + 주요 텍스트 색                             |
+| `df-hover-primary`        | 주요 색 틴트가 적용된 호버 상태                               |
+| `df-hover-primary-md`     | 더 진한 주요 색 틴트 호버 상태                                |
+| `df-hover-primary-solid`  | 채워진 주요 색 버튼용 불투명 호버 상태                        |
+| `df-hover-base`           | DayFlow의 호버 토큰을 쓰는 기본 호버 배경                     |
+| `df-hover-muted`          | 흐린 호버 배경                                                |
+| `df-hover-destructive`    | 파괴적 동작의 호버 상태                                       |
+| `df-text-primary`         | 주요 텍스트 색상                                              |
+| `df-text-muted`           | 흐린 텍스트 색상                                              |
+| `df-text-primary-fg`      | 주요 색으로 채운 배경 위의 텍스트 색상                        |
+| `df-text-secondary-fg`    | 보조 색으로 채운 배경 위의 텍스트 색상                        |
+| `df-text-destructive`     | 파괴적 동작 텍스트 색상                                       |
+| `df-text-destructive-fg`  | 파괴적 동작 색으로 채운 배경 위의 텍스트 색상                 |
+| `df-bg-base`              | 기본 표면 배경                                                |
+| `df-bg-card`              | 카드 표면 배경                                                |
+| `df-bg-sidebar`           | 사이드바 스타일의 흐린 배경                                   |
+| `df-bg-secondary`         | 보조 흐린 배경                                                |
+| `df-bg-tertiary`          | 3차 배경 또는 구분 표면                                       |
+| `df-border-base`          | 기본 테두리                                                   |
+| `df-border-light`         | 더 옅고 부드러운 테두리                                       |
+| `df-border-strong`        | 주요 색 토큰을 쓰는 진한 테두리                               |
+| `df-border-primary`       | 주요 테두리 색상                                              |
+| `df-border-primary-soft`  | 더 부드러운 주요 테두리 색상                                  |
+| `df-ring-primary`         | 주요 포커스·선택 링 색상                                      |
+| `df-ring-primary-solid`   | 불투명한 주요 링 색상                                         |
+| `df-shadow-sm`            | 낮은 높이감의 그림자                                          |
+| `df-shadow-md`            | 중간 높이감의 그림자                                          |
+| `df-shadow-primary`       | 주요 그림자 색상 토큰                                         |
+| `df-focus-ring`           | `:focus`에서 주요 `border-color`와 `ring-color`를 함께 적용   |
+| `df-focus-ring-only`      | 테두리 색은 그대로 두고 `:focus`에서 주요 `ring-color`만 적용 |
+| `df-focus-border-primary` | `:focus`에서 주요 `border-color`만 적용                       |
+
+테마를 입힐 때는 이 클래스들이나 `--df-color-*` 변수를 사용하세요. DayFlow 내부 요소에 `bg-primary`, `text-primary`, `hover:bg-primary/90` 같은 예전 내부 조합을 지정하지 마세요. 이 Tailwind 의미 이름들은 더 이상 공개 스타일 계약에 포함되지 않습니다.
+
+---
+
+## 레이아웃과 모션 헬퍼
+
+직접 만든 슬롯 콘텐츠나 플러그인 UI가 DayFlow의 레이아웃·애니메이션 동작을 그대로 물려받게 하고 싶을 때 유용한 클래스들입니다.
+
+| 클래스 이름               | 용도                                                               |
+| ------------------------- | ------------------------------------------------------------------ |
+| `df-content-slot-stacked` | content slot이 사용 가능한 높이를 채우고 내용을 세로로 쌓게 합니다 |
+| `df-scrollbar-hide`       | 스크롤 동작은 유지한 채 스크롤바만 숨깁니다                        |
+| `df-animate-in`           | 진입 전환에 쓰이는 기본 애니메이션 타이밍 헬퍼                     |
+| `df-fade-in`              | 서서히 나타나는 애니메이션 헬퍼                                    |
+| `df-zoom-in-95`           | 살짝 확대되며 나타나는 애니메이션 헬퍼                             |
+| `df-animate-slide-up`     | 위로 밀려 올라오는 진입 애니메이션                                 |
+| `df-animate-slide-down`   | 아래로 밀려 내려가는 퇴장 애니메이션                               |
+
+---
+
+## 일 뷰
+
+일 뷰 전용 CSS 클래스입니다.
+
+| 클래스 이름         | 설명                                           |
+| ------------------- | ---------------------------------------------- |
+| `df-day-view`       | 일 뷰 컨테이너                                 |
+| `df-day-event`      | 일 뷰의 개별 이벤트                            |
+| `df-day-time-grid`  | 시간 그리드 컨테이너                           |
+| `df-time-column`    | 시간 열(왼쪽 사이드바)                         |
+| `df-time-slot`      | 개별 시간 슬롯 컨테이너(왼쪽 열)               |
+| `df-time-label`     | 시간 레이블 텍스트(예: "오후 1시")             |
+| `df-time-grid-row`  | 시간 그리드의 가로 행                          |
+| `df-time-grid-cell` | 시간 그리드의 개별 셀                          |
+| `df-right-panel`    | 일 뷰의 오른쪽 패널(미니 캘린더 + 이벤트 목록) |
+
+---
+
+## 주 뷰
+
+주 뷰 전용 CSS 클래스입니다.
+
+| 클래스 이름          | 설명                                  |
+| -------------------- | ------------------------------------- |
+| `df-week-view`       | 주 뷰 컨테이너                        |
+| `df-week-event`      | 주 뷰의 개별 이벤트                   |
+| `df-week-header`     | 요일 이름이 들어가는 주 헤더 컨테이너 |
+| `df-week-header-row` | 요일 이름을 담은 고정 헤더 행         |
+| `df-week-day-cell`   | 헤더의 개별 요일 셀                   |
+| `df-time-column`     | 시간 열(왼쪽 사이드바)                |
+| `df-time-slot`       | 개별 시간 슬롯 컨테이너(왼쪽 열)      |
+| `df-time-label`      | 시간 레이블 텍스트                    |
+| `df-time-grid-row`   | 시간 그리드의 가로 행                 |
+| `df-time-grid-cell`  | 시간 그리드의 개별 셀                 |
+
+---
+
+## 월 뷰
+
+월 뷰 전용 CSS 클래스입니다.
+
+| 클래스 이름                      | 설명                                   |
+| -------------------------------- | -------------------------------------- |
+| `df-month-view`                  | 월 뷰 컨테이너                         |
+| `df-month-grid`                  | 월 뷰의 주 그리드 컨테이너             |
+| `df-month-day-cell`              | 월 뷰의 개별 날짜 셀                   |
+| `df-month-date-number-container` | 날짜 숫자 영역의 컨테이너              |
+| `df-month-date-number`           | 월 뷰의 날짜 숫자                      |
+| `df-month-more-events`           | 숨겨진 이벤트를 알리는 "+ x개 더" 표시 |
+| `df-month-title`                 | 스크롤 중 떠 있는 월 제목              |
+
+---
+
+## 연간 뷰
+
+연간 뷰 전용 CSS 클래스입니다. 연간 개요에서 이벤트 외형을 조정할 때 특히 유용합니다.
+
+| 클래스 이름               | 설명                                                           |
+| ------------------------- | -------------------------------------------------------------- |
+| `df-year-event`           | 이벤트 바깥 컨테이너 — 이벤트 요소 전체를 감쌉니다             |
+| `df-event-year-content`   | 이벤트 콘텐츠 컨테이너 — 아이콘, 제목 등을 담습니다            |
+| `df-event-year-title`     | 이벤트 제목 텍스트 — 정렬, 글꼴 등을 조정할 때 사용합니다      |
+| `df-event-icon-svg`       | 연간 뷰를 포함한 모든 이벤트 렌더러에서 쓰는 이벤트 아이콘 SVG |
+| `df-event-year-indicator` | 시간이 지정된 이벤트의 색상 표시자 — 색 점 또는 바             |
+| `df-year-grid-month`      | 그리드 방식 연간 뷰의 월 카드 컨테이너                         |
+| `df-year-fixed-day-cell`  | 고정 주 방식 연간 뷰의 날짜 셀                                 |
+
+---
+
+## 미니 캘린더
+
+미니 캘린더 컴포넌트의 CSS 클래스입니다(보통 사이드바나 일 뷰에 있습니다).
+
+| 클래스 이름                    | 설명                                |
+| ------------------------------ | ----------------------------------- |
+| `df-mini-calendar`             | 미니 캘린더 컨테이너                |
+| `df-mini-calendar-body`        | 미니 캘린더 본문 래퍼               |
+| `df-mini-calendar-header-nav`  | 월 이동 행                          |
+| `df-mini-calendar-nav-btn`     | 이전·다음 달 버튼                   |
+| `df-mini-calendar-month-label` | 현재 월 레이블                      |
+| `df-mini-calendar-grid`        | 날짜 그리드 컨테이너                |
+| `df-mini-calendar-header`      | 요일 헤더 셀(예: "월", "화")        |
+| `df-mini-calendar-day`         | 미니 캘린더 날짜 버튼의 기본 클래스 |
+| `df-mini-calendar-day-cell`    | 스타일이 적용된 날짜 셀 표면        |
+| `df-mini-calendar-day-number`  | 날짜 숫자 레이블                    |
+| `df-mini-calendar-dots`        | 날짜 셀 안의 이벤트 점 컨테이너     |
+| `df-mini-calendar-dot`         | 개별 이벤트 점                      |
+
+---
+
+## 사이드바
+
+사이드바 컴포넌트의 CSS 클래스입니다.
+
+| 클래스 이름               | 설명                               |
+| ------------------------- | ---------------------------------- |
+| `df-sidebar`              | 사이드바 컨테이너                  |
+| `df-sidebar-header`       | 사이드바 헤더 컨테이너             |
+| `df-sidebar-toggle`       | 사이드바 접기·펼치기 버튼          |
+| `df-sidebar-header-title` | 사이드바 헤더 제목("캘린더")       |
+| `df-sidebar-list-shell`   | 사이드바 목록을 감싸는 스크롤 래퍼 |
+| `df-sidebar-list`         | 캘린더 목록 컨테이너               |
+| `df-sidebar-list-item`    | 목록의 개별 캘린더 항목            |
+| `df-sidebar-row`          | 각 목록 항목 안의 상호작용 행      |
+| `df-sidebar-chip`         | 사이드바의 작은 레이블·칩          |
+| `df-sidebar-dialog`       | 사이드바 모달·대화상자 컨테이너    |
+| `df-sidebar-button`       | 사이드바가 공유하는 버튼 클래스    |
+
+---
+
+## 내비게이션
+
+이동 버튼의 CSS 클래스입니다.
+
+| 클래스 이름                | 설명                                      |
+| -------------------------- | ----------------------------------------- |
+| `df-nav-button`            | 이동 화살표 버튼의 기본 클래스(이전/다음) |
+| `df-calendar-nav-button`   | 스타일이 적용된 캘린더 이동 화살표 버튼   |
+| `df-today-button`          | "오늘" 버튼의 기본 클래스                 |
+| `df-calendar-today-button` | 스타일이 적용된 캘린더 "오늘" 버튼        |
+
+---
+
+## 이벤트 상세
+
+이벤트 상세 패널과 대화상자의 CSS 클래스입니다.
+
+| 클래스 이름                | 설명                               |
+| -------------------------- | ---------------------------------- |
+| `df-event-detail-panel`    | 떠 있는 이벤트 상세 패널           |
+| `df-event-dialog-overlay`  | 이벤트 상세 대화상자 오버레이 루트 |
+| `df-event-dialog-backdrop` | 이벤트 상세 대화상자 배경          |
+| `df-dialog-container`      | 대화상자 콘텐츠 컨테이너           |
+| `df-event-dialog-close`    | 이벤트 상세 대화상자 닫기 버튼     |
+| `df-portal`                | 공용 포털 루트 클래스              |
+
+---
+
+## Content Slots
+
+Content Slot 렌더링 시스템에서 사용하는 CSS 클래스입니다.
+
+| 클래스 이름       | 설명                                                                    |
+| ----------------- | ----------------------------------------------------------------------- |
+| `df-content-slot` | content slot의 컨테이너                                                 |
+| `df-slot-[id]`    | 특정 슬롯 인스턴스에 부여되는 동적 클래스로, `[id]`는 고유 식별자입니다 |
+
+---
+
+## 이벤트 상태 속성
+
+DayFlow가 제공하는 것은 이벤트 상태 플래그만이 아닙니다. 이벤트, 그리드, 오버레이, 드로어, 내부 레이아웃 헬퍼 전반에서 현재 프로젝트는 다음 `data-*` 속성을 사용합니다. 상당수는 CSS에서 직접 대상으로 삼을 수 있고, 일부는 오버레이 로직과 바깥쪽 클릭 처리를 위한 구조적 후크에 가깝습니다.
+
+### 이벤트 요소
+
+| 속성                   | 값                                             | 설명                                                       |
+| ---------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| `data-view`            | `"day"` `"week"` `"month"` `"year"` `"agenda"` | 현재 이벤트 또는 이벤트 조각을 렌더링 중인 뷰              |
+| `data-all-day`         | `"true"` `"false"`                             | 종일 이벤트인지 여부                                       |
+| `data-selected`        | `"true"` `"false"`                             | 이벤트가 선택되어 있는지 여부                              |
+| `data-dragging`        | `"true"` `"false"`                             | 이벤트를 끌고 있는 중인지 여부                             |
+| `data-resizing`        | `"true"` `"false"`                             | 이벤트 크기를 조절 중인지 여부                             |
+| `data-popping`         | `"true"` `"false"`                             | 상호작용 중 이벤트가 시각적으로 도드라져 있는지 여부       |
+| `data-editable`        | `"true"` `"false"`                             | 내장 UI에서 이벤트를 편집할 수 있는지 여부                 |
+| `data-viewable`        | `"true"` `"false"`                             | 이벤트 상세 UI를 열 수 있는지 여부                         |
+| `data-draggable`       | `"true"` `"false"`                             | 해당 이벤트에 드래그가 허용되는지 여부                     |
+| `data-multi-day`       | `"true"` `"false"`                             | 이벤트가 여러 날에 걸치는지 여부                           |
+| `data-month-stack`     | `"true"` `"false"`                             | 월 뷰의 쌓기 레이아웃 안에서 렌더링되는지 여부             |
+| `data-touch-handles`   | `"true"` `"false"`                             | 터치용 크기 조절 핸들을 보이거나 자리를 확보할지 여부      |
+| `data-axis`            | 뷰별 키워드                                    | 컴팩트·시간 지정 이벤트 렌더러가 쓰는 방향 힌트            |
+| `data-density`         | 뷰별 키워드                                    | 컴팩트 이벤트 콘텐츠가 쓰는 밀도 힌트                      |
+| `data-position`        | 뷰별 키워드                                    | 분할·컴팩트 이벤트 렌더러가 쓰는 위치 힌트                 |
+| `data-segment-shape`   | `"full"` `"start"` `"middle"` `"end"`          | 여러 조각으로 나뉜 이벤트의 모서리 둥글기 형태             |
+| `data-segment-days`    | 숫자 문자열                                    | 월 뷰에서 렌더링된 이벤트 조각이 나타내는 일수             |
+| `data-event-id`        | 이벤트 id 문자열                               | 상호작용 이벤트 노드와 패널 앵커에 붙는 원본 이벤트 식별자 |
+| `data-continued-left`  | `"true"` `"false"`                             | 아젠다의 종일 배지가 이전 날짜에서 이어짐                  |
+| `data-continued-right` | `"true"` `"false"`                             | 아젠다의 종일 배지가 다음 날짜로 이어짐                    |
+
+### 날짜·그리드·레이아웃 상태
+
+| 속성                     | 값                     | 설명                                                      |
+| ------------------------ | ---------------------- | --------------------------------------------------------- |
+| `data-today`             | `"true"` `"false"`     | 오늘을 나타내는 날짜, 구획, 헤더 셀을 표시                |
+| `data-other-month`       | `"true"` `"false"`     | 이전 달 또는 다음 달에 속한 날짜를 표시                   |
+| `data-current-month`     | `"true"` `"false"`     | 현재 달 범위 안에서 렌더링된 날짜를 표시                  |
+| `data-date`              | 날짜 문자열            | 그리드·연간 뷰 셀에 붙는 구체적인 날짜 값                 |
+| `data-first-day`         | `"true"` `"false"`     | 연·월 단위로 묶인 구조에서 처음 보이는 날짜를 표시        |
+| `data-weekend`           | `"true"` `"false"`     | 주말 셀과 레이블을 표시                                   |
+| `data-has-events`        | `"true"` `"false"`     | 이벤트가 하나 이상 있는 그리드 셀을 표시                  |
+| `data-heat-level`        | 숫자 문자열            | 그리드 방식 연간 뷰의 히트맵 농도 단계                    |
+| `data-visible`           | `"true"` `"false"`     | 가상·조건부 레이아웃에서 쓰는 범용 표시 여부 플래그       |
+| `data-layout`            | 레이아웃 키워드        | 월 뷰·가상 스크롤 렌더링이 쓰는 내부 레이아웃 모드 표시자 |
+| `data-layout-ready`      | `"true"` `"false"`     | 가상화 레이아웃이 첫 측정 단계를 마쳤는지 여부            |
+| `data-trailing-border`   | `"true"` `"false"`     | 월 셀이 끝쪽 테두리를 그려야 하는지 여부                  |
+| `data-scrollbar-space`   | `"true"` `"false"`     | 뷰가 스크롤바 자리를 확보하는지 여부                      |
+| `data-secondary-tz`      | `"true"` `"false"`     | 보조 시간대 축이 활성화되어 있는지 여부                   |
+| `data-show-all-day`      | `"true"` `"false"`     | 종일 행이 현재 켜져 있는지 여부                           |
+| `data-sliding-view`      | `"true"` `"false"`     | 뷰가 슬라이딩·전환 상태인지 여부                          |
+| `data-mobile`            | `"true"` `"false"`     | 일부 컴팩트 뷰 조각이 쓰는 모바일 렌더링 힌트             |
+| `data-switcher-mode`     | `"buttons"` `"select"` | 내장 뷰 전환기의 어떤 모드가 활성인지                     |
+| `data-inside-pill`       | `"true"` `"false"`     | 컴팩트 헤더 콘텐츠가 오늘 알약 안에서 렌더링되는지 여부   |
+| `data-sidebar-collapsed` | `"true"` `"false"`     | 사이드바가 접혀 있는지 여부                               |
+| `data-sidebar-enabled`   | `"true"` `"false"`     | 캘린더 셸이 사이드바 플러그인과 함께 마운트되었는지 여부  |
+| `data-df-theme`          | 테마 키워드            | 테마가 적용된 레이아웃 래퍼가 내보내는 테마 표시자        |
+
+### 컨트롤·입력·검색
+
+| 속성                     | 값                                 | 설명                                                   |
+| ------------------------ | ---------------------------------- | ------------------------------------------------------ |
+| `data-active`            | `"true"` `"false"`                 | 스위치, 탭, 선택 컨트롤에 쓰이는 범용 활성 상태 표시자 |
+| `data-open`              | `"true"` `"false"`                 | 드롭다운, 드로어, 검색 영역이 열려 있는지 여부         |
+| `data-bordered`          | `"true"` `"false"`                 | 헤더가 아래쪽 테두리를 그려야 하는지 여부              |
+| `data-loading`           | `"true"` `"false"`                 | 비동기 버튼·동작의 로딩 상태                           |
+| `data-ready`             | `"true"` `"false"`                 | 빠른 생성 오버레이가 초기 위치 계산을 마쳤는지 여부    |
+| `data-placement`         | 배치 키워드                        | 팝업·빠른 생성 정렬을 위한 배치 힌트                   |
+| `data-checked`           | `"true"` `"false"`                 | 사용자 정의 스위치의 체크 상태                         |
+| `data-disabled`          | `"true"` `"false"`                 | 사용자 정의 스위치·입력의 비활성 상태                  |
+| `data-kind`              | 컴포넌트별 키워드                  | 모바일 이벤트 드로어가 쓰는 구획·필드 종류 표시자      |
+| `data-expanded`          | `"true"` `"false"`                 | 드로어 구획의 펼침·접힘 상태                           |
+| `data-closing`           | `"true"` `"false"`                 | 모바일 드로어가 닫히는 전환 중임을 표시                |
+| `data-tone`              | `"default"` `"today"` `"upcoming"` | 묶인 검색 결과의 날짜 헤더가 쓰는 의미 기반 톤         |
+| `data-mini-calendar-dot` | 속성 존재                          | 미니 캘린더의 이벤트 점에 붙는 표시자                  |
+
+### 사이드바 플러그인 상태
+
+| 속성                   | 값                 | 설명                                                                |
+| ---------------------- | ------------------ | ------------------------------------------------------------------- |
+| `data-active`          | `"true"` `"false"` | 사이드바 목록에서 활성 캘린더 행을 강조                             |
+| `data-collapsed`       | `"true"` `"false"` | 사이드바의 소스 그룹이나 셰브론으로 여닫는 패널이 접혀 있는지 여부  |
+| `data-draggable`       | `"true"` `"false"` | 사이드바의 캘린더 항목을 끌 수 있는지 여부                          |
+| `data-dragging`        | `"true"` `"false"` | 사이드바의 캘린더 항목을 끌고 있는 중인지 여부                      |
+| `data-position`        | `"top"` `"bottom"` | 사이드바에서 캘린더를 끌 때 표시되는 드롭 위치                      |
+| `data-selected`        | `"true"` `"false"` | 사이드바 드롭다운·가져오기 대화상자의 선택 상태                     |
+| `data-submenu-content` | 속성 존재          | 포털로 렌더링된 하위 메뉴 콘텐츠를 표시(병합 메뉴 및 관련 오버레이) |
+
+### 오버레이와 상호작용 후크
+
+| 속성                            | 값        | 설명                                               |
+| ------------------------------- | --------- | -------------------------------------------------- |
+| `data-event-detail-panel`       | 속성 존재 | 떠 있는 이벤트 상세 패널의 루트를 표시             |
+| `data-event-detail-dialog`      | 속성 존재 | 모달 이벤트 상세 대화상자의 루트를 표시            |
+| `data-range-picker-popup`       | 속성 존재 | 범위 선택기 팝업의 루트를 표시                     |
+| `data-calendar-picker-dropdown` | 속성 존재 | 캘린더 선택 드롭다운의 루트를 표시                 |
+| `data-grid-day-cell`            | 속성 존재 | 그리드 방식 연간 뷰에서 클릭 가능한 날짜 셀을 표시 |
+| `data-grid-day-popup`           | 속성 존재 | 연간 뷰 날짜 팝업의 루트를 표시                    |
+
+### 예시
+
+```css
+/* Selected events */
+.df-event[data-selected='true'] {
+  outline: 2px solid var(--df-color-primary);
+}
+
+/* Events while being dragged */
+.df-event[data-dragging='true'] {
+  opacity: 0.6;
+}
+
+/* Only target month-view events */
+.df-event[data-view='month'] {
+  font-size: 11px;
+}
+
+/* All-day events only */
+.df-event[data-all-day='true'] {
+  font-weight: 600;
+}
+
+/* Highlight today's agenda section or compact grid cell */
+[data-today='true'] {
+  background-color: color-mix(in srgb, var(--df-color-primary) 8%, transparent);
+}
+```
+
+---
+
+## 스타일 맞춤 설정
+
+외형을 조정하려면 이 클래스들을 대상으로 삼거나 전역 CSS에서 `--df-color-*` 변수를 재정의하세요. 대부분의 테마 수준 변경에는 `!important`가 필요하지 않습니다. 특정도가 아주 높은 지역 규칙을 의도적으로 이겨야 할 때만 사용하세요.
+
+### 예시
+
+```css
+/* Change the background of all events */
+.df-event {
+  border-radius: 8px !important;
+}
+
+/* Customize the current time indicator */
+.df-current-time-line {
+  z-index: 100;
+}
+.df-current-time-bar {
+  height: 3px !important;
+  background-color: #ef4444 !important;
+}
+
+/* Customize specific view */
+.df-day-view .df-event {
+  border-left: 4px solid #3b82f6;
+}
+
+/* Style the sidebar */
+.df-sidebar {
+  background-color: #f8fafc !important;
+}
+
+/* Style mini calendar */
+.df-mini-calendar-day:hover {
+  background-color: #e2e8f0;
+}
+
+/* Reuse DayFlow semantic helpers in your own slot or plugin markup */
+.my-custom-primary-chip {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
+}
+
+/* Dark mode overrides */
+.dark .df-calendar {
+  background-color: #111827;
+}
+
+/* Style event detail panel */
+.df-event-detail-panel {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+```
+
+## 사용 팁
+
+1. **특정도**: 스타일이 적용되지 않는다면, 캘린더를 직접 만든 클래스로 감싸 특정도를 높이세요:
+
+   ```css
+   .my-custom-calendar .df-event { ... }
+   ```
+
+2. **반응형 디자인**: 미디어 쿼리로 모바일 환경의 스타일을 조정하세요:
+
+   ```css
+   @media (max-width: 768px) {
+     .df-event-title {
+       font-size: 10px;
+     }
+     .df-time-label {
+       font-size: 10px;
+     }
+   }
+   ```
+
+3. **다크 모드**: 다크 모드 전용 스타일에는 `.dark` 선택자를 사용하세요:
+
+   ```css
+   .dark .df-month-day-cell {
+     border-color: #374151;
+   }
+   ```
+
+4. **CSS 변수**: DayFlow는 색상에 `--df-color-*` 커스텀 속성을 사용합니다. 색상 변경 범위를 제한하려면 `.df-calendar-container`(플로팅 오버레이에는 `.df-portal`)에서 재정의하세요:
+   ```css
+   .df-calendar-container,
+   .df-portal {
+     --df-color-primary: #3b82f6;
+     --df-color-primary-foreground: #ffffff;
+   }
+   ```
+
+## 이전 버전에서 업그레이드하기
+
+<Callout title="호환성 변경: calendar-event 클래스 제거" type="warn">
+  이벤트 요소에서 `calendar-event` 클래스가 제거되었습니다. 스타일시트가 `.calendar-event { ... }`를 대상으로 한다면 `.df-event { ... }`로 바꾸세요.
+
+예전에 DayFlow DOM 요소에 붙어 있던 내부 Tailwind 유틸리티 클래스(`flex`, `rounded-md`, `shadow-sm` 등)도 제거되었습니다. 이들은 애초에 공개 API가 아니었습니다. CSS 커스터마이징에는 문서화된 `df-*` 클래스와 `data-*` 속성을 사용하세요.
+
+</Callout>
+
+## 관련 문서
+
+- [테마 커스터마이징](/docs-ko/guides/theme-customization) – 고급 테마 옵션
+- [다크 모드](/docs-ko/features/dark-mode) – 다크 모드 설정

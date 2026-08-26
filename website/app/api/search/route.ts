@@ -1,23 +1,26 @@
-import { defineI18n } from 'fumadocs-core/i18n';
 import { flexsearchI18n } from 'fumadocs-core/search/flexsearch';
 
-import { source, sourceJa, sourceZh } from '@/lib/source';
+import { i18n } from '@/lib/i18n';
+import { source } from '@/lib/source';
 
 export const dynamic = 'force-static';
 
-const docsI18n = defineI18n({
-  languages: ['en', 'zh', 'ja'],
-  defaultLanguage: 'en',
-});
+/**
+ * Tokenizer overrides. Locales absent from this map use flexsearch's default,
+ * so a new language only needs an entry when it is not space-delimited.
+ */
+type LocaleMap = NonNullable<Parameters<typeof flexsearchI18n>[0]['localeMap']>;
 
-const sourcesByLocale = {
-  en: source,
-  zh: sourceZh,
-  ja: sourceJa,
-} as const;
+const TOKENIZERS: LocaleMap = {
+  zh: 'cjk',
+  ja: 'cjk',
+  // Korean is space-delimited but agglutinative: particles attach to the noun
+  // ("캘린더" vs "캘린더를"), so the default word tokenizer would miss the stem.
+  // Character-level indexing matches it.
+  ko: 'cjk',
+};
 
-type SearchSource = (typeof sourcesByLocale)[keyof typeof sourcesByLocale];
-type SearchPage = ReturnType<SearchSource['getPages']>[number];
+type SearchPage = ReturnType<typeof source.getPages>[number];
 
 type TreeNode = {
   type?: string;
@@ -45,8 +48,8 @@ function findPagePath(
   }
 }
 
-function buildBreadcrumbs(docSource: SearchSource, page: SearchPage) {
-  const tree = docSource.getPageTree() as TreeNode;
+function buildBreadcrumbs(locale: string, page: SearchPage) {
+  const tree = source.getPageTree(locale) as TreeNode;
   const path = findPagePath(tree.children, page.url);
 
   if (!path) return;
@@ -85,7 +88,7 @@ async function getStructuredData(page: SearchPage) {
   }
 }
 
-async function buildSearchIndex(docSource: SearchSource, page: SearchPage) {
+async function buildSearchIndex(locale: string, page: SearchPage) {
   const structuredData = await getStructuredData(page);
 
   if (!structuredData) {
@@ -98,26 +101,22 @@ async function buildSearchIndex(docSource: SearchSource, page: SearchPage) {
     description: page.data.description,
     url: page.url,
     structuredData,
-    breadcrumbs: buildBreadcrumbs(docSource, page),
+    breadcrumbs: buildBreadcrumbs(locale, page),
   };
 }
 
 const search = flexsearchI18n({
-  i18n: docsI18n,
-  localeMap: {
-    zh: 'cjk',
-    ja: 'cjk',
-  },
+  i18n,
+  localeMap: TOKENIZERS,
   indexes() {
-    const indexes = Object.entries(sourcesByLocale).flatMap(
-      ([locale, docSource]) =>
-        docSource.getPages().map(async page => ({
-          locale,
-          ...(await buildSearchIndex(docSource, page)),
+    return Promise.all(
+      source.getLanguages().flatMap(({ language, pages }) =>
+        pages.map(async page => ({
+          locale: language,
+          ...(await buildSearchIndex(language, page)),
         }))
+      )
     );
-
-    return Promise.all(indexes);
   },
 });
 

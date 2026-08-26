@@ -1,0 +1,536 @@
+---
+title: '@dayflow/google-sync'
+---
+
+# @dayflow/google-sync
+
+`@dayflow/google-sync` conecta DayFlow con la API REST v3 de Google Calendar. Es un paquete distinto de `@dayflow/caldav`: habla directamente la API de Google Calendar, no CalDAV.
+
+## Instalación
+
+<PackageTabs pkg='@dayflow/google-sync' />
+
+## Inicio rápido
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useRef, useEffect, useState } from 'react';
+    import {
+      DayFlowCalendar,
+      useCalendarApp,
+      createMonthView,
+    } from '@dayflow/react';
+    import {
+      attachGoogleSyncToDayFlow,
+      createGoogleSync,
+      createGoogleSyncAdapter,
+      type GoogleDayFlowController,
+      type GoogleSyncStatus,
+    } from '@dayflow/google-sync';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      const controllerRef = useRef<GoogleDayFlowController | null>(null);
+      const [syncStatus, setSyncStatus] = useState<GoogleSyncStatus>({
+        state: 'idle',
+      });
+
+      useEffect(() => {
+        if (controllerRef.current) return;
+
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        const controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: setSyncStatus,
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controllerRef.current = controller;
+        controller.start();
+
+        return () => {
+          controller.stop();
+          controllerRef.current = null;
+        };
+      }, [calendar.app]);
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+      import { ref, onMounted, onBeforeUnmount } from 'vue';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachGoogleSyncToDayFlow,
+        createGoogleSync,
+        createGoogleSyncAdapter,
+      } from '@dayflow/google-sync';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      const syncStatus = ref({ state: 'idle' });
+      let controller;
+
+      onMounted(() => {
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: status => {
+            syncStatus.value = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onBeforeUnmount(() => {
+        controller?.stop();
+      });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component, OnInit, OnDestroy } from '@angular/core';
+    import { CalendarApp, createMonthView } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import {
+      attachGoogleSyncToDayFlow,
+      createGoogleSync,
+      createGoogleSyncAdapter,
+      type GoogleDayFlowController,
+      type GoogleSyncStatus,
+    } from '@dayflow/google-sync';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`,
+    })
+    export class AppComponent implements OnInit, OnDestroy {
+      calendar = new CalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      syncStatus: GoogleSyncStatus = { state: 'idle' };
+      private controller?: GoogleDayFlowController;
+
+      ngOnInit() {
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        this.controller = attachGoogleSyncToDayFlow(this.calendar, sync, {
+          writable: true,
+          onStatusChange: status => {
+            this.syncStatus = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        this.controller.start();
+      }
+
+      ngOnDestroy() {
+        this.controller?.stop();
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { onMount, onDestroy } from 'svelte';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachGoogleSyncToDayFlow,
+        createGoogleSync,
+        createGoogleSyncAdapter,
+      } from '@dayflow/google-sync';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      let syncStatus = { state: 'idle' };
+      let controller;
+
+      onMount(() => {
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: status => {
+            syncStatus = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onDestroy(() => {
+        controller?.stop();
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Inyección del token
+
+### Con `getToken` (recomendado para tokens en el cliente)
+
+Cuando dispones del token en tiempo de ejecución (por ejemplo, de una sesión de Supabase o de tu proveedor de autenticación), usa `getToken`. Se llama antes de cada petición, así que las renovaciones son transparentes: no hace falta recrear el adaptador cuando el token cambia.
+
+```ts
+const adapter = createGoogleSyncAdapter({
+  getToken: async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.provider_token ?? '';
+  },
+});
+```
+
+### Con un proxy en el backend (recomendado en producción)
+
+La API de Google Calendar admite CORS, pero enviar tokens de OAuth desde el navegador los expone a cualquiera que inspeccione las peticiones de red. En producción, mantén los tokens en el servidor:
+
+```ts
+const adapter = createGoogleSyncAdapter({
+  baseUrl: '/api/google-calendar',
+  // No getToken needed — your proxy injects Authorization
+});
+```
+
+```js
+// proxy.mjs (Node.js example)
+import { createServer } from 'node:http';
+
+const {
+  GOOGLE_ACCESS_TOKEN,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REFRESH_TOKEN,
+  PORT = '3002',
+} = process.env;
+
+const GOOGLE_API_BASE = 'https://www.googleapis.com/calendar/v3';
+const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']);
+
+let cachedToken = GOOGLE_ACCESS_TOKEN
+  ? { token: GOOGLE_ACCESS_TOKEN, expiresAt: Infinity }
+  : null;
+
+async function getAccessToken() {
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) {
+    return cachedToken.token;
+  }
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: GOOGLE_REFRESH_TOKEN,
+      grant_type: 'refresh_token',
+    }),
+  });
+  const data = await res.json();
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  };
+  return cachedToken.token;
+}
+
+createServer(async (req, res) => {
+  const upstreamPath = req.url.replace(/^\/api\/google-calendar/, '');
+  const upstreamUrl = `${GOOGLE_API_BASE}${upstreamPath}`;
+
+  if (!ALLOWED_METHODS.has(req.method)) {
+    res.writeHead(405);
+    res.end();
+    return;
+  }
+
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const body =
+    req.method === 'GET' || req.method === 'DELETE'
+      ? undefined
+      : Buffer.concat(chunks).toString();
+
+  const token = await getAccessToken();
+  const upstream = await fetch(upstreamUrl, {
+    method: req.method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(req.headers['if-match']
+        ? { 'If-Match': req.headers['if-match'] }
+        : {}),
+    },
+    body,
+  });
+
+  const responseBody = upstream.status === 204 ? '' : await upstream.text();
+  res.writeHead(upstream.status, { 'Content-Type': 'application/json' });
+  res.end(responseBody);
+}).listen(Number(PORT));
+```
+
+Arranca el proxy:
+
+```bash
+# Quick test with an access token
+GOOGLE_ACCESS_TOKEN=ya29.xxx node proxy.mjs
+
+# Long-lived with refresh token
+GOOGLE_CLIENT_ID=xxx \
+GOOGLE_CLIENT_SECRET=xxx \
+GOOGLE_REFRESH_TOKEN=xxx \
+node proxy.mjs
+```
+
+Puedes generar un token de acceso para pruebas en el [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground). Selecciona el ámbito `https://www.googleapis.com/auth/calendar`.
+
+## Persistencia del token de sincronización
+
+De forma predeterminada, los tokens de sincronización de Google Calendar se guardan en memoria y se pierden al recargar la página, lo que obliga a la siguiente sesión a hacer una sincronización completa. Proporciona una implementación de `GoogleSyncStorage` para conservarlos:
+
+```ts
+import { createGoogleSync, type GoogleSyncStorage } from '@dayflow/google-sync';
+
+const storage: GoogleSyncStorage = {
+  getSyncToken: async calendarId =>
+    localStorage.getItem(`google-token:${calendarId}`),
+  setSyncToken: async (calendarId, token) =>
+    token
+      ? localStorage.setItem(`google-token:${calendarId}`, token)
+      : localStorage.removeItem(`google-token:${calendarId}`),
+};
+
+const sync = createGoogleSync(adapter, { storage });
+```
+
+Con `storage` configurado, cada sesión arranca con una sincronización incremental en lugar de descargar todos los eventos desde cero.
+
+## Hidratación desde la caché local
+
+Si guardas los eventos sincronizados en una base de datos o en un almacén local, puedes precargar DayFlow antes de la primera sincronización remota para que el calendario se muestre de inmediato:
+
+```ts
+const controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+  getInitialSnapshot: async () => {
+    const { calendars, events } = await loadFromLocalDB();
+    return { calendars, events };
+  },
+  onSyncComplete: delta => {
+    // Save what changed to your local store
+    saveChanges(delta);
+  },
+  onWriteComplete: (operation, event) => {
+    // Update local store after a successful write-back
+    persistEvent(operation, event);
+  },
+});
+```
+
+`getInitialSnapshot` se llama una sola vez durante `start()`, antes de cualquier petición a la API de Google Calendar. DayFlow se renderiza con los datos en caché mientras la sincronización se ejecuta en segundo plano.
+
+## Aplicar una instantánea remota manualmente
+
+Para aplicaciones que gestionan su propia orquestación de sincronización, `applyRemoteSnapshot` aplica un lote de eventos remotos a DayFlow sin volver a enviarlos al proveedor:
+
+```ts
+import { applyRemoteSnapshot, getGoogleMeta } from '@dayflow/google-sync';
+
+const delta = await applyRemoteSnapshot(
+  calendar.app,
+  { calendars, events },
+  {
+    isOwnedEvent: event => Boolean(getGoogleMeta(event)),
+    isOwnedCalendar: calendar => calendar.source === 'Google',
+    snapshotMode: 'authoritative',
+
+    // Optionally preserve local in-progress edits during optimistic sync
+    resolveConflict: (remote, local) =>
+      mergeLocalEditsOntoRemote(remote, local),
+  }
+);
+
+console.log(delta.events.added, delta.events.updated, delta.events.deleted);
+```
+
+`applyRemoteSnapshot` calcula la diferencia entre la instantánea entrante y el estado actual de la aplicación, y después aplica los cambios con `source: 'remote'` para evitar bucles de sincronización. Devuelve un `RemoteSnapshotDelta` con los recuentos por operación. Usa `snapshotMode: 'authoritative'` solo con instantáneas completas del proveedor; las limitadas por rango o paginadas deberían mantener el modo parcial predeterminado.
+
+## Referencia de opciones
+
+### Opciones de `attachGoogleSyncToDayFlow`
+
+| Opción               | Tipo                                   | Valor por defecto | Descripción                                                                                                      |
+| :------------------- | :------------------------------------- | :---------------- | :--------------------------------------------------------------------------------------------------------------- |
+| `writable`           | `boolean`                              | `true`            | Permite que los cambios locales se escriban de vuelta en Google Calendar.                                        |
+| `onStatusChange`     | `(status: GoogleSyncStatus) => void`   | —                 | Se llama cada vez que cambia el estado de la sincronización.                                                     |
+| `onWriteError`       | `(error: Error, ctx) => void`          | `console.error`   | Se llama cuando falla la escritura de una creación, actualización o borrado. `ctx` incluye `action` y `eventId`. |
+| `getInitialSnapshot` | `() => Promise<{ events, calendars }>` | —                 | Precarga DayFlow desde una caché local antes de la primera sincronización remota.                                |
+| `onSyncComplete`     | `(delta: GoogleSyncDelta) => void`     | —                 | Se llama tras cada sincronización correcta, con los recuentos de lo que ha cambiado.                             |
+| `onWriteComplete`    | `(operation, event) => void`           | —                 | Se llama cuando un cambio local se escribe correctamente en Google Calendar.                                     |
+
+### Opciones de `createGoogleSyncAdapter`
+
+| Opción     | Tipo                              | Valor por defecto                        | Descripción                                                                                                                                                  |
+| :--------- | :-------------------------------- | :--------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseUrl`  | `string`                          | `https://www.googleapis.com/calendar/v3` | Cámbialo para apuntar a un proxy en tu backend.                                                                                                              |
+| `fetch`    | `function`                        | `globalThis.fetch`                       | Implementación propia de fetch (por ejemplo, para pruebas).                                                                                                  |
+| `getToken` | `() => string \| Promise<string>` | —                                        | Se llama antes de cada petición. Devuelve el token de acceso que se inyecta como `Authorization: Bearer <token>`. Úsalo en lugar de envolver `fetch` a mano. |
+
+### `GoogleSyncStatus`
+
+```ts
+type GoogleSyncStatus = {
+  state: 'idle' | 'syncing' | 'error';
+  lastSyncedAt?: string; // ISO timestamp
+  error?: {
+    message: string;
+    calendarId?: string;
+  };
+};
+```
+
+### `GoogleSyncDelta`
+
+```ts
+type GoogleSyncDelta = {
+  calendars: { added: number; updated: number; deleted: number };
+  events: { added: number; updated: number; deleted: number };
+};
+```
+
+## API del controlador
+
+```ts
+// Load calendars, sync initial events, and subscribe to visible-range and event changes
+await controller.start();
+
+// Unsubscribe all listeners
+controller.stop();
+
+// Re-sync all calendars for the current visible range
+await controller.refresh();
+
+// Re-sync a specific calendar
+await controller.refresh({ calendarId: 'primary' });
+
+// Re-sync with an explicit range
+await controller.refresh({
+  calendarId: 'primary',
+  range: { start: new Date('2025-01-01'), end: new Date('2025-02-01') },
+});
+
+// Current sync state
+const status = controller.getStatus();
+```
+
+## Cómo funciona la sincronización
+
+### Descubrimiento de calendarios
+
+Al llamar a `controller.start()`, el paquete descarga la lista de calendarios del usuario autenticado (`GET /calendarList`) y registra cada uno como un `CalendarType` en DayFlow. Los calendarios con `accessRole: 'reader'` o `'freeBusyReader'` se marcan como `readOnly: true`.
+
+### Carga de eventos
+
+Los eventos se cargan para el rango de fechas visible. Cuando el usuario navega (avanza una semana, retrocede un mes, etc.), los eventos del nuevo rango se cargan automáticamente mediante el listener de cambio de rango visible.
+
+### Sincronización incremental
+
+Tras la carga inicial, el paquete usa el `syncToken` de Google Calendar para la sincronización incremental: en las siguientes sincronizaciones solo se descargan los eventos que han cambiado. Si proporcionas `GoogleSyncStorage`, los tokens de sincronización sobreviven a las recargas de página, así que la siguiente sesión también arranca de forma incremental.
+
+### Escritura de vuelta
+
+Con `writable: true`, los cambios locales en los eventos (crear, actualizar, eliminar) se escriben automáticamente en Google Calendar:
+
+- **Crear**: `POST /calendars/{calendarId}/events`
+- **Actualizar**: `PUT /calendars/{calendarId}/events/{eventId}` con `If-Match: <etag>`
+- **Eliminar**: `DELETE /calendars/{calendarId}/events/{eventId}`
+
+Si una actualización devuelve **412 Precondition Failed** (conflicto de ETag, porque el evento se cambió en otro dispositivo), el paquete vuelve a obtener el ETag más reciente y reintenta la actualización una vez.
+
+Los eventos recurrentes **nunca** se vuelven a enviar al proveedor: son de solo lectura.
+
+## Ámbitos de la API de Google Calendar
+
+Tu token de OAuth debe incluir al menos uno de estos ámbitos:
+
+| Ámbito                                              | Acceso                                               |
+| :-------------------------------------------------- | :--------------------------------------------------- |
+| `https://www.googleapis.com/auth/calendar`          | Acceso completo de lectura y escritura               |
+| `https://www.googleapis.com/auth/calendar.readonly` | Acceso de solo lectura (úsalo con `writable: false`) |

@@ -1,0 +1,246 @@
+---
+title: Plugin de impresión
+description: Flujo de impresión y exportación de DayFlow Pro, con vista previa, tamaño de papel, filtrado por calendario y varios diseños imprimibles.
+status: pro
+---
+
+# Plugin de impresión
+
+`@dayflow-pro/plugin-print` añade a DayFlow un diálogo de impresión con vista previa. Admite diseños de día, semana, mes y dos de año, permite elegir el tamaño y la orientación del papel, y puede imprimir solo los eventos visibles o todos los que coincidan, según el contexto.
+
+Prueba la [demo en vivo](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_print)
+
+## Instalación
+
+<PackageTabs pkg='@dayflow-pro/plugin-print' />
+
+Consulta la guía de [instalación de Pro](/docs-es/introduction/pro-installation) para conocer los pasos de instalación.
+
+## Uso básico
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+    function App() {
+      const printPlugin = createPrintPlugin({
+        defaultOptions: {
+          miniCalendar: true,
+          calendarKeys: true,
+          textSize: 'medium',
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [printPlugin],
+      });
+
+      return (
+        <>
+          <button onClick={() => printPlugin.api.open()}>Print</button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <button @click="printPlugin.api.open()">Print</button>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+    const printPlugin = createPrintPlugin({
+      defaultOptions: {
+        miniCalendar: true,
+        calendarKeys: true,
+        textSize: 'medium',
+      },
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [printPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <button (click)="printPlugin.api.open()">Print</button>
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      printPlugin = createPrintPlugin({
+        defaultOptions: {
+          miniCalendar: true,
+          calendarKeys: true,
+          textSize: 'medium',
+        },
+      });
+
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [this.printPlugin]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+      const printPlugin = createPrintPlugin({
+        defaultOptions: {
+          miniCalendar: true,
+          calendarKeys: true,
+          textSize: 'medium',
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [printPlugin],
+      });
+    </script>
+
+    <button onclick={() => printPlugin.api.open()}>Print</button>
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+El plugin también instala dos funciones auxiliares directamente en la app del calendario:
+
+```tsx
+await calendar.openPrintDialog();
+await calendar.print();
+```
+
+## Qué aporta el plugin
+
+- Un diálogo de vista previa de impresión renderizado en `document.body`
+- Impresión nativa del navegador mediante `window.print()`
+- Selección de diseño para día, semana, mes y año
+- Filtrado por calendario mediante `calendarIds`
+- Controles de tamaño y orientación del papel
+- Soporte del atajo Cmd/Ctrl + P mientras el plugin esté instalado
+
+## Diseños de impresión admitidos
+
+| Diseño            | Notas                                                                          |
+| :---------------- | :----------------------------------------------------------------------------- |
+| `day`             | Imprime uno o varios días seleccionados.                                       |
+| `week`            | Imprime un diseño de tipo semanal.                                             |
+| `month`           | Imprime una rejilla mensual.                                                   |
+| `year-fixed-week` | Vista anual con filas semanales fijas. Usa orientación horizontal por defecto. |
+| `year-canvas`     | Vista anual densa, optimizada para orientación vertical.                       |
+
+Al abrirse, el diálogo deduce su diseño inicial de la vista actual de DayFlow:
+
+- vista de mes actual -> `month`
+- vista de semana actual -> `week`
+- vista de día actual -> `day`
+- vista de año actual -> `year-fixed-week`
+
+## Configuración del plugin
+
+| Propiedad        | Tipo                            | Valor por defecto | Notas                                                   |
+| :--------------- | :------------------------------ | :---------------- | :------------------------------------------------------ |
+| `enabled`        | `boolean`                       | `true`            | Con `false`, el plugin no se instala en absoluto.       |
+| `defaultOptions` | `Partial<CalendarPrintOptions>` | —                 | Precarga el diálogo con opciones de impresión propias.  |
+| `license`        | `PackageLicenseConfig`          | —                 | Sustitución opcional cuando no usas el registro global. |
+
+## CalendarPrintOptions
+
+| Propiedad       | Tipo                             | Valor por defecto | Notas                                                                  |
+| :-------------- | :------------------------------- | :---------------- | :--------------------------------------------------------------------- |
+| `allDayEvents`  | `boolean`                        | `true`            | Incluye los eventos de día completo.                                   |
+| `timedEvents`   | `boolean`                        | `true`            | Incluye los eventos con horario.                                       |
+| `miniCalendar`  | `boolean`                        | `true`            | Muestra el minicalendario en la cabecera impresa.                      |
+| `calendarKeys`  | `boolean`                        | `true`            | Muestra la leyenda de calendarios.                                     |
+| `blackAndWhite` | `boolean`                        | `false`           | Imprime sin los colores de los calendarios.                            |
+| `textSize`      | `'small' \| 'medium' \| 'large'` | `medium`          | Controla la densidad tipográfica en la vista previa y en la impresión. |
+
+## CalendarPrintConfig
+
+Puedes precargar o sustituir la configuración del diálogo con un objeto parcial:
+
+```ts
+type CalendarPrintConfig = {
+  view: 'month' | 'week' | 'day' | 'year-fixed-week' | 'year-canvas';
+  paper: 'A4' | 'Letter';
+  orientation?: 'portrait' | 'landscape';
+  startDate: Date;
+  endDate?: Date;
+  calendarIds: string[];
+  options: CalendarPrintOptions;
+};
+```
+
+Comportamientos importantes según el código fuente:
+
+- `year-fixed-week` fuerza la orientación `landscape`.
+- `year-canvas` fuerza la orientación `portrait`.
+- El diálogo inyecta una regla `@page` antes de abrir la interfaz de impresión nativa del navegador.
+- La vista previa permite hacer zoom y desplazarse antes de imprimir.
+
+## Alcance de la impresión
+
+El diálogo no siempre toma los eventos de la misma fuente:
+
+- Si el diseño de impresión elegido coincide con la vista actual del calendario y `startDate` coincide con la fecha actual de la app, la vista previa usa `app.getEvents()`, es decir, el conjunto de eventos visible.
+- En caso contrario usa `app.getAllEvents()`, de modo que la impresión puede abarcar fechas fuera de lo que hay en pantalla.
+
+Internamente esto se expone como `sourceScope: 'visible' | 'all'`.
+
+## API
+
+`createPrintPlugin()` devuelve un plugin normal de DayFlow con un objeto `api`:
+
+```ts
+type PrintPluginApi = {
+  open: () => void;
+  close: () => void;
+  print: (config?: Partial<CalendarPrintConfig>) => void;
+};
+```
+
+Notas:
+
+- `api.open()` abre el diálogo de impresión.
+- `api.close()` lo cierra si está montado.
+- `api.print(config)` también abre el diálogo por ahora; todavía no omite la vista previa.
+- Una vez instalado, el plugin escucha `Cmd/Ctrl + P` de forma global.

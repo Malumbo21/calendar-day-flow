@@ -1,0 +1,172 @@
+---
+title: 'Plugin de glisser-déposer'
+---
+
+# Plugin de glisser-déposer
+
+Le plugin glisser-déposer active la gestion interactive des événements : les utilisateurs peuvent déplacer, redimensionner et créer des événements directement sur la grille du calendrier.
+
+## Installation
+
+Installez le plugin avec votre gestionnaire de paquets préféré :
+
+<PackageTabs pkg='@dayflow/plugin-drag' />
+
+```tsx
+import { createDragPlugin } from '@dayflow/plugin-drag';
+```
+
+## Utilisation
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+
+    function MyCalendar() {
+      const dragPlugin = createDragPlugin({
+        enableDrag: true,
+        enableResize: true,
+        enableCreate: true,
+        onEventDrop: (updated, original) => {
+          console.log('Event moved:', updated);
+        },
+        onEventResize: (updated, original) => {
+          console.log('Event resized:', updated);
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [dragPlugin],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+
+    const dragPlugin = createDragPlugin({
+      enableDrag: true,
+      enableResize: true,
+      enableCreate: true,
+      onEventDrop: (updated, original) => {
+        console.log('Event moved:', updated);
+      },
+      onEventResize: (updated, original) => {
+        console.log('Event resized:', updated);
+      },
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [dragPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      dragPlugin = createDragPlugin({
+        enableDrag: true,
+        enableResize: true,
+        enableCreate: true,
+        onEventDrop: (updated, original) => {
+          console.log('Event moved:', updated);
+        },
+        onEventResize: (updated, original) => {
+          console.log('Event resized:', updated);
+        },
+      });
+
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [this.dragPlugin]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createDragPlugin } from '@dayflow/plugin-drag';
+
+      const dragPlugin = createDragPlugin({
+        enableDrag: true,
+        enableResize: true,
+        enableCreate: true,
+        onEventDrop: (updated, original) => {
+          console.log('Event moved:', updated);
+        },
+        onEventResize: (updated, original) => {
+          console.log('Event resized:', updated);
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [dragPlugin],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Configuration
+
+| Propriété            | Type         | Par défaut                 | Description                                                                                |
+| :------------------- | :----------- | :------------------------- | :----------------------------------------------------------------------------------------- |
+| `enableDrag`         | `boolean`    | `true`                     | Autorise le déplacement des événements par glisser.                                        |
+| `enableResize`       | `boolean`    | `true`                     | Autorise la modification de la durée d'un événement par redimensionnement.                 |
+| `enableCreate`       | `boolean`    | `true`                     | Autorise la création d'événements par double-clic sur la grille.                           |
+| `enableAllDayCreate` | `boolean`    | `true`                     | Autorise la création d'événements sur la journée entière en glissant dans la ligne dédiée. |
+| `supportedViews`     | `ViewType[]` | `[DAY, WEEK, MONTH, YEAR]` | Vues dans lesquelles le glisser est activé.                                                |
+| `onEventDrop`        | `Function`   | —                          | Callback déclenché lorsqu'un événement est déplacé (glisser-déposer).                      |
+| `onEventResize`      | `Function`   | —                          | Callback déclenché lorsqu'un événement est redimensionné.                                  |
+
+## API du plugin
+
+Vous pouvez accéder au service de glisser pour modifier la configuration dynamiquement :
+
+```tsx
+const dragService = calendar.app.getPlugin<DragService>('drag');
+
+// Disable resizing dynamically
+dragService.updateConfig({ enableResize: false });
+```

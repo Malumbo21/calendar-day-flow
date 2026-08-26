@@ -1,0 +1,301 @@
+---
+title: Primeros pasos
+description: Aprende a instalar DayFlow y a poner en marcha el calendario en una aplicación React, Vue, Svelte o Angular.
+---
+
+# Primeros pasos
+
+¡Te damos la bienvenida a DayFlow! Esta guía te llevará paso a paso hasta tu primer calendario.
+
+## Instalación
+
+### CLI (recomendado)
+
+Ejecuta el asistente de configuración interactivo: detecta tu gestor de paquetes, te permite elegir un framework y los plugins, y lo instala todo en un solo paso.
+
+<CreateDayflowTabs />
+
+<CliPreview />
+
+### Instalación manual
+
+¿Prefieres instalar los paquetes tú mismo? Selecciona tu framework y tu gestor de paquetes:
+
+<FrameworkInstall />
+
+### Importar los estilos de DayFlow
+
+**Importante:** debes importar los estilos de DayFlow en tu aplicación. Añade esta importación a tu componente App principal o a tu archivo de layout:
+
+```tsx
+// In App.tsx or layout.tsx
+import '@dayflow/core/dist/styles.css';
+```
+
+También puedes importarlo desde tu archivo CSS:
+
+```css
+/* src/index.css */
+@import '@dayflow/core/dist/styles.css';
+```
+
+<Callout title="¿Usas Tailwind CSS?">
+  Importa `styles.components.css` en su lugar para evitar conflictos del reset de CSS con tus estilos existentes:
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+Consulta la [integración con Tailwind v4](https://calendar.dayflow.studio/docs-es/guides/theme-customization#integración-con-tailwind-v4) para más detalles.
+
+> **Consejo:** si usas el asistente `create-dayflow` y eliges «Sí» para Tailwind CSS, añadirá esta importación automáticamente.
+
+</Callout>
+
+## Uso básico
+
+Selecciona tu framework para ver cómo integrar DayFlow en tu aplicación.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createEventsPlugin,
+    } from '@dayflow/react';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+    import { createEvent, createAllDayEvent } from '@dayflow/core';
+    import '@dayflow/core/dist/styles.css';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [createDayView(), createWeekView(), createMonthView()],
+        plugins: [createDragPlugin(), createEventsPlugin()],
+        calendars: [
+          {
+            id: 'work',
+            name: 'Work',
+            colors: {
+              lineColor: '#2563eb',
+              eventColor: '#dbeafe',
+              eventSelectedColor: '#bfdbfe',
+              textColor: '#1e3a8a',
+            },
+          },
+        ],
+        events: [
+          createEvent({
+            id: '1',
+            title: 'Team Meeting',
+            start: new Date(2025, 10, 15, 10, 0),
+            end: new Date(2025, 10, 15, 11, 0),
+            calendarId: 'work',
+          }),
+          createAllDayEvent({
+            id: '2',
+            title: 'Conference',
+            start: new Date(2025, 10, 20),
+            calendarId: 'work',
+          }),
+        ],
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+      import {
+        createDayView,
+        createWeekView,
+        createMonthView,
+        createEventsPlugin,
+        createEvent,
+        createAllDayEvent
+      } from '@dayflow/core';
+      import { createDragPlugin } from '@dayflow/plugin-drag';
+      import '@dayflow/core/dist/styles.css';
+
+      const calendar = useCalendarApp({
+        views: [createDayView(), createWeekView(), createMonthView()],
+        plugins: [createDragPlugin(), createEventsPlugin()],
+        calendars: [
+          {
+            id: 'work',
+            name: 'Work',
+            colors: {
+              lineColor: '#2563eb',
+              eventColor: '#dbeafe',
+              eventSelectedColor: '#bfdbfe',
+              textColor: '#1e3a8a',
+            },
+          },
+        ],
+        events: [
+          createEvent({
+            id: '1',
+            title: 'Team Meeting',
+            start: new Date(2025, 10, 15, 10, 0),
+            end: new Date(2025, 10, 15, 11, 0),
+            calendarId: 'work',
+          }),
+          createAllDayEvent({
+            id: '2',
+            title: 'Conference',
+            start: new Date(2025, 10, 20),
+            calendarId: 'work',
+          }),
+        ],
+        initialDate: new Date(),
+      });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import {
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createEventsPlugin,
+      createEvent,
+      createAllDayEvent
+    } from '@dayflow/core';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import '@dayflow/core/dist/styles.css';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createDayView(), createWeekView(), createMonthView()],
+        plugins: [createDragPlugin(), createEventsPlugin()],
+        calendars: [
+          {
+            id: 'work',
+            name: 'Work',
+            colors: {
+              lineColor: '#2563eb',
+              eventColor: '#dbeafe',
+              eventSelectedColor: '#bfdbfe',
+              textColor: '#1e3a8a',
+            },
+          },
+        ],
+        events: [
+          createEvent({
+            id: '1',
+            title: 'Team Meeting',
+            start: new Date(2025, 10, 15, 10, 0),
+            end: new Date(2025, 10, 15, 11, 0),
+            calendarId: 'work',
+          }),
+          createAllDayEvent({
+            id: '2',
+            title: 'Conference',
+            start: new Date(2025, 10, 20),
+            calendarId: 'work',
+          }),
+        ],
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import {
+        createDayView,
+        createWeekView,
+        createMonthView,
+        createEventsPlugin,
+        createEvent,
+        createAllDayEvent
+      } from '@dayflow/core';
+      import { createDragPlugin } from '@dayflow/plugin-drag';
+      import '@dayflow/core/dist/styles.css';
+
+      const calendar = useCalendarApp({
+        views: [createDayView(), createWeekView(), createMonthView()],
+        plugins: [createDragPlugin(), createEventsPlugin()],
+        calendars: [
+          {
+            id: 'work',
+            name: 'Work',
+            colors: {
+              lineColor: '#2563eb',
+              eventColor: '#dbeafe',
+              eventSelectedColor: '#bfdbfe',
+              textColor: '#1e3a8a',
+            },
+          },
+        ],
+        events: [
+          createEvent({
+            id: '1',
+            title: 'Team Meeting',
+            start: new Date(2025, 10, 15, 10, 0),
+            end: new Date(2025, 10, 15, 11, 0),
+            calendarId: 'work',
+          }),
+          createAllDayEvent({
+            id: '2',
+            title: 'Conference',
+            start: new Date(2025, 10, 20),
+            calendarId: 'work',
+          }),
+        ],
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Personalizar los estilos
+
+De forma predeterminada, el calendario ocupa todo el ancho de su contenedor. Puedes personalizar la altura y otros estilos con CSS. Por ejemplo, para definir una altura adaptable:
+
+```css
+.df-calendar-container {
+  --df-calendar-height: 760px !important;
+  height: var(--df-calendar-height, 760px) !important;
+}
+
+@media (max-width: 768px) {
+  .df-calendar-container {
+    --df-calendar-height: 550px !important;
+  }
+}
+```
+
+**Nota:** la biblioteca usa la moderna [API Temporal](/docs-es/introduction/events#avanzado-usar-la-api-temporal-directamente) para gestionar fechas y horas. Las funciones auxiliares (`createEvent`) facilitan la creación de eventos sin tratar directamente con Temporal.

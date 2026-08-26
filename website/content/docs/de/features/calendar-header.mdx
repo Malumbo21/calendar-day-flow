@@ -1,0 +1,115 @@
+---
+title: 'Kalender-Kopfzeile'
+---
+
+# Kalender-Kopfzeile
+
+Die Kalender-Kopfzeile enthält die Navigation, den Ansichtsumschalter und die Suche. Sie können ihr Verhalten anpassen oder sie vollständig ersetzen.
+
+## Die Kopfzeile ausblenden
+
+Wenn Sie eine eigene Navigation bauen möchten oder die Standardkopfzeile schlicht nicht brauchen, können Sie sie abschalten.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  useCalendarHeader: false, // Blendet die Standardkopfzeile aus
+});
+```
+
+## Eigene Kopfzeile
+
+<Callout title='Inkompatible Änderung seit v3.4.1' type='warn'>
+  Eine Funktion an `useCalendarHeader` zu übergeben, wird nicht mehr
+  unterstützt. Verschieben Sie Ihre eigene Kopfzeile wie unten gezeigt in den
+  Slot `calendarHeader` von `DayFlowCalendar`.
+</Callout>
+
+Über den Content-Slot `calendarHeader` ersetzen Sie die Standardkopfzeile durch eine eigene Komponente. Ihr Renderer erhält den Zustand des Kalenders und dessen Hilfsmethoden, sodass Sie Navigation und Suche aus Ihrer eigenen Oberfläche heraus steuern können.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+    });
+
+    <DayFlowCalendar
+      calendar={calendar}
+      calendarHeader={() => (
+        <div className='custom-header'>
+          <button onClick={() => calendar.goToPrevious()}>‹</button>
+          <button onClick={() => calendar.goToToday()}>Today</button>
+          <button onClick={() => calendar.goToNext()}>›</button>
+        </div>
+      )}
+    />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <DayFlowCalendar :calendar="calendar">
+      <template #calendarHeader="{ calendar }">
+        <div class="custom-header">
+          <button @click="calendar.goToPrevious()">‹</button>
+          <button @click="calendar.goToToday()">Today</button>
+          <button @click="calendar.goToNext()">›</button>
+        </div>
+      </template>
+    </DayFlowCalendar>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [calendarHeader]="header"
+    >
+    </dayflow-calendar>
+
+    <ng-template #header let-args>
+      <div class="custom-header">
+        <button (click)="args.calendar.goToPrevious()">‹</button>
+        <button (click)="args.calendar.goToToday()">Today</button>
+        <button (click)="args.calendar.goToNext()">›</button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} calendarHeader={CustomHeader} />
+
+    <!-- CustomHeader.svelte -->
+    <script lang="ts">
+      import type { CalendarHeaderProps } from '@dayflow/core';
+      let { calendar } = $props<CalendarHeaderProps>();
+    </script>
+
+    <div class="custom-header">
+      <button onclick={() => calendar.goToPrevious()}>‹</button>
+      <button onclick={() => calendar.goToToday()}>Today</button>
+      <button onclick={() => calendar.goToNext()}>›</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Slot-Argumente
+
+Der Slot-Renderer erhält die folgenden Argumente:
+
+| Argument         | Beschreibung                                                                           |
+| :--------------- | :------------------------------------------------------------------------------------- |
+| `calendar`       | Die `CalendarApp`-Instanz.                                                             |
+| `switcherMode`   | Der aktuelle Modus des Ansichtsumschalters (`buttons` oder `select`).                  |
+| `onAddCalendar`  | Handler zum Hinzufügen eines neuen Kalenders.                                          |
+| `onSearchChange` | Handler zum Aktualisieren des Suchbegriffs.                                            |
+| `onSearchClick`  | Handler für den Klick auf das Suchsymbol.                                              |
+| `searchValue`    | Der aktuelle Suchtext.                                                                 |
+| `isSearchOpen`   | Gibt an, ob die Such-Oberfläche gerade geöffnet ist.                                   |
+| `isEditable`     | Gibt an, ob der Kalender derzeit bearbeitbar ist.                                      |
+| `safeAreaLeft`   | Linker Innenabstand (px), damit die Fensterbuttons unter macOS nicht überdeckt werden. |

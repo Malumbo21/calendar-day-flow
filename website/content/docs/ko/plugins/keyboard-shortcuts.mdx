@@ -1,0 +1,213 @@
+---
+title: '키보드 단축키 플러그인'
+---
+
+# 키보드 단축키 플러그인
+
+키보드 단축키 플러그인은 이동, 이벤트 관리, 클립보드 작업을 위한 전역 키보드 조작을 제공합니다.
+
+## 설치
+
+플러그인 패키지를 설치하세요:
+
+<PackageTabs pkg='@dayflow/plugin-keyboard-shortcuts' />
+
+## 사용법
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [
+        createKeyboardShortcutsPlugin({
+          // Optional configuration
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 기본 단축키
+
+| 동작                    | 키 (Mac)                      | 키 (Windows/Linux)         |
+| :---------------------- | :---------------------------- | :------------------------- |
+| **오늘로 이동**         | `Cmd + T`                     | `Ctrl + T`                 |
+| **검색**                | `Cmd + F`                     | `Ctrl + F`                 |
+| **새 이벤트**           | `Cmd + N`                     | `Ctrl + N`                 |
+| **이동**                | `ArrowLeft` / `ArrowRight`    | `ArrowLeft` / `ArrowRight` |
+| **이벤트 간 이동(Tab)** | `Tab` / `Shift + Tab`         | `Tab` / `Shift + Tab`      |
+| **실행 취소**           | `Cmd + Z`                     | `Ctrl + Z`                 |
+| **다시 실행**           | `Cmd + Shift + Z` / `Cmd + Y` | `Ctrl + Y`                 |
+| **이벤트 복사**         | `Cmd + C`                     | `Ctrl + C`                 |
+| **이벤트 잘라내기**     | `Cmd + X`                     | `Ctrl + X`                 |
+| **이벤트 붙여넣기**     | `Cmd + V`                     | `Ctrl + V`                 |
+| **이벤트 삭제**         | `Backspace` / `Delete`        | `Backspace` / `Delete`     |
+| **대화상자·패널 닫기**  | `Esc`                         | `Esc`                      |
+
+## 설정
+
+키 매핑을 바꾸거나 각 동작에 직접 만든 콜백을 지정할 수 있습니다:
+
+```tsx
+createKeyboardShortcutsPlugin({
+  keyMap: {
+    today: 't',
+    search: 'f',
+    prev: 'ArrowLeft',
+    next: 'ArrowRight',
+    undo: 'z',
+    redo: 'y',
+    delete: 'Delete',
+    newEvent: 'n',
+  },
+  callbacks: {
+    undo: app => {
+      console.log('Custom undo logic');
+      app.undo();
+    },
+    redo: app => {
+      console.log('Custom redo logic');
+      if (app.redo) app.redo();
+    },
+    delete: app => {
+      if (confirm('Are you sure?')) {
+        const selectedId = app.state.selectedEventId;
+        if (selectedId) app.deleteEvent(selectedId);
+      }
+    },
+  },
+});
+```
+
+### 사용 가능한 콜백
+
+`callbacks` 객체에서 지원하는 항목은 다음과 같습니다:
+
+- `undo`, `redo`, `paste` (`app`을 전달받음)
+- `copy`, `cut`, `delete` (`app`과 `event?: Event`를 전달받음)
+- `today`, `search`, `prev`, `next`, `newEvent`, `dismiss` (`app`을 전달받음)
+- `tab` (`app`과 `reverse: boolean`을 전달받음)
+
+## 플러그인 API
+
+플러그인 핸들에 접근하면 런타임에 단축키 처리를 제어할 수 있습니다:
+
+```tsx
+import { type KeyboardShortcutsService } from '@dayflow/plugin-keyboard-shortcuts';
+
+const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+```
+
+### KeyboardShortcutsService
+
+| 메서드        | 반환값    | 설명                                                |
+| :------------ | :-------- | :-------------------------------------------------- |
+| `enable()`    | `void`    | 단축키 처리를 다시 활성화합니다                     |
+| `disable()`   | `void`    | `enable()`을 호출할 때까지 모든 단축키를 차단합니다 |
+| `isEnabled()` | `boolean` | 현재 단축키가 활성 상태인지 반환합니다              |
+
+직접 만든 모달이나 리치 텍스트 에디터가 열려 있는 동안 캘린더 단축키를 잠시 꺼 두는 것이 대표적인 사용 사례입니다:
+
+```tsx
+function MyModal() {
+  const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+
+  useEffect(() => {
+    kb?.disable();
+    return () => kb?.enable(); // restore on unmount
+  }, []);
+
+  // ...
+}
+```
+
+열려 있는 UI를 코드로 닫을 수도 있습니다:
+
+```tsx
+app.dismissUI();
+```

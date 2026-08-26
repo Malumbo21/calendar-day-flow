@@ -1,0 +1,59 @@
+---
+title: 'Modo de solo lectura'
+---
+
+# Modo de solo lectura
+
+Puedes poner el calendario en solo lectura para impedir que los usuarios lo modifiquen. Resulta útil en calendarios públicos o en paneles de visualización.
+
+El modo de solo lectura desactiva únicamente la interfaz de modificación integrada de DayFlow. Las APIs programáticas como `calendar.addEvent()`, `calendar.updateEvent()`, `calendar.deleteEvent()` y `calendar.applyEventsChanges()` siguen funcionando.
+
+## Uso básico
+
+Para activar el modo de solo lectura, pasa `readOnly: true` en la configuración del calendario.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: true, // Disables built-in mutation UI (dragging, creating, editing)
+});
+```
+
+## Control detallado
+
+También puedes proporcionar un objeto `ReadOnlyConfig` para desactivar solo algunas funciones:
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: {
+    draggable: false, // Disables drag-and-drop
+    viewable: true, // Allows clicking to view event details (read-only mode)
+  },
+});
+```
+
+### Opciones de configuración
+
+| Opción      | Tipo      | Descripción                                                                            |
+| :---------- | :-------- | :------------------------------------------------------------------------------------- |
+| `draggable` | `boolean` | Indica si los eventos se pueden mover o redimensionar arrastrándolos.                  |
+| `viewable`  | `boolean` | Indica si se puede ver el detalle de los eventos (abre el panel o diálogo de detalle). |
+
+Con `readOnly` activo, el calendario también oculta los botones de «Crear» y los demás elementos de interfaz que normalmente provocarían cambios.
+
+## Interfaz propia
+
+Si renderizas tus propios botones, menús o diálogos, usa `calendar.canMutateFromUI()` para decidir si mostrar los controles de modificación:
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: true,
+});
+
+const canEdit = calendar.canMutateFromUI();
+```
+
+- `true`: tu interfaz puede mostrar los controles de crear, editar y eliminar.
+- `false`: tu interfaz debería ocultarlos o desactivarlos.

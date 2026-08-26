@@ -4,32 +4,23 @@ export const dynamic = 'force-static';
 
 import { blog } from 'fumadocs-mdx:collections/server';
 
+import { defaultLanguage } from '@/lib/i18n';
 import { SITE_URL } from '@/lib/site';
-import { source, sourceJa, sourceZh } from '@/lib/source';
+import { source } from '@/lib/source';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const docPages = source.getPages().map(page => ({
-    url: `${SITE_URL}${page.url}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: page.url === '/docs' ? 0.9 : 0.8,
-  }));
-
-  const docJaPages = sourceJa.getPages().map(page => ({
-    url: `${SITE_URL}${page.url}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
-
-  const docZhPages = sourceZh.getPages().map(page => ({
-    url: `${SITE_URL}${page.url}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+  // Every locale the loader knows about, so a new language needs no change here.
+  const docPages = source.getLanguages().flatMap(({ language, pages }) =>
+    pages.map(page => ({
+      url: `${SITE_URL}${page.url}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority:
+        language === defaultLanguage ? (page.url === '/docs' ? 0.9 : 0.8) : 0.7,
+    }))
+  );
 
   const blogPages = blog.map(post => {
     const slug = post.info.path.replace(/\.mdx$/, '');
@@ -55,8 +46,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     ...docPages,
-    ...docJaPages,
-    ...docZhPages,
     ...blogPages,
   ];
 }

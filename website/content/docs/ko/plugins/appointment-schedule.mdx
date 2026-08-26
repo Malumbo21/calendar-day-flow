@@ -1,0 +1,1054 @@
+---
+title: 예약 일정
+description: 주간 가용 시간, UI 독립형 컨트롤러, 세 가지 참석자 레이아웃, React·Vue·Svelte·Angular 어댑터를 제공하는 DayFlow Pro의 가용 시간 편집기와 예약 UI입니다.
+status: pro
+---
+
+# 예약 일정
+
+`@dayflow-pro/appointment-schedule`은 두 가지 일을 합니다:
+
+1. 주최자가 **언제 예약을 받을 수 있는지** 정의하도록 해 줍니다. DayFlow 주 뷰에서 바로 편집합니다.
+2. 그 정의를 참석자가 **선택할 수 있는 슬롯**으로 바꿔 줍니다. `CalendarApp`은 필요하지 않습니다.
+
+이것은 예약 플랫폼이 아닙니다. 백엔드도, 예약 생명주기도, 알림 서비스도, 결제 시스템도 없습니다. 슬롯을 선택하면 콜백이 실행되고, 그다음은 애플리케이션이 이어받습니다.
+
+## 설치
+
+<PackageTabs pkg='@dayflow-pro/appointment-schedule' />
+
+설치 단계는 [Pro 설치](/docs-ko/introduction/pro-installation) 가이드를 참고하세요.
+
+`temporal-polyfill`은 필수입니다. `@dayflow/core`는 주최자 플러그인과 주간 오버레이 레이아웃에서만 필요합니다. React, Vue, Svelte, Angular는 선택적 peer 의존성이므로, 사용하려는 어댑터의 프레임워크만 설치하면 됩니다.
+
+```ts
+import '@dayflow-pro/appointment-schedule/styles.css';
+// Alternatively, for Tailwind projects that already load the core theme:
+import '@dayflow-pro/appointment-schedule/styles.components.css';
+```
+
+## 주최자 플러그인
+
+```ts title="appointmentPlugin.ts"
+import { createAppointmentSchedulePlugin } from '@dayflow-pro/appointment-schedule/plugin';
+import type { AppointmentSchedule } from '@dayflow-pro/appointment-schedule/engine';
+import '@dayflow-pro/appointment-schedule/styles.css';
+
+let schedules: AppointmentSchedule[] = [];
+
+const upsertSchedule = (schedule: AppointmentSchedule) => {
+  schedules = [
+    ...schedules.filter(current => current.id !== schedule.id),
+    schedule,
+  ];
+  appointmentPlugin.updateConfig?.({ schedules });
+};
+
+export const appointmentPlugin = createAppointmentSchedulePlugin({
+  schedules,
+  drawerPlacement: 'calendar',
+  drawerWidth: 420,
+  onCreateSchedule: upsertSchedule,
+  onUpdateSchedule: upsertSchedule,
+});
+```
+
+프레임워크의 주 뷰에 동일한 플러그인 인스턴스를 추가하세요:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { createWeekView } from '@dayflow/core';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    export function App() {
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      });
+
+      return (
+        <>
+          <button onClick={() => appointmentPlugin.api.openCreate()}>
+            New appointment schedule
+          </button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <script setup lang="ts">
+    import { createWeekView } from '@dayflow/core';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      plugins: [appointmentPlugin],
+    });
+    </script>
+
+    <template>
+      <button @click="appointmentPlugin.api.openCreate()">
+        New appointment schedule
+      </button>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createWeekView } from '@dayflow/core';
+    import { appointmentPlugin } from './appointmentPlugin';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <button (click)="appointmentPlugin.api.openCreate()">
+          New appointment schedule
+        </button>
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `,
+    })
+    export class AppComponent {
+      readonly appointmentPlugin = appointmentPlugin;
+      readonly calendar = {
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { createWeekView } from '@dayflow/core';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { appointmentPlugin } from './appointmentPlugin';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        plugins: [appointmentPlugin],
+      });
+    </script>
+
+    <button onclick={() => appointmentPlugin.api.openCreate()}>
+      New appointment schedule
+    </button>
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`schedules`는 제어되는 데이터로, 플러그인은 아무것도 저장하지 않습니다. 가용 시간은 이벤트 아래의 배경 레이어로 그려지므로 `getEvents()`, 검색, 인쇄, 원격 동기화에는 전혀 포함되지 않습니다.
+
+### 일정 데이터 모델
+
+`AppointmentSchedule`은 주최자 화면, 예약 컴포넌트, 헤드리스 엔진이 공유하는 데이터 계약입니다.
+
+| 속성                    | 타입                         | 용도                                                             |
+| ----------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| `id`                    | `string`                     | 일정의 고정 식별자입니다.                                        |
+| `title`                 | `string`                     | 주최자 화면과 예약 화면에 표시되는 이름입니다.                   |
+| `durationMinutes`       | `number`                     | 각 예약의 길이입니다.                                            |
+| `slotIntervalMinutes?`  | `number`                     | 슬롯 시작 시각 사이의 간격입니다. 기본값은 예약 길이와 같습니다. |
+| `beforeBufferMinutes?`  | `number`                     | 각 예약 앞에 두는 여유 시간입니다. 기본값은 `0`입니다.           |
+| `afterBufferMinutes?`   | `number`                     | 각 예약 뒤에 두는 여유 시간입니다. 기본값은 `0`입니다.           |
+| `timeZone`              | `string`                     | 가용 시간을 정의하는 기준 IANA 시간대입니다.                     |
+| `calendarId?`           | `string`                     | 색상과 생성되는 이벤트에 사용할 호스트 캘린더입니다.             |
+| `recurrence?`           | `AppointmentRecurrence`      | 매주, 일회성, 또는 N주마다 반복하는 규칙입니다.                  |
+| `availability`          | `WeeklyAvailability[]`       | 요일별로 묶인 반복 예약 가능 구간입니다. 필수입니다.             |
+| `unavailableIntervals?` | `WeeklyAvailability[]`       | 화면에는 보이지만 슬롯을 만들지 않는 반복 휴식 시간입니다.       |
+| `dateOverrides?`        | `DateAvailabilityOverride[]` | 주간 규칙을 대체하는 날짜별 구간입니다.                          |
+| `location?`             | `AppointmentLocationConfig`  | 직접 지정한 링크, 화상회의 제공자, 주소 또는 전화번호입니다.     |
+| `meta?`                 | `Record<string, unknown>`    | 애플리케이션이 소유하는 직렬화 가능한 메타데이터입니다.          |
+
+`WeeklyAvailability`에는 `dayOfWeek`(`0` 일요일 ~ `6` 토요일)와 `intervals` 배열이 들어갑니다. 각 `AvailabilityInterval`은 `id`와, 벽시계 기준 `HH:mm` 형식의 `startTime`·`endTime`을 가집니다. `DateAvailabilityOverride`는 ISO 형식의 `date`와 대체할 `intervals`로 구성되며, 빈 배열을 넣으면 그날은 예약을 받지 않습니다.
+
+직접 만든 UI에서 편집기를 여세요:
+
+```ts
+appointmentPlugin.api.openCreate();
+appointmentPlugin.api.openEdit('product-demo');
+```
+
+이 플러그인은 캘린더의 빠른 생성 팝업에도 항목을 추가합니다. 플러그인이 없는 캘린더는 기존의 빠른 생성 화면을 그대로 유지합니다.
+
+### 자주 쓰는 옵션
+
+다음 필드들이 `AppointmentSchedulePluginConfig`를 구성합니다.
+
+| 옵션                       | 기본값         | 용도                                                         |
+| -------------------------- | -------------- | ------------------------------------------------------------ |
+| `schedules`                | 필수           | 제어되는 예약 일정 목록입니다.                               |
+| `activeScheduleId`         | 없음           | 특정 일정을 선택한 상태로 편집기를 엽니다.                   |
+| `availabilitySnapMinutes`  | `15`           | 가용 시간을 편집할 때 사용하는 분 단위 간격입니다.           |
+| `drawerPlacement`          | `'viewport'`   | 편집기를 뷰포트 또는 캘린더에 붙입니다.                      |
+| `drawerWidth`              | `420`          | 드로어의 너비입니다. 픽셀 또는 임의의 CSS 길이를 지정합니다. |
+| `drawerTarget`             | 첫 번째 캘린더 | `calendar` 배치에서 사용할 요소 또는 선택자입니다.           |
+| `drawerRenderer`           | 기본 드로어    | 주최자 편집기를 통째로 교체합니다.                           |
+| `timeFormat`               | 활성 뷰의 형식 | 12시간제 또는 24시간제를 사용합니다.                         |
+| `conferenceProviders`      | `[]`           | 위치 선택기에 이름이 지정된 화상회의 제공자를 추가합니다.    |
+| `onCreateSchedule`         | 없음           | 새로 만든 일정을 애플리케이션에 저장합니다.                  |
+| `onUpdateSchedule`         | 없음           | 기존 일정의 변경 사항을 저장합니다.                          |
+| `onDeleteScheduleRequest`  | 없음           | 호스트 앱에 일정 삭제 확인과 처리를 요청합니다.              |
+| `onExternalUpdateConflict` | 없음           | 편집 중에 도착한 제어 데이터 갱신을 알립니다.                |
+
+### 플러그인 API
+
+플러그인은 `appointmentPlugin.api`에 `AppointmentScheduleApi`를 노출합니다.
+
+| 메서드                            | 용도                                               |
+| --------------------------------- | -------------------------------------------------- |
+| `openCreate(initial?)`            | 초기 필드를 선택적으로 지정해 새 초안을 엽니다.    |
+| `openEdit(scheduleId)`            | 기존의 제어되는 일정을 엽니다.                     |
+| `closeEditor()` / `cancelDraft()` | 현재 초안을 버리고 드로어를 닫습니다.              |
+| `saveDraft()`                     | 생성 또는 수정 콜백을 실행하고, 성공하면 닫습니다. |
+| `setActiveSchedule(scheduleId)`   | 편집기를 열지 않고 활성 일정만 바꿉니다.           |
+| `getActiveSchedule()`             | 현재 활성화된 제어 일정을 반환합니다.              |
+| `getDraft()`                      | 편집 중이라면 현재 수정 가능한 초안을 반환합니다.  |
+| `draftManager`                    | 필드와 가용 시간을 편집하는 동작을 제공합니다.     |
+| `subscribeDraft(listener)`        | 초안 변경을 구독하고 구독 해제 함수를 반환합니다.  |
+
+### 주최자 편집기 커스터마이징
+
+`drawerRenderer`로 주최자 드로어 전체를 교체할 수 있습니다. 배치, 활성 초안, 캘린더에서의 가용 시간 편집, 저장·취소 동작은 여전히 플러그인이 담당합니다. 애플리케이션은 전달받은 호스트 안에 평범한 프레임워크 컴포넌트를 렌더링하면 됩니다.
+
+렌더러는 `AppointmentScheduleDrawerRenderArgs`를 전달받습니다:
+
+| 속성                    | 용도                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `draft`                 | 현재 `AppointmentSchedule` 초안입니다.                                                                    |
+| `isCreating`            | 새 일정인지 기존 일정 수정인지 구분합니다.                                                                |
+| `draftManager`          | 필드를 갱신하고 `toggleDay`, `addInterval`, `updateInterval`, `removeInterval` 및 복사 헬퍼를 제공합니다. |
+| `calendars`             | 선택 가능한 캘린더 목록입니다(`{ id, name, color? }` 형태).                                               |
+| `conferenceProviders`   | 등록된 제공자 목록입니다(`{ id, name, icon? }` 형태).                                                     |
+| `placement`             | 확정된 배치 값입니다: `'calendar'` 또는 `'viewport'`.                                                     |
+| `drawerWidth`           | 확정된 CSS 너비 문자열입니다.                                                                             |
+| `timeFormat` / `locale` | 설정과 캘린더에서 물려받은 표시 환경설정입니다.                                                           |
+| `translate`             | 패키지 번역을 조회하며, 없으면 대체 문구를 사용합니다.                                                    |
+| `save()`                | 호스트의 생성 또는 수정 콜백을 실행하고, 성공하면 닫습니다.                                               |
+| `cancel()`              | 초안을 버리고 편집기를 닫습니다.                                                                          |
+
+이 콜백은 프레임워크를 마운트하는 경계일 뿐, DOM을 직접 조작해 폼을 만들라는 뜻이 아닙니다. 아래 예시는 제목·저장·취소 컨트롤을 각 프레임워크의 네이티브 컴포넌트로 동일하게 렌더링합니다:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx title="organiserDrawer.tsx"
+    import { createRoot } from 'react-dom/client';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+
+    function OrganiserDrawer({
+      args,
+    }: {
+      args: AppointmentScheduleDrawerRenderArgs;
+    }) {
+      return (
+        <form onSubmit={event => { event.preventDefault(); void args.save(); }}>
+          <input
+            value={args.draft.title}
+            onChange={event =>
+              args.draftManager.updateDraft({ title: event.target.value })
+            }
+          />
+          <button type="submit">Save</button>
+          <button type="button" onClick={args.cancel}>Cancel</button>
+        </form>
+      );
+    }
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const root = createRoot(host);
+        const render = (args: AppointmentScheduleDrawerRenderArgs) =>
+          root.render(<OrganiserDrawer args={args} />);
+
+        render(initial);
+        // Closing the drawer from a React effect — flipping `drawerRenderer`,
+        // for instance — reaches `destroy` while React is still rendering, and
+        // unmounting a root there races that render. Defer it by a microtask.
+        return {
+          update: render,
+          destroy: () => queueMicrotask(() => root.unmount()),
+        };
+      };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue title="OrganiserDrawer.vue"
+    <script setup lang="ts">
+    import type { AppointmentScheduleDrawerRenderArgs } from '@dayflow-pro/appointment-schedule/plugin';
+
+    const props = defineProps<{ args: AppointmentScheduleDrawerRenderArgs }>();
+    const updateTitle = (event: Event) => {
+      props.args.draftManager.updateDraft({
+        title: (event.target as HTMLInputElement).value,
+      });
+    };
+    </script>
+
+    <template>
+      <form @submit.prevent="args.save()">
+        <input :value="args.draft.title" @input="updateTitle" />
+        <button type="submit">Save</button>
+        <button type="button" @click="args.cancel()">Cancel</button>
+      </form>
+    </template>
+    ```
+
+    ```ts title="organiserDrawerRenderer.ts"
+    import { createApp, h, reactive } from 'vue';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+    import OrganiserDrawer from './OrganiserDrawer.vue';
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const state = reactive({ args: initial });
+        const app = createApp({
+          render: () => h(OrganiserDrawer, { args: state.args }),
+        });
+        app.mount(host);
+
+        return {
+          update: (args: AppointmentScheduleDrawerRenderArgs) => {
+            state.args = args;
+          },
+          destroy: () => app.unmount(),
+        };
+      };
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts title="organiser-drawer.ts"
+    import {
+      ApplicationRef,
+      Component,
+      EnvironmentInjector,
+      Input,
+      createComponent,
+    } from '@angular/core';
+    import type {
+      AppointmentScheduleDrawerRenderArgs,
+      AppointmentScheduleDrawerRenderer,
+    } from '@dayflow-pro/appointment-schedule/plugin';
+
+    @Component({
+      selector: 'app-organiser-drawer',
+      standalone: true,
+      template: `
+        <input [value]="args.draft.title" (input)="updateTitle($event)" />
+        <button type="button" (click)="args.save()">Save</button>
+        <button type="button" (click)="args.cancel()">Cancel</button>
+      `,
+    })
+    export class OrganiserDrawerComponent {
+      @Input({ required: true }) args!: AppointmentScheduleDrawerRenderArgs;
+
+      updateTitle(event: Event) {
+        this.args.draftManager.updateDraft({
+          title: (event.target as HTMLInputElement).value,
+        });
+      }
+    }
+
+    export const createDrawerRenderer = (
+      appRef: ApplicationRef,
+      environmentInjector: EnvironmentInjector
+    ): AppointmentScheduleDrawerRenderer => (initial, host) => {
+      const component = createComponent(OrganiserDrawerComponent, {
+        hostElement: host,
+        environmentInjector,
+      });
+      appRef.attachView(component.hostView);
+      const update = (args: AppointmentScheduleDrawerRenderArgs) => {
+        component.setInput('args', args);
+        component.changeDetectorRef.detectChanges();
+      };
+      update(initial);
+
+      return {
+        update,
+        destroy: () => {
+          appRef.detachView(component.hostView);
+          component.destroy();
+        },
+      };
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte title="OrganiserDrawer.svelte"
+    <script lang="ts">
+      import type { Readable } from 'svelte/store';
+      import type { AppointmentScheduleDrawerRenderArgs } from '@dayflow-pro/appointment-schedule/plugin';
+
+      let { state }: { state: Readable<AppointmentScheduleDrawerRenderArgs> } = $props();
+      const updateTitle = (event: Event) => {
+        $state.draftManager.updateDraft({
+          title: (event.target as HTMLInputElement).value,
+        });
+      };
+    </script>
+
+    <form onsubmit={(event) => { event.preventDefault(); void $state.save(); }}>
+      <input value={$state.draft.title} oninput={updateTitle} />
+      <button type="submit">Save</button>
+      <button type="button" onclick={$state.cancel}>Cancel</button>
+    </form>
+    ```
+
+    ```ts title="organiserDrawerRenderer.ts"
+    import { mount, unmount } from 'svelte';
+    import { writable } from 'svelte/store';
+    import type { AppointmentScheduleDrawerRenderer } from '@dayflow-pro/appointment-schedule/plugin';
+    import OrganiserDrawer from './OrganiserDrawer.svelte';
+
+    export const drawerRenderer: AppointmentScheduleDrawerRenderer =
+      (initial, host) => {
+        const state = writable(initial);
+        const component = mount(OrganiserDrawer, {
+          target: host,
+          props: { state },
+        });
+
+        return {
+          update: next => state.set(next),
+          destroy: () => void unmount(component),
+        };
+      };
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+완성한 렌더러를 `createAppointmentSchedulePlugin({ drawerRenderer })`에 전달하세요. 초안이 바뀌면 `update`가, 드로어를 닫거나 렌더러를 교체하면 `destroy`가 호출됩니다. 렌더 인자에는 캘린더·화상회의 메타데이터, 로케일, `timeFormat`, `translate`, `isCreating`, `save()`, `cancel()`도 함께 전달됩니다.
+
+### 드로어 호스트, 애니메이션, 레이어
+
+렌더러에 넘겨주는 호스트 요소는 플러그인이 소유합니다. 이 요소에는 `df-appointment-custom-drawer-host` 클래스와 `--calendar` 또는 `--viewport` 수식자가 붙고, 위치·너비·쌓임 순서는 플러그인이 인라인으로 지정합니다. 스타일은 이 클래스들을 기준으로 지정하세요. DOM에서 옮기거나 `position`을 바꾸지 마세요. 렌더링할 때마다 플러그인이 두 값을 다시 적용합니다.
+
+교체한 드로어도 기본 드로어와 똑같이 슬라이드로 나타나고 사라집니다. 닫을 때 플러그인은 호스트에 `data-df-drawer-exiting`을 표시하고, 키프레임 애니메이션이 끝날 때까지 기다린 다음에야 `destroy`를 호출하고 호스트를 제거합니다. 덕분에 드로어는 내용이 남아 있는 상태로 사라지는 애니메이션을 완주합니다:
+
+```css
+/* Defaults shipped by the package; override to change the motion. */
+.df-appointment-custom-drawer-host {
+  animation: df-slide-in-left 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.df-appointment-custom-drawer-host[data-df-drawer-exiting] {
+  animation: df-slide-out-left 180ms cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+```
+
+알아 두면 좋은 세 가지가 있습니다. 기다리는 대상은 키프레임 애니메이션뿐이므로, 프레임워크가 호버나 포커스 링에 붙인 CSS 트랜지션 때문에 드로어가 지연되는 일은 없습니다. 무한 애니메이션은 건너뛰며, 애니메이션 자체의 길이로 제한된 타이머가 대기를 보완하므로 드로어 안의 스피너나 백그라운드 탭(애니메이션 프레임이 멈추는 상황)이 호스트를 문서에 남겨 두는 일은 생기지 않습니다. 그리고 애니메이션을 제거하거나 `prefers-reduced-motion: reduce`에 해당하면 닫힌 바로 그 프레임에 호스트가 사라지는데, 이는 움직임을 줄이고 싶어 하는 사용자를 위해 패키지가 이미 하고 있는 동작입니다.
+
+드로어는 `z-index: 900`에 놓이며, `1000`에 있는 캘린더의 빠른 생성 팝업과 대화상자보다 아래입니다. 그래서 추가 메뉴를 열었을 때 편집기에 가려지는 일이 없습니다. 드로어를 `1000` 위로 올리면 이 관계가 뒤집힙니다. 드로어가 그 위를 덮어야 한다면 드로어만 올리지 말고 그쪽도 함께 올리세요.
+
+### 반복
+
+가용 시간은 기본적으로 매주 반복됩니다. 드로어에서는 일회성 일정과 N주마다 반복하는 사용자 지정 규칙도 선택할 수 있습니다:
+
+```ts
+type AppointmentRecurrence = {
+  frequency: 'weekly' | 'none' | 'custom';
+  startDate?: string; // YYYY-MM-DD anchor
+  intervalWeeks?: number; // custom: every N weeks
+  endsOnDate?: string;
+  endsAfterOccurrences?: number;
+};
+```
+
+`frequency: 'none'`은 선택한 주간 시간대를 기준 날짜가 속한 월~일 한 주에만 적용합니다. 가용 시간을 기준 날짜 하루로 좁히지는 않습니다.
+
+월 단위, n번째 요일, RRULE 같은 더 복잡한 규칙은 애플리케이션의 몫입니다. 반복 규칙보다 항상 우선하는 `dateOverrides`로 표현하세요.
+
+## 장소와 화상회의
+
+일정에는 예약이 **어디서** 이루어지는지 지정할 수 있습니다. 이는 설정일 뿐 이미 잡힌 회의가 아닙니다. 하나의 일정은 여러 번 예약될 수 있으므로, 예약별 참가 URL은 저장하지 않습니다:
+
+```ts
+type AppointmentLocationConfig =
+  | { type: 'custom-link'; url: string; label?: string }
+  | { type: 'conference'; providerId: string }
+  | { type: 'in-person'; address: string }
+  | { type: 'phone'; phone?: string };
+```
+
+드로어의 **장소** 선택기에는 언제나 "사용자 지정 회의 링크", "대면", "전화 통화"가 있습니다. 이름이 지정된 화상회의 앱은 등록한 뒤에야 나타납니다:
+
+```ts
+createAppointmentSchedulePlugin({
+  schedules,
+  conferenceProviders: [googleMeet, zoom], // ← the picker lists these first
+});
+```
+
+### 화상회의 제공자
+
+DayFlow는 Google, Zoom, Microsoft와 직접 통신하지 않습니다. 메서드 하나짜리 인터페이스를 정의하고 그것을 호출할 뿐이며, OAuth 토큰·API 시크릿·벤더 SDK는 여러분의 백엔드에 남습니다:
+
+```ts
+import type { ConferenceProvider } from '@dayflow-pro/appointment-schedule/engine';
+
+const googleMeet: ConferenceProvider = {
+  id: 'google-meet',
+  name: 'Google Meet',
+  icon: '/icons/meet.svg',
+  createConference: input =>
+    fetch('/api/dayflow/google-meet', {
+      method: 'POST',
+      body: JSON.stringify({ ...input, start: input.start.toString() }),
+    }).then(response => response.json()),
+};
+// → { provider, joinUrl, meetingId?, hostUrl?, password?, meta? }
+```
+
+`createConference`는 `CreateConferenceInput`을 받습니다: `scheduleId`, `title`, Temporal `start`와 `end`, `timeZone`, 그리고 선택적으로 `host`와 `attendees`입니다. 반환값은 `provider`와 `joinUrl`을 가진 `Conference`이며, `meetingId`, `hostUrl`, `password`, `meta`는 선택 사항입니다.
+
+예약 컴포넌트에도 같은 제공자를 지정하면 위치 행에 이름이 붙고 제공자 아이콘이 표시됩니다:
+
+```tsx
+<AppointmentBooking schedule={schedule} conferenceProviders={[googleMeet]} />
+```
+
+### 회의 생성 시점
+
+화상회의는 참석자가 **확정할 때** 만드세요. 슬롯을 눌러 강조만 했을 때 만들면 안 됩니다. 10:00을 클릭했다가 그냥 떠난 사람이 회의를 남겨 두게 해서는 안 됩니다.
+
+```ts
+import {
+  createBookingEvent,
+  createConferenceForBooking,
+} from '@dayflow-pro/appointment-schedule/engine';
+
+const conference = await createConferenceForBooking({
+  slot,
+  schedule,
+  providers: [googleMeet],
+  attendees: [{ name: 'Ada Lovelace', email: 'ada@example.com' }],
+});
+
+const draft = createBookingEvent({ slot, schedule, conference });
+// draft.location  → 'https://meet.google.com/abc-defg-hij'
+// draft.conference → { provider: 'google-meet', joinUrl, meetingId }
+```
+
+`custom-link` 일정은 네트워크 호출 없이 주최자의 고정 회의실로 확정되고, `in-person`과 `phone` 일정은 `undefined`로 확정됩니다. 등록되지 않은 `providerId`는 오류를 발생시키는데, 예약이 회의 링크를 조용히 잃어버려서는 안 되기 때문입니다.
+
+<Callout title='하나의 고정 링크를 계속 쓰면 안 되나요?'>
+  Google Meet, Zoom, Teams에는 `custom-link`보다 `conference`를 사용하세요.
+  Google은 회의 데이터를 여러 이벤트가 공유하면 접근 권한과 개인정보 문제가 생길
+  수 있으므로, 링크를 재사용하는 대신 [이벤트마다 새 회의를 만들 것을
+  권장합니다](https://developers.google.com/workspace/calendar/api/v3/reference/events).
+</Callout>
+
+이메일이나 확인 페이지처럼 다른 곳에 장소를 표시하려면, 회의 정보 행과 동일한 순수 리졸버를 사용하세요:
+
+```ts
+import { resolveLocation } from '@dayflow-pro/appointment-schedule/engine';
+
+resolveLocation(schedule.location, { providers: [googleMeet] });
+// → { kind: 'video', label: 'Google Meet', icon: '/icons/meet.svg', config }
+```
+
+장소가 설정되어 있으면 리졸버가 `ResolvedLocation`을 반환합니다.
+
+## 참석자용 예약 컴포넌트
+
+```tsx
+import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/booking';
+
+<AppointmentBooking
+  schedule={schedule}
+  presentation={{ organiserName: 'Alex Morgan', locationLabel: 'Zoom meeting' }}
+  busyIntervals={busyIntervals}
+  layout='calendar-day-slots'
+  onSelectSlot={slot => console.log(slot.start.toString())}
+/>;
+```
+
+`presentation`에는 회의 정보 패널에 표시할 선택적이고 표현 전용인 내용이 들어갑니다. 가용 시간과 예약 동작은 계속 `schedule`에서 옵니다.
+
+| 속성              | 타입     | 용도                                                                                                |
+| ----------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `organiserName`   | `string` | 주최자 이름을 표시하고, 아바타가 없을 때 대체용 첫 글자를 제공합니다.                               |
+| `organiserAvatar` | `string` | 주최자 아바타 이미지의 URL입니다.                                                                   |
+| `organiserUrl`    | `string` | 주최자 아바타에서 열리는 프로필 URL입니다.                                                          |
+| `title`           | `string` | 소요 시간·장소·시간대 위에 표시되는 제목입니다. `schedule.title`을 전달하면 그 제목을 재사용합니다. |
+| `description`     | `string` | 회의 메타데이터 아래에 표시되는 보조 설명입니다.                                                    |
+| `locationLabel`   | `string` | `schedule.location`에서 파생된 장소 문구를 덮어씁니다. 보통은 일정의 필드를 쓰는 편이 좋습니다.     |
+
+### 예약 옵션
+
+모든 프레임워크 어댑터는 최종적으로 `AppointmentBookingProps`를 받습니다. Vue, Angular, Svelte는 각자의 진입점에서 이에 대응하는 마운트 타입을 별도 이름으로 제공합니다.
+
+| 속성 그룹                                                         | 용도                                                                               |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `schedule`                                                        | 슬롯을 생성하는 데 사용하는 필수 `AppointmentSchedule`입니다.                      |
+| `calendarApp`                                                     | DayFlow 이벤트를 주최자의 바쁜 시간으로 읽고 구독합니다.                           |
+| `presentation`                                                    | 위에서 설명한 선택적 `AppointmentPresentation` 콘텐츠입니다.                       |
+| `conferenceProviders`                                             | 화상회의 장소의 제공자 이름과 아이콘을 확인합니다.                                 |
+| `busyIntervals` / `attendeeBusyIntervals`                         | 주최자 슬롯을 제거하거나 참석자의 일정 충돌을 겹쳐 보여 주는 Temporal 구간입니다.  |
+| `layout`                                                          | `BookingLayout` 값입니다: `calendar-day-slots`, `multi-day-slots`, `week-overlay`. |
+| `renderWeekOverlay` / `weekOverlayOptions`                        | `WeekOverlayRenderArgs`와 `WeekOverlayOptions`로 주간 뷰를 켜고 세부 조정합니다.   |
+| `availableLayouts` / `onLayoutChange`                             | 내장 전환기가 제공할 레이아웃을 제어합니다.                                        |
+| `displayTimeZone` / `timeZoneOptions` / `onDisplayTimeZoneChange` | 참석자에게 표시할 시간대와 시간대 선택기를 제어합니다.                             |
+| `timeFormat` / `onTimeFormatChange`                               | `TimeFormat` 값을 `12h` 또는 `24h`로 제어합니다.                                   |
+| `theme` / `locale` / `startOfWeek`                                | 주간 테마, 로케일, `StartOfWeek` 값(`0`, `1`, `6`)을 설정합니다.                   |
+| `multiDayCount` / `skipEmptyDays`                                 | 여러 날 레이아웃을 세부 조정합니다.                                                |
+| `now` / `rangeStart` / `rangeEnd`                                 | 현재 시각과 슬롯 생성 범위를 대체합니다.                                           |
+| `selectedDate` / `onSelectDate`                                   | 제어 방식으로 포커스된 날짜입니다.                                                 |
+| `selectedSlotId` / `onSelectSlot`                                 | 제어 방식의 슬롯 선택과 선택 콜백입니다.                                           |
+| `loading` / `disabled`                                            | 로딩 UI를 표시하거나 상호작용을 비활성화합니다.                                    |
+| `onError` / `onRetry`                                             | 자체 오류 보고와 재시도 동작을 연결합니다.                                         |
+| `className` / `style`                                             | 루트 요소에 스타일을 추가합니다.                                                   |
+| `labels`                                                          | 사용자에게 보이는 문구를 원하는 만큼 덮어씁니다.                                   |
+| `slots`                                                           | 아래에 나열된 영역을 교체하거나 확장합니다.                                        |
+| `onAnalyticsEvent`                                                | `AppointmentBookingAnalyticsEvent`와 개인정보가 아닌 페이로드를 전달받습니다.      |
+
+보여 줘야 할 가용 시간의 양에 맞춰 레이아웃을 선택하세요:
+
+| 레이아웃             | 적합한 경우                                                                |
+| -------------------- | -------------------------------------------------------------------------- |
+| `calendar-day-slots` | 월 선택기와 선택한 날짜의 시간 목록을 함께 보여 줄 때.                     |
+| `multi-day-slots`    | 여러 날의 가능한 시간을 열로 나란히 비교할 때.                             |
+| `week-overlay`       | 주간 타임라인 위에 예약 가능한 시간을 표시할 때. 아래 렌더러가 필요합니다. |
+
+주간 레이아웃은 `@dayflow/core`가 필요한 유일한 레이아웃이라 선택적으로 제공됩니다:
+
+```tsx
+import { renderWeekOverlay } from '@dayflow-pro/appointment-schedule/booking/week-overlay';
+
+<AppointmentBooking
+  layout='week-overlay'
+  renderWeekOverlay={renderWeekOverlay}
+/>;
+```
+
+## 프레임워크 어댑터
+
+예약 페이지를 담당하는 프레임워크의 어댑터를 사용하세요. 모든 어댑터가 동일한 예약 옵션을 받고 마운트, 반응형 갱신, 정리를 처리합니다. 어댑터 하나를 가져와도 다른 프레임워크의 런타임이 번들에 포함되지는 않습니다.
+
+어떤 어댑터에서도 공유할 수 있는 직렬화 가능한 일정을 만드세요:
+
+```ts title="schedule.ts"
+import type { AppointmentSchedule } from '@dayflow-pro/appointment-schedule/engine';
+
+export const schedule: AppointmentSchedule = {
+  id: 'product-demo',
+  title: 'Product demo',
+  durationMinutes: 30,
+  slotIntervalMinutes: 30,
+  timeZone: 'Europe/London',
+  recurrence: { frequency: 'weekly' },
+  availability: [
+    {
+      dayOfWeek: 1,
+      intervals: [{ id: 'monday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 2,
+      intervals: [{ id: 'tuesday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 3,
+      intervals: [{ id: 'wednesday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 4,
+      intervals: [{ id: 'thursday', startTime: '09:00', endTime: '17:00' }],
+    },
+    {
+      dayOfWeek: 5,
+      intervals: [{ id: 'friday', startTime: '09:00', endTime: '17:00' }],
+    },
+  ],
+  location: {
+    type: 'custom-link',
+    url: 'https://zoom.us/j/1234567890',
+    label: 'Zoom meeting',
+  },
+};
+```
+
+애플리케이션 진입점에서 `styles.components.css`를 한 번만 가져온 뒤, 해당하는 어댑터를 사용하세요:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/react';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    export function BookingPage() {
+      return (
+        <AppointmentBooking
+          schedule={schedule}
+          presentation={{
+            organiserName: 'Alex Morgan',
+            locationLabel: 'Zoom meeting',
+          }}
+          layout='calendar-day-slots'
+          onSelectSlot={slot => console.log(slot.start.toString())}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <script setup lang="ts">
+    import { AppointmentBooking } from '@dayflow-pro/appointment-schedule/vue';
+    import type { MountAppointmentBookingProps } from '@dayflow-pro/appointment-schedule/vue';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    const bookingOptions: MountAppointmentBookingProps = {
+      schedule,
+      presentation: {
+        organiserName: 'Alex Morgan',
+        locationLabel: 'Zoom meeting',
+      },
+      layout: 'calendar-day-slots',
+      onSelectSlot: slot => console.log(slot.start.toString()),
+    };
+    </script>
+
+    <template>
+      <AppointmentBooking :options="bookingOptions" />
+    </template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import { Component } from '@angular/core';
+    import {
+      AppointmentBookingDirective,
+      type MountAppointmentBookingProps,
+    } from '@dayflow-pro/appointment-schedule/angular';
+    import '@dayflow-pro/appointment-schedule/styles.components.css';
+    import { schedule } from './schedule';
+
+    @Component({
+      standalone: true,
+      imports: [AppointmentBookingDirective],
+      template: '<div [dfAppointmentBooking]="bookingOptions"></div>',
+    })
+    export class BookingPage {
+      readonly bookingOptions: MountAppointmentBookingProps = {
+        schedule,
+        presentation: {
+          organiserName: 'Alex Morgan',
+          locationLabel: 'Zoom meeting',
+        },
+        layout: 'calendar-day-slots',
+        onSelectSlot: slot => console.log(slot.start.toString()),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { appointmentBooking } from '@dayflow-pro/appointment-schedule/svelte';
+      import type { SvelteAppointmentBookingOptions } from '@dayflow-pro/appointment-schedule/svelte';
+      import '@dayflow-pro/appointment-schedule/styles.components.css';
+      import { schedule } from './schedule';
+
+      const options: SvelteAppointmentBookingOptions = {
+        schedule,
+        presentation: {
+          organiserName: 'Alex Morgan',
+          locationLabel: 'Zoom meeting',
+        },
+        layout: 'calendar-day-slots',
+        onSelectSlot: slot => console.log(slot.start.toString()),
+      };
+    </script>
+
+    <div use:appointmentBooking={options}></div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`options` 객체를 받는 어댑터는 사용자 정의 영역을 `options.slots`로 노출하고, props를 쓰는 컴포넌트는 동일한 `slots` 계약을 그대로 노출합니다. 예약을 갱신하려면 옵션 객체를 교체하세요. 슬롯 렌더러 모음을 바꾸면 안전하게 다시 마운트되며, 호스트를 언마운트하면 예약 인스턴스가 정리됩니다.
+
+## 연동 API
+
+### 단순 마운트 API
+
+다른 프레임워크에서든 프레임워크 없는 페이지에서든, 예약 UI를 직접 마운트하고 싶다면 `createAppointmentBooking`을 사용하세요:
+
+```ts
+import { createAppointmentBooking } from '@dayflow-pro/appointment-schedule/booking';
+
+const booking = createAppointmentBooking('#booking', {
+  schedule,
+  onSelectSlot: slot => console.log(slot.start.toString()),
+});
+
+booking.update({ disabled: true });
+booking.destroy();
+```
+
+대상 요소의 기존 자식은 건드리지 않습니다. 마운트 API는 자식 요소 하나를 만들어 소유하고, `destroy()` 시 그것을 제거합니다.
+
+DOM 슬롯은 현재 인자와, 렌더러가 소유하는 컨테이너를 전달받습니다:
+
+```ts
+createAppointmentBooking('#booking', {
+  schedule,
+  slots: {
+    slotButton: (args, host) => {
+      host.textContent = `${args.formattedTime} · ${price(args.slot)}`;
+    },
+  },
+});
+```
+
+렌더러는 아무것도 반환하지 않거나, 정리 함수를 반환하거나, `{ update, destroy }`를 반환할 수 있습니다. 핸들 형태는 패치가 아니라 append 방식으로 동작하는 프레임워크 마운트 API를 위한 것입니다.
+
+### 헤드리스 예약 컨트롤러
+
+패키지가 제공하는 예약 동작은 그대로 쓰되 마크업은 직접 작성하고 싶다면 `createBookingController`를 사용하세요. 선택된 날짜와 슬롯, 시간대와 시간 형식, 참석자 바쁜 시간 표시 여부, 슬롯 그룹화를 관리하지만 DOM은 전혀 건드리지 않습니다:
+
+```ts
+import { createBookingController } from '@dayflow-pro/appointment-schedule/controller';
+
+const booking = createBookingController({ schedule });
+const unsubscribe = booking.subscribe(() => render(booking.getState()));
+
+booking.getState().selectSlot(slot);
+booking.setOptions({ schedule, disabled: true });
+
+unsubscribe();
+booking.destroy();
+```
+
+## 커스터마이징
+
+### 디자인 토큰
+
+`.df-appointment-booking`은 참석자 컴포넌트의 테마 범위이지, 유일한 토큰은 아닙니다. 이 패키지는 아래 커스텀 속성을 지원합니다. 재정의 값은 패키지 스타일시트보다 뒤에 불러오고 `.df-appointment-booking`에 지정하거나, 사용자 지정 `className`을 넘겨 두 클래스를 함께 지정하세요.
+
+```css
+.df-appointment-booking.my-booking-theme {
+  --df-ap-accent: #2563eb;
+  --df-ap-radius: 6px;
+  --df-ap-sidebar-width: 320px;
+}
+```
+
+| 토큰                         | 기본값              | 제어 대상                |
+| ---------------------------- | ------------------- | ------------------------ |
+| `--df-ap-surface`            | 코어 배경           | 주요 표면                |
+| `--df-ap-surface-sunken`     | 코어 muted          | 안쪽으로 들어간 표면     |
+| `--df-ap-fill`               | `#e8eaef`           | 중립적인 채움 색         |
+| `--df-ap-border`             | 코어 테두리         | 테두리와 구분선          |
+| `--df-ap-fg`                 | 코어 전경색         | 기본 텍스트              |
+| `--df-ap-fg-muted`           | 코어 muted 전경색   | 보조 텍스트              |
+| `--df-ap-fg-subtle`          | `#9ca3af`           | 옅은 텍스트              |
+| `--df-ap-accent`             | 코어 primary        | 선택된 컨트롤            |
+| `--df-ap-accent-fg`          | 코어 primary 전경색 | 강조 표면 위의 텍스트    |
+| `--df-ap-accent-soft`        | 강조색에서 파생     | 부드러운 호버 배경       |
+| `--df-ap-accent-ring`        | 강조색에서 파생     | 포커스·선택 링           |
+| `--df-ap-available`          | `#22c55e`           | 가용 여부 표시           |
+| `--df-ap-radius`             | `14px`              | 카드 모서리 반경         |
+| `--df-ap-radius-md`          | `9px`               | 컨트롤 모서리 반경       |
+| `--df-ap-radius-sm`          | `7px`               | 작은 항목의 모서리 반경  |
+| `--df-ap-max-width`          | `1440px`            | 예약 화면의 최대 너비    |
+| `--df-ap-sidebar-width`      | `296px`             | 사이드바 너비            |
+| `--df-ap-slots-width`        | `320px`             | 하루 슬롯 열의 너비      |
+| `--df-ap-week-height`        | `620px`             | 주간 타임라인 높이       |
+| `--df-ap-slot-scroll-height` | `none`              | 하루 슬롯 목록의 높이    |
+| `--df-ap-pad`                | `1.5rem`            | 주요 내부 여백           |
+| `--df-ap-font`               | 시스템 폰트 스택    | 예약 화면의 타이포그래피 |
+
+호버·선택·포커스 색상은 `--df-ap-accent`에서 파생됩니다. 고급 테마에서는 `--df-ap-accent-soft`와 `--df-ap-accent-ring`을 직접 재정의할 수도 있습니다.
+
+주최자 드로어는 DayFlow 캘린더의 일부이므로 참석자 토큰이 아니라 코어 테마를 사용합니다:
+
+```css
+:root {
+  --df-color-background: #ffffff;
+  --df-color-card: #ffffff;
+  --df-color-foreground: #172033;
+  --df-color-muted: #f4f6f8;
+  --df-color-muted-foreground: #667085;
+  --df-color-border: #d0d5dd;
+  --df-color-primary: #7c3aed;
+  --df-color-primary-foreground: #ffffff;
+  --df-color-destructive: #dc2626;
+  --df-color-ring: #7c3aed;
+}
+```
+
+`drawerPlacement`가 `viewport`일 때는 드로어가 캘린더 요소 바깥에 마운트되므로 `:root`를 사용하세요. `calendar` 배치라면 캘린더 컨테이너에 변수를 지정해도 됩니다.
+
+### 슬롯
+
+슬롯은 모든 어댑터가 지원하지만, 렌더러의 시그니처는 서로 다릅니다:
+
+- React 슬롯은 React 콘텐츠를 반환합니다. `slotButton`과 `dayCell`은 `defaultContent`도 함께 받으므로 기본 콘텐츠를 감쌀 수 있습니다.
+- Vue, Angular, Svelte는 `options.slots`를 사용합니다. 각 렌더러는 `(args, host)`를 받아 전달된 DOM 요소에 내용을 씁니다. 프레임워크 컴포넌트를 마운트할 때는 정리 함수나 `{ update, destroy }` 핸들을 반환할 수 있습니다.
+
+다음 예시는 각 프레임워크에서 동일한 `slotButton` 영역을 올바르게 커스터마이징하는 방법을 보여 줍니다:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    <AppointmentBooking
+      schedule={schedule}
+      slots={{
+        slotButton: ({ defaultContent }) => (
+          <>
+            {defaultContent}
+            <span>$120</span>
+          </>
+        ),
+      }}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/vue';
+
+    const slots: DomBookingSlots = {
+      slotButton: ({ formattedTime }, host) => {
+        host.textContent = `${formattedTime} · $120`;
+      },
+    };
+
+    const bookingOptions = { schedule, slots };
+    ```
+
+  </Tab>
+  <Tab>
+    ```ts
+    import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/angular';
+
+    const slots: DomBookingSlots = {
+      slotButton: ({ formattedTime }, host) => {
+        host.textContent = `${formattedTime} · $120`;
+      },
+    };
+
+    export class BookingPage {
+      readonly bookingOptions = { schedule, slots };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import type { DomBookingSlots } from '@dayflow-pro/appointment-schedule/svelte';
+
+      const slots: DomBookingSlots = {
+        slotButton: ({ formattedTime }, host) => {
+          host.textContent = `${formattedTime} · $120`;
+        },
+      };
+
+      const options = { schedule, slots };
+    </script>
+
+    <div use:appointmentBooking={options}></div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`AppointmentBookingSlots`가 아래 영역들을 정의합니다. 내보내는 인자 타입에는 `SidebarSlotArgs`, `MeetingInfoSlotArgs`, `MonthPickerSlotArgs`, `SlotListSlotArgs`, `ToolbarSlotArgs`, `SlotButtonSlotArgs`, `DayCellSlotArgs`, `SelectedSummarySlotArgs`가 포함됩니다.
+
+| 슬롯                | 용도                                                                 | 주요 인자                                                                     |
+| ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `sidebar`           | 회의 상세와 미니 캘린더가 있는 측면 열 전체를 교체합니다.            | `schedule`, `presentation`, `location`, `layout`, `defaultContent`            |
+| `meetingInfo`       | 회의 정보 패널을 교체합니다.                                         | `schedule`, `presentation`, `location`, `timeZone`, `defaultContent`          |
+| `meetingInfoFooter` | 회의 정보 패널 아래에 내용을 추가합니다.                             | `schedule`, `presentation`, `location`, `timeZone`                            |
+| `monthPicker`       | 본문과 사이드바의 월 선택기를 교체합니다.                            | `selectedDate`, `availableDates`, `onSelectDate`, `compact`, `defaultContent` |
+| `slotList`          | `calendar-day-slots`에서 선택한 날짜의 시간 목록을 교체합니다.       | `date`, `slots`, `selectedSlotId`, `onSelectSlot`, `defaultContent`           |
+| `toolbar`           | `multi-day-slots`와 `week-overlay`의 툴바를 교체합니다.              | `layout`, `timeZone`, `timeFormat`, `rangeLabel`, `defaultContent`            |
+| `toolbarExtra`      | 툴바 컨트롤 오른쪽에 내용을 추가합니다.                              | `layout`, `timeZone`, `timeFormat`, `rangeLabel`                              |
+| `slotButton`        | 예약 가능한 시간 버튼 내부의 내용을 교체합니다.                      | `slot`, `formattedTime`, `isSelected`, `disabled`, `defaultContent`           |
+| `dayCell`           | 월 선택기의 각 날짜 셀 내부 내용을 교체합니다.                       | `date`, 월, 가용 및 선택 상태, `defaultContent`                               |
+| `emptyDay`          | 선택한 날짜에 가능한 시간이 없을 때 렌더링됩니다.                    | `date`                                                                        |
+| `emptyRange`        | 현재 날짜 범위에 예약 가능한 시간이 없을 때 렌더링됩니다.            | 없음                                                                          |
+| `loading`           | 로딩 상태를 교체합니다.                                              | 없음                                                                          |
+| `error`             | 오류 상태를 교체하며, 오류 객체와 선택적 재시도 동작을 전달받습니다. | `error`, `retry`                                                              |
+| `selectedSummary`   | 슬롯을 선택한 뒤 콘텐츠 아래에 요약을 추가합니다.                    | `slot`, `formattedDate`, `formattedRange`, `timeZone`                         |
+
+## 헤드리스: 나만의 UI 만들기
+
+제공되는 레이아웃이 맞지 않는다면 컴포넌트를 아예 쓰지 않아도 됩니다. 엔진은 일정을 받아 슬롯을 반환하는 순수 함수이며, 패키지의 다른 부분은 번들에 포함되지 않습니다.
+
+```ts
+import { generateSlots } from '@dayflow-pro/appointment-schedule/engine';
+import { Temporal } from 'temporal-polyfill';
+
+const slots = generateSlots({
+  schedule,
+  rangeStart: Temporal.PlainDate.from('2026-08-03'),
+  rangeEnd: Temporal.PlainDate.from('2026-08-09'),
+  busyIntervals,
+  displayTimeZone: 'Europe/London',
+  now: Temporal.Now.zonedDateTimeISO('Australia/Sydney'),
+});
+// slots: { id, scheduleId, start, end, displayTimeZone }[]
+```
+
+입력은 `SlotQuery`이며, `rangeStart`와 `rangeEnd`는 양 끝을 포함하는 `Temporal.PlainDate` 값입니다. `busyIntervals`와 `attendeeBusyIntervals`에는 Temporal `start`·`end`를 가진 `BusyInterval` 값이 들어갑니다. 결과는 `AppointmentSlot[]`입니다.
+
+엔진은 `window`, `document`, 시스템 시간대를 전혀 건드리지 않으므로 서버에서 가져와도 안전합니다. 또한 구성 요소인 `expandAvailability`, `recurrenceAppliesOn`, `sortBusyIntervals`, `mergeBusyIntervals`, `hasConflict`, `eventsToBusyIntervals`도 내보내므로, 이를 조합해 직접 파이프라인을 구성할 수 있습니다.
+
+## 예약을 이벤트로 바꾸기
+
+이 모듈은 이벤트를 직접 쓰지 않습니다. 대신 순수한 매핑 함수를 제공합니다:
+
+```ts
+import { createBookingEvent } from '@dayflow-pro/appointment-schedule/engine';
+
+const draft = createBookingEvent({
+  slot,
+  schedule, // schedule.calendarId decides which calendar (and colour)
+  attendee: { name: 'Ada Lovelace' }, // you collect it, the module never stores it
+  conference, // optional; see Location and conferencing
+  // titleTemplate: ({ attendee }) => `1:1 · ${attendee?.name}`,
+});
+// → { id, title: 'Meeting with Ada Lovelace', start, end, calendarId, location?, conference?, meta }
+
+calendar.addEvent(draft);
+```
+
+`meta`에는 `appointmentScheduleId`와 `appointmentSlotId`가 담겨 이벤트를 원래 슬롯까지 추적할 수 있고, 일정에 장소가 있으면 `appointmentLocation`과 `appointmentConference`도 함께 담깁니다.
+
+## 접근성
+
+WCAG 2.2 AA를 목표로 합니다. 월 선택기는 실제 `role="grid"`이며 방향키, Home, End, PageUp, PageDown으로 이동할 수 있습니다. 슬롯 버튼은 `aria-pressed`와 함께 날짜·시간·시간대를 포함한 접근 가능한 이름을 제공하며, 가능·불가능·선택 상태를 색상만으로 나타내지 않습니다.

@@ -1,0 +1,190 @@
+---
+title: '@dayflow/sync-core'
+---
+
+# @dayflow/sync-core
+
+`@dayflow/sync-core` enthält anbieterneutrale Abgleichshilfen, die von den Sync-Integrationen in DayFlow genutzt werden. Die meisten Anwendungen müssen das Paket nicht direkt einbinden – beginnen Sie mit einem Anbieterpaket:
+
+- [`@dayflow/caldav`](/docs-de/caldav/caldav) für CalDAV-Server.
+- [`@dayflow/google-sync`](/docs-de/caldav/google-sync) für Google Calendar.
+- [`@dayflow/outlook-sync`](/docs-de/caldav/outlook-sync) für Outlook Calendar.
+
+Greifen Sie zu `@dayflow/sync-core`, wenn Sie einen eigenen Anbieter bauen, über Backend-Jobs synchronisieren oder eine produktspezifische Kalender- bzw. Termindatenbank mit den Datensätzen eines externen Anbieters abgleichen.
+
+## Installation
+
+<PackageTabs pkg='@dayflow/sync-core' />
+
+## Wofür es zuständig ist
+
+`@dayflow/sync-core` verantwortet die anbieterneutrale Diff- und Anwendungsschicht:
+
+| Hilfsfunktion                  | Einsetzen, wenn                                                                                                 |
+| :----------------------------- | :-------------------------------------------------------------------------------------------------------------- |
+| `applyProviderEventsToDayFlow` | Eine Anbieteranbindung bereits DayFlow-Termine abgebildet und gelöschte Remote-Referenzen ermittelt hat.        |
+| `applyRemoteSnapshot`          | Sie einen vollständigen oder teilweisen Anbieter-Snapshot haben und ihn auf eine `CalendarApp` anwenden wollen. |
+| `reconcileProviderCalendars`   | Sie Remote-Kalender mit Ihren eigenen Datenbankeinträgen synchronisieren.                                       |
+| `reconcileProviderEvents`      | Sie Remote-Termine mit Ihrer Datenbank synchronisieren und normalisierte Änderungsdatensätze benötigen.         |
+
+Nicht enthalten sind Anbieteradapter, Authentifizierungsabläufe, Token-Erneuerung, Speicherung von Zugangsdaten, Verlaufs-Persistenz, Hintergrundjobs, Wiederholungswarteschlangen oder ein Datenbankschema.
+
+## Anbieter-Termine auf DayFlow anwenden
+
+Anbieterpakete rufen `applyProviderEventsToDayFlow` auf, nachdem sie Remote-Termine in DayFlow-`Event`-Objekte übersetzt haben. Bestehende Termine werden zuerst über die Anbieteridentität, dann über die DayFlow-ID zugeordnet; die Änderungen laufen mit `source: 'remote'`, um Rückschreibeschleifen zu vermeiden.
+
+```ts
+import { applyProviderEventsToDayFlow } from '@dayflow/sync-core';
+
+const delta = applyProviderEventsToDayFlow({
+  app: calendar.app,
+  events: mappedRemoteEvents,
+  deleted: deletedRemoteRefs,
+  getProviderEventId: event => event.meta?.myProvider?.href,
+  getDeletedProviderEventId: deleted => deleted.href,
+  resolveUpdate: (remote, existing) => ({
+    ...remote,
+    meta: {
+      ...existing.meta,
+      ...remote.meta,
+    },
+  }),
+});
+
+console.log(delta.added, delta.updated, delta.deleted);
+```
+
+Verwenden Sie möglichst eine stabile Anbieteridentität wie den CalDAV-`href`, die Google-Termin-ID oder die Graph-Termin-ID. So entstehen im lokalen Zustand keine Duplikate, falls Sie Ihre DayFlow-ID-Strategie später ändern.
+
+## Remote-Snapshots anwenden
+
+`applyRemoteSnapshot` gleicht einen Snapshot von DayFlow-Kalendern und -Terminen mit der App ab.
+
+```ts
+import { applyRemoteSnapshot } from '@dayflow/sync-core';
+
+const delta = await applyRemoteSnapshot(
+  calendar.app,
+  {
+    calendars: remoteCalendars,
+    events: remoteEvents,
+  },
+  {
+    isOwnedCalendar: calendar => calendar.source === 'Custom Provider',
+    isOwnedEvent: event => event.meta?.provider === 'custom',
+    resolveConflict: (remote, local) => ({
+      ...remote,
+      meta: {
+        ...local.meta,
+        ...remote.meta,
+      },
+    }),
+    snapshotMode: 'authoritative',
+  }
+);
+```
+
+Der heikle Punkt ist das Löschen. Der voreingestellte `snapshotMode` ist `'partial'`, eigene lokale Datensätze, die im Snapshot fehlen, bleiben also erhalten. Das ist der sichere Weg bei Synchronisierung des sichtbaren Bereichs, gefilterten Abfragen oder seitenweisen Anbieterantworten:
+
+```ts
+await applyRemoteSnapshot(calendar.app, partialSnapshot, {
+  isOwnedCalendar,
+  isOwnedEvent,
+  snapshotMode: 'partial',
+});
+```
+
+Setzen Sie `snapshotMode: 'authoritative'` nur, wenn der Snapshot tatsächlich alle vom Anbieter verwalteten Kalender und Termine abbildet. Die tiefer liegenden Schalter `deleteMissingCalendars` und `deleteMissingEvents` bleiben für anbieterspezifische Aufräumstrategien erhalten.
+
+## Datenbankeinträge abgleichen
+
+Verwenden Sie `reconcileProviderCalendars` und `reconcileProviderEvents`, wenn Ihre Anwendung Anbieterdatensätze in einer Datenbank ablegt, bevor sie sie auf DayFlow anwendet.
+
+```ts
+import {
+  reconcileProviderCalendars,
+  reconcileProviderEvents,
+} from '@dayflow/sync-core';
+
+const calendarResult = await reconcileProviderCalendars({
+  provider: 'custom',
+  remoteCalendars,
+  existingCalendars: await db.calendar.findMany({ where: { accountId } }),
+  getRemoteCalendarId: remote => remote.id,
+  getRecordId: record => record.id,
+  getRecordExternalCalendarId: record => record.externalCalendarId,
+  mapRemoteCalendar: (remote, existing) => ({
+    id: existing?.id ?? crypto.randomUUID(),
+    accountId,
+    provider: 'custom',
+    externalCalendarId: remote.id,
+    name: remote.name,
+    color: remote.color ?? null,
+    readOnly: remote.readOnly,
+    syncEnabled: existing?.syncEnabled ?? true,
+    syncToken: existing?.syncToken ?? null,
+    syncStatus: 'idle',
+  }),
+  save: records => db.calendar.upsertMany(records),
+  deactivate: records =>
+    db.calendar.updateMany(
+      records.map(record => ({ ...record, syncEnabled: false }))
+    ),
+});
+
+const eventResult = await reconcileProviderEvents({
+  provider: 'custom',
+  calendarId: localCalendar.id,
+  remoteEvents,
+  deletedRemoteEvents,
+  existingRecords: await db.event.findMany({
+    where: { calendarId: localCalendar.id },
+  }),
+  getRemoteEventId: remote => remote.id,
+  getDeletedRemoteEventId: deleted => deleted.id,
+  getRecordExternalEventId: record => record.externalEventId,
+  isRecordDeleted: record => Boolean(record.deletedAt),
+  mapRemoteEvent: (remote, existing) => ({
+    id: existing?.id ?? crypto.randomUUID(),
+    accountId,
+    calendarId: localCalendar.id,
+    provider: 'custom',
+    externalEventId: remote.id,
+    title: remote.title,
+    description: remote.description ?? null,
+    startsAt: remote.startsAt,
+    endsAt: remote.endsAt,
+    timezone: remote.timezone ?? null,
+    allDay: remote.allDay,
+    location: remote.location ?? null,
+    rawData: remote,
+    externalUpdatedAt: remote.updatedAt ?? null,
+    localUpdatedAt: existing?.localUpdatedAt ?? null,
+    syncStatus: 'synced',
+    deletedAt: null,
+  }),
+  save: records => db.event.upsertMany(records),
+  softDelete: record =>
+    db.event.update(record.id, { deletedAt: new Date().toISOString() }),
+});
+
+await db.syncHistory.insertMany([
+  ...calendarResult.changes,
+  ...eventResult.changes,
+]);
+```
+
+Die Hilfsfunktionen liefern normalisierte Änderungsobjekte wie `calendar.created`, `event.updated` oder `event.deleted` zurück. Ob daraus Audit-Logs, Benachrichtigungen, Analysedaten oder gar nichts werden, entscheidet Ihre Anwendung.
+
+## Wann Sie es nicht brauchen
+
+Binden Sie `@dayflow/sync-core` nicht ein, nur um einen gewöhnlichen Remote-Kalender anzuschließen. Die Anbieterpakete nutzen intern bereits die passenden `sync-core`-Hilfen und bringen anbieterspezifisches Mapping, Metadaten, Berechtigungen, Rückschreibeverhalten und die Anbindungs-Controller für DayFlow mit.
+
+Direkt einsetzen sollten Sie es nur, wenn Sie eine dieser Grenzen überschreiten:
+
+| Grenze                              | Warum sync-core hilft                                                                          |
+| :---------------------------------- | :--------------------------------------------------------------------------------------------- |
+| Eigenes Anbieterpaket               | Dasselbe Anwendungsverhalten in DayFlow wie die offiziellen Anbieter.                          |
+| Backend-gesteuerte Synchronisierung | Anbieterdatensätze in Ihrer Datenbank abgleichen, bevor DayFlow gerendert wird.                |
+| Audit- oder Verlaufs-Pipeline       | Normalisierte `SyncChange`-Objekte verarbeiten, ohne den Verlauf an Anbieteradapter zu binden. |
+| Umstellung der ID-Strategie         | Über eine stabile Anbieteridentität zuordnen, während sich die lokalen DayFlow-IDs ändern.     |
