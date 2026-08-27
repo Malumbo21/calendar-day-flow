@@ -1,0 +1,246 @@
+---
+title: 인쇄 플러그인
+description: 미리보기, 용지 설정, 캘린더 필터링, 여러 인쇄 레이아웃을 제공하는 DayFlow Pro의 인쇄·내보내기 워크플로입니다.
+status: pro
+---
+
+# 인쇄 플러그인
+
+`@dayflow-pro/plugin-print`는 DayFlow에 미리보기가 포함된 인쇄 대화상자를 추가합니다. 일·주·월과 두 가지 연간 레이아웃을 지원하고, 용지 크기와 방향을 선택할 수 있으며, 상황에 따라 현재 보이는 이벤트만 인쇄하거나 조건에 맞는 모든 이벤트를 인쇄할 수 있습니다.
+
+[라이브 데모](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_print)를 사용해 보세요
+
+## 설치
+
+<PackageTabs pkg='@dayflow-pro/plugin-print' />
+
+설치 단계는 [Pro 설치](/docs-ko/introduction/pro-installation) 가이드를 참고하세요.
+
+## 기본 사용법
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+    function App() {
+      const printPlugin = createPrintPlugin({
+        defaultOptions: {
+          miniCalendar: true,
+          calendarKeys: true,
+          textSize: 'medium',
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [printPlugin],
+      });
+
+      return (
+        <>
+          <button onClick={() => printPlugin.api.open()}>Print</button>
+          <DayFlowCalendar calendar={calendar} />
+        </>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <button @click="printPlugin.api.open()">Print</button>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+    const printPlugin = createPrintPlugin({
+      defaultOptions: {
+        miniCalendar: true,
+        calendarKeys: true,
+        textSize: 'medium',
+      },
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [printPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <button (click)="printPlugin.api.open()">Print</button>
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      printPlugin = createPrintPlugin({
+        defaultOptions: {
+          miniCalendar: true,
+          calendarKeys: true,
+          textSize: 'medium',
+        },
+      });
+
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [this.printPlugin]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createPrintPlugin } from '@dayflow-pro/plugin-print';
+
+      const printPlugin = createPrintPlugin({
+        defaultOptions: {
+          miniCalendar: true,
+          calendarKeys: true,
+          textSize: 'medium',
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [printPlugin],
+      });
+    </script>
+
+    <button onclick={() => printPlugin.api.open()}>Print</button>
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+이 플러그인은 캘린더 앱에 두 개의 헬퍼도 직접 추가합니다:
+
+```tsx
+await calendar.openPrintDialog();
+await calendar.print();
+```
+
+## 플러그인이 제공하는 것
+
+- `document.body`에 렌더링되는 인쇄 미리보기 대화상자
+- `window.print()`를 통한 브라우저 기본 인쇄
+- 일·주·월·연간 레이아웃 선택
+- `calendarIds`를 이용한 캘린더 단위 필터링
+- 용지 크기와 방향 설정
+- 플러그인이 설치된 동안 Cmd/Ctrl + P 단축키 지원
+
+## 지원하는 인쇄 레이아웃
+
+| 레이아웃          | 설명                                                                    |
+| :---------------- | :---------------------------------------------------------------------- |
+| `day`             | 선택한 하루 또는 여러 날을 인쇄합니다.                                  |
+| `week`            | 주 단위 레이아웃으로 인쇄합니다.                                        |
+| `month`           | 월 그리드를 인쇄합니다.                                                 |
+| `year-fixed-week` | 고정된 주 단위 행으로 구성된 연간 개요입니다. 기본값은 가로 방향입니다. |
+| `year-canvas`     | 세로 출력에 최적화된 조밀한 연간 개요입니다.                            |
+
+대화상자가 열리면 현재 DayFlow 뷰를 기준으로 초기 레이아웃을 결정합니다:
+
+- 현재 월 뷰 -> `month`
+- 현재 주 뷰 -> `week`
+- 현재 일 뷰 -> `day`
+- 현재 연간 뷰 → `year-fixed-week`
+
+## 플러그인 설정
+
+| 속성             | 타입                            | 기본값 | 설명                                                     |
+| :--------------- | :------------------------------ | :----- | :------------------------------------------------------- |
+| `enabled`        | `boolean`                       | `true` | `false`로 설정하면 플러그인이 아예 설치되지 않습니다.    |
+| `defaultOptions` | `Partial<CalendarPrintOptions>` | —      | 대화상자에 사용자 지정 인쇄 옵션을 미리 채워 둡니다.     |
+| `license`        | `PackageLicenseConfig`          | —      | 전역 등록을 사용하지 않을 때 지정하는 선택적 설정입니다. |
+
+## CalendarPrintOptions
+
+| 속성            | 타입                             | 기본값   | 설명                                        |
+| :-------------- | :------------------------------- | :------- | :------------------------------------------ |
+| `allDayEvents`  | `boolean`                        | `true`   | 종일 이벤트를 포함합니다.                   |
+| `timedEvents`   | `boolean`                        | `true`   | 시간이 지정된 이벤트를 포함합니다.          |
+| `miniCalendar`  | `boolean`                        | `true`   | 인쇄 헤더에 미니 캘린더를 표시합니다.       |
+| `calendarKeys`  | `boolean`                        | `true`   | 캘린더 범례를 표시합니다.                   |
+| `blackAndWhite` | `boolean`                        | `false`  | 캘린더 색상 없이 인쇄합니다.                |
+| `textSize`      | `'small' \| 'medium' \| 'large'` | `medium` | 미리보기와 인쇄물의 글자 밀도를 조절합니다. |
+
+## CalendarPrintConfig
+
+부분 설정 객체로 인쇄 대화상자를 미리 채우거나 값을 덮어쓸 수 있습니다:
+
+```ts
+type CalendarPrintConfig = {
+  view: 'month' | 'week' | 'day' | 'year-fixed-week' | 'year-canvas';
+  paper: 'A4' | 'Letter';
+  orientation?: 'portrait' | 'landscape';
+  startDate: Date;
+  endDate?: Date;
+  calendarIds: string[];
+  options: CalendarPrintOptions;
+};
+```
+
+소스 코드에서 확인되는 중요한 동작:
+
+- `year-fixed-week`는 `landscape`를 강제합니다.
+- `year-canvas`는 `portrait`를 강제합니다.
+- 대화상자는 브라우저의 기본 인쇄 UI를 열기 전에 `@page` 규칙을 삽입합니다.
+- 미리보기에서는 인쇄 전에 확대·축소와 이동이 가능합니다.
+
+## 인쇄 범위
+
+대화상자가 항상 같은 곳에서 이벤트를 가져오는 것은 아닙니다:
+
+- 선택한 인쇄 레이아웃이 현재 캘린더 뷰와 일치하고 `startDate`가 앱의 현재 날짜와 같으면, 미리보기는 `app.getEvents()`로 현재 보이는 이벤트를 사용합니다.
+- 그렇지 않으면 `app.getAllEvents()`를 사용하므로, 화면에 렌더링되지 않은 날짜까지 인쇄할 수 있습니다.
+
+내부적으로는 `sourceScope: 'visible' | 'all'`로 표현됩니다.
+
+## API
+
+`createPrintPlugin()`은 `api` 객체를 가진 일반적인 DayFlow 플러그인을 반환합니다:
+
+```ts
+type PrintPluginApi = {
+  open: () => void;
+  close: () => void;
+  print: (config?: Partial<CalendarPrintConfig>) => void;
+};
+```
+
+참고:
+
+- `api.open()`은 인쇄 대화상자를 엽니다.
+- `api.close()`는 대화상자가 열려 있다면 닫습니다.
+- `api.print(config)`는 현재로서는 대화상자를 여는 동작을 하며, 아직 미리보기를 건너뛰지는 않습니다.
+- 설치되면 플러그인이 전역에서 `Cmd/Ctrl + P`를 감지합니다.

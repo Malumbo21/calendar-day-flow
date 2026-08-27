@@ -1,0 +1,272 @@
+---
+title: "Boîte de dialogue d'événement"
+---
+
+import { EventDialogShowcase } from '@/components/showcase/FeatureShowcase';
+
+# Boîte de dialogue d'événement
+
+DayFlow intègre une boîte de dialogue d'événement complète, opérationnelle dès l'installation. Elle permet de créer, modifier et supprimer des événements avec une interface intuitive.
+
+<EventDialogShowcase />
+
+## Éditeur de répétition intégré
+
+Le panneau de détail flottant et la boîte de dialogue modale proposent le même éditeur de répétition lorsqu'un événement est modifiable.
+
+- **Répéter** propose les options Aucune répétition, Chaque jour, Chaque semaine, Chaque mois, Chaque année et Personnalisé.
+- **Personnalisé** ouvre une boîte de dialogue dédiée dans laquelle vous pouvez choisir la fréquence, l'intervalle et, pour une règle hebdomadaire, un ou plusieurs jours de la semaine.
+- **Fin de la répétition** peut être définie sur Jamais, À une date ou Après un certain nombre d'occurrences.
+
+Les paramètres de répétition sont enregistrés sur l'événement dans `meta.recurring` et `meta.recurrenceRule`. La vue Mois développe les règles prises en charge en occurrences visibles et trie les événements avec horaire selon leur heure de début dans le fuseau horaire configuré du calendrier. La modification ou la suppression d'une occurrence générée s'applique actuellement à toute la série ; la modification d'une seule occurrence n'est pas encore prise en charge.
+
+```tsx
+import { Temporal } from 'temporal-polyfill';
+
+const weeklyReview = {
+  id: 'review',
+  title: 'Revue de conception',
+  start: Temporal.PlainDateTime.from('2026-08-26T09:30'),
+  end: Temporal.PlainDateTime.from('2026-08-26T10:30'),
+  meta: {
+    recurring: true,
+    recurrenceRule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE;COUNT=10',
+  },
+};
+```
+
+## Utilisation
+
+Par défaut, DayFlow affiche le panneau de détail flottant intégré. Pour utiliser plutôt la boîte de dialogue modale, activez `useEventDetailDialog` dans `useCalendarApp`, puis affichez `DayFlowCalendar` comme d'habitude.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+
+    const calendar = useCalendarApp({
+      views: [...],
+      useEventDetailDialog: true,
+    });
+
+    <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      views: [...],
+      useEventDetailDialog: true,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [...],
+        useEventDetailDialog: true,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        views: [...],
+        useEventDetailDialog: true,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Personnalisation
+
+### Remplacer l'interface de la boîte de dialogue
+
+Utilisez le slot `eventDetailDialog` pour insérer votre propre composant tout en conservant la gestion de l'ouverture et de la fermeture par DayFlow. Cela nécessite `useEventDetailDialog: true` dans votre configuration `useCalendarApp`.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    // 1. Enable dialog mode in the calendar config
+    const calendar = useCalendarApp({
+      views: [...],
+      useEventDetailDialog: true,
+    });
+
+    // 2. Provide your own dialog via the slot
+    <DayFlowCalendar
+      calendar={calendar}
+      eventDetailDialog={({ event, isOpen, onClose }) => (
+        <MyDialog isOpen={isOpen} onClose={onClose}>
+          <EventForm event={event} />
+        </MyDialog>
+      )}
+    />
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #eventDetailDialog="{ event, isOpen, onClose }">
+          <MyDialog :isOpen="isOpen" @close="onClose()">
+            <EventForm :event="event" />
+          </MyDialog>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import MyDialog from './MyDialog.vue';
+    import EventForm from './EventForm.vue';
+
+    const calendar = useCalendarApp({
+      views: [...],
+      useEventDetailDialog: true,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <!-- app.component.html -->
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventDetailDialog]="dialog"
+    >
+    </dayflow-calendar>
+
+    <ng-template #dialog let-args>
+      <my-dialog [isOpen]="args.isOpen" (close)="args.onClose()">
+        <event-form [event]="args.event"></event-form>
+      </my-dialog>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} eventDetailDialog={MyCustomDialog} />
+
+    <!-- MyCustomDialog.svelte -->
+    <script lang="ts">
+      import type { EventDetailDialogSlotArgs } from '@dayflow/core';
+      import MyDialog from './MyDialog.svelte';
+      import EventForm from './EventForm.svelte';
+
+      let { event, isOpen, onClose } = $props<EventDetailDialogSlotArgs>();
+    </script>
+
+    <MyDialog {isOpen} {onClose}>
+      <EventForm {event} />
+    </MyDialog>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Se passer du panneau intégré
+
+Si votre application gère le détail des événements dans ses propres fenêtres modales (pilotées par des callbacks ou un état global), vous pouvez supprimer complètement le panneau flottant intégré en définissant `useEventDetailPanel: false` dans votre configuration `useCalendarApp` :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+
+    const calendar = useCalendarApp({
+      // ...
+      useEventDetailPanel: false,
+    });
+
+    <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      // ...
+      useEventDetailPanel: false,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        // ...
+        useEventDetailPanel: false,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        // ...
+        useEventDetailPanel: false,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+Cela fonctionne avec les adaptateurs React, Vue, Svelte et Angular.

@@ -1,0 +1,185 @@
+---
+title: 컨텍스트 메뉴
+---
+
+# 컨텍스트 메뉴
+
+DayFlow UI를 위한 조합 가능한 포털 기반 컨텍스트 메뉴입니다. 중첩 하위 메뉴, 레이블, 구분선, 내장 색상 선택기를 지원합니다. 바깥쪽 클릭, 스크롤, 창 크기 변경, `Escape` 입력 시 자동으로 닫힙니다.
+
+## 설치
+
+<PackageTabs pkg='@dayflow/ui-context-menu' />
+
+이미 Tailwind CSS를 쓰는 프로젝트라면 컴포넌트 전용 번들을 가져오세요:
+
+```css
+@import '@dayflow/ui-context-menu/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+Tailwind CSS를 쓰지 않는 프로젝트라면 전체 스타일시트를 가져오세요:
+
+```tsx
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuLabel,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
+  ContextMenuSubContent,
+  ContextMenuColorPicker,
+} from '@dayflow/ui-context-menu';
+import '@dayflow/ui-context-menu/dist/styles.css';
+```
+
+## 기본 사용법
+
+`contextmenu` 이벤트에서 얻은 커서 위치에 `ContextMenu`를 렌더링하세요.
+
+```tsx
+import { useState } from 'react';
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from '@dayflow/ui-context-menu';
+
+function MyComponent() {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  return (
+    <div onContextMenu={handleContextMenu}>
+      Right-click here
+      {menu && (
+        <ContextMenu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          <ContextMenuItem onClick={() => console.log('Edit')}>
+            Edit
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => console.log('Copy')}>
+            Copy
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => console.log('Delete')} danger>
+            Delete
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+    </div>
+  );
+}
+```
+
+## 레이블과 아이콘 사용하기
+
+```tsx
+<ContextMenu x={x} y={y} onClose={onClose}>
+  <ContextMenuLabel>Actions</ContextMenuLabel>
+  <ContextMenuItem icon={<PencilIcon />} onClick={() => onEdit()}>
+    Edit Event
+  </ContextMenuItem>
+  <ContextMenuItem icon={<CopyIcon />} onClick={() => onDuplicate()}>
+    Duplicate
+  </ContextMenuItem>
+  <ContextMenuSeparator />
+  <ContextMenuItem icon={<TrashIcon />} onClick={() => onDelete()} danger>
+    Delete
+  </ContextMenuItem>
+</ContextMenu>
+```
+
+## 중첩 하위 메뉴
+
+항목을 `ContextMenuSub`로 감싸면 마우스를 올렸을 때 열리는 하위 메뉴가 만들어집니다. 하위 메뉴는 화면 밖으로 넘치지 않도록 위치를 자동으로 조정합니다.
+
+```tsx
+<ContextMenu x={x} y={y} onClose={onClose}>
+  <ContextMenuItem onClick={() => onEdit()}>Edit</ContextMenuItem>
+  <ContextMenuSub>
+    <ContextMenuSubTrigger>Move to</ContextMenuSubTrigger>
+    <ContextMenuSubContent>
+      <ContextMenuItem onClick={() => onMove('work')}>Work</ContextMenuItem>
+      <ContextMenuItem onClick={() => onMove('personal')}>
+        Personal
+      </ContextMenuItem>
+    </ContextMenuSubContent>
+  </ContextMenuSub>
+  <ContextMenuSeparator />
+  <ContextMenuItem danger onClick={() => onDelete()}>
+    Delete
+  </ContextMenuItem>
+</ContextMenu>
+```
+
+## 색상 선택기
+
+`ContextMenuColorPicker`는 미리 정의된 색상 견본 한 줄과, 선택적으로 "사용자 지정 색상" 동작을 렌더링합니다.
+
+```tsx
+<ContextMenu x={x} y={y} onClose={onClose}>
+  <ContextMenuLabel>Calendar Color</ContextMenuLabel>
+  <ContextMenuColorPicker
+    selectedColor={currentColor}
+    onSelect={color => {
+      updateCalendarColor(color);
+      onClose();
+    }}
+    onCustomColor={() => openColorDialog()}
+    customColorLabel='Custom color...'
+  />
+</ContextMenu>
+```
+
+## 비활성 항목
+
+```tsx
+<ContextMenuItem onClick={() => onPaste()} disabled={!hasClipboard}>
+  Paste
+</ContextMenuItem>
+```
+
+## API 레퍼런스
+
+### `ContextMenu`
+
+| Prop        | 타입                | 설명                                    |
+| :---------- | :------------------ | :-------------------------------------- |
+| `x`         | `number`            | 가로 위치입니다(예: `event.clientX`)    |
+| `y`         | `number`            | 세로 위치입니다(예: `event.clientY`)    |
+| `onClose`   | `() => void`        | 메뉴를 닫아야 할 때 호출됩니다          |
+| `children`  | `ComponentChildren` | 메뉴 항목입니다                         |
+| `className` | `string`            | 메뉴 컨테이너에 추가할 CSS 클래스입니다 |
+
+### `ContextMenuItem`
+
+| Prop       | 타입                | 기본값  | 설명                                              |
+| :--------- | :------------------ | :------ | :------------------------------------------------ |
+| `onClick`  | `() => void`        | —       | 클릭 핸들러입니다                                 |
+| `children` | `ComponentChildren` | —       | 항목의 레이블입니다                               |
+| `icon`     | `ComponentChildren` | —       | 레이블 왼쪽에 표시되는 아이콘입니다               |
+| `danger`   | `boolean`           | `false` | 항목을 파괴적 동작을 뜻하는 빨간색으로 표시합니다 |
+| `disabled` | `boolean`           | `false` | 항목을 상호작용할 수 없게 만듭니다                |
+
+### `ContextMenuColorPicker`
+
+| Prop               | 타입                      | 기본값           | 설명                                         |
+| :----------------- | :------------------------ | :--------------- | :------------------------------------------- |
+| `selectedColor`    | `string`                  | —                | 현재 선택된 색상입니다(hex)                  |
+| `onSelect`         | `(color: string) => void` | —                | 색상 견본을 클릭했을 때 호출됩니다           |
+| `onCustomColor`    | `() => void`              | —                | 사용자 지정 색상 줄을 클릭했을 때 호출됩니다 |
+| `customColorLabel` | `string`                  | `"Custom Color"` | 사용자 지정 색상 동작의 레이블입니다         |
+
+### 그 밖의 export
+
+| 컴포넌트                | 설명                                        |
+| :---------------------- | :------------------------------------------ |
+| `ContextMenuSeparator`  | 가로 구분선입니다                           |
+| `ContextMenuLabel`      | 상호작용하지 않는 구획 제목입니다           |
+| `ContextMenuSub`        | 하위 메뉴의 열림 상태를 관리하는 래퍼입니다 |
+| `ContextMenuSubTrigger` | 마우스를 올리면 하위 메뉴를 여는 행입니다   |
+| `ContextMenuSubContent` | 떠 있는 하위 메뉴 패널입니다                |

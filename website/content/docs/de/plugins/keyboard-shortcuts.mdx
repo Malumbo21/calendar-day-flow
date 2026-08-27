@@ -1,0 +1,213 @@
+---
+title: 'Tastenkürzel-Plugin'
+---
+
+# Tastenkürzel-Plugin
+
+Das Tastenkürzel-Plugin aktiviert globale Tastaturbefehle für Navigation, Terminverwaltung und Zwischenablage.
+
+## Installation
+
+Installieren Sie das Plugin-Paket:
+
+<PackageTabs pkg='@dayflow/plugin-keyboard-shortcuts' />
+
+## Verwendung
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [
+        createKeyboardShortcutsPlugin({
+          // Optional configuration
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Standard-Tastenkürzel
+
+| Aktion                           | Taste (Mac)                   | Taste (Windows/Linux)      |
+| :------------------------------- | :---------------------------- | :------------------------- |
+| **Zu heute springen**            | `Cmd + T`                     | `Ctrl + T`                 |
+| **Suchen**                       | `Cmd + F`                     | `Ctrl + F`                 |
+| **Neuer Termin**                 | `Cmd + N`                     | `Ctrl + N`                 |
+| **Navigation**                   | `ArrowLeft` / `ArrowRight`    | `ArrowLeft` / `ArrowRight` |
+| **Termine durchtabben**          | `Tab` / `Shift + Tab`         | `Tab` / `Shift + Tab`      |
+| **Rückgängig**                   | `Cmd + Z`                     | `Ctrl + Z`                 |
+| **Wiederholen**                  | `Cmd + Shift + Z` / `Cmd + Y` | `Ctrl + Y`                 |
+| **Termin kopieren**              | `Cmd + C`                     | `Ctrl + C`                 |
+| **Termin ausschneiden**          | `Cmd + X`                     | `Ctrl + X`                 |
+| **Termin einfügen**              | `Cmd + V`                     | `Ctrl + V`                 |
+| **Termin löschen**               | `Backspace` / `Delete`        | `Backspace` / `Delete`     |
+| **Dialoge und Panels schließen** | `Esc`                         | `Esc`                      |
+
+## Konfiguration
+
+Sie können die Tastenbelegung anpassen und für jede Aktion eigene Callbacks hinterlegen:
+
+```tsx
+createKeyboardShortcutsPlugin({
+  keyMap: {
+    today: 't',
+    search: 'f',
+    prev: 'ArrowLeft',
+    next: 'ArrowRight',
+    undo: 'z',
+    redo: 'y',
+    delete: 'Delete',
+    newEvent: 'n',
+  },
+  callbacks: {
+    undo: app => {
+      console.log('Custom undo logic');
+      app.undo();
+    },
+    redo: app => {
+      console.log('Custom redo logic');
+      if (app.redo) app.redo();
+    },
+    delete: app => {
+      if (confirm('Are you sure?')) {
+        const selectedId = app.state.selectedEventId;
+        if (selectedId) app.deleteEvent(selectedId);
+      }
+    },
+  },
+});
+```
+
+### Verfügbare Callbacks
+
+Im Objekt `callbacks` werden folgende Einträge unterstützt:
+
+- `undo`, `redo`, `paste` (erhalten `app`)
+- `copy`, `cut`, `delete` (erhalten `app` und `event?: Event`)
+- `today`, `search`, `prev`, `next`, `newEvent`, `dismiss` (erhalten `app`)
+- `tab` (erhält `app` und `reverse: boolean`)
+
+## Plugin-API
+
+Über den Plugin-Handle steuern Sie die Verarbeitung der Tastenkürzel zur Laufzeit:
+
+```tsx
+import { type KeyboardShortcutsService } from '@dayflow/plugin-keyboard-shortcuts';
+
+const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+```
+
+### KeyboardShortcutsService
+
+| Methode       | Rückgabe  | Beschreibung                                                  |
+| :------------ | :-------- | :------------------------------------------------------------ |
+| `enable()`    | `void`    | Aktiviert die Verarbeitung der Tastenkürzel wieder            |
+| `disable()`   | `void`    | Unterdrückt alle Tastenkürzel, bis `enable()` aufgerufen wird |
+| `isEnabled()` | `boolean` | Gibt zurück, ob die Tastenkürzel gerade aktiv sind            |
+
+Ein typischer Anwendungsfall ist, die Kalender-Tastenkürzel zu unterdrücken, solange ein eigenes Modal oder ein Rich-Text-Editor geöffnet ist:
+
+```tsx
+function MyModal() {
+  const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+
+  useEffect(() => {
+    kb?.disable();
+    return () => kb?.enable(); // restore on unmount
+  }, []);
+
+  // ...
+}
+```
+
+Sie können auch jede geöffnete Oberfläche programmgesteuert schließen:
+
+```tsx
+app.dismissUI();
+```

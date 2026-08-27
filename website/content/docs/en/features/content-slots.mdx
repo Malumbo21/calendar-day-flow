@@ -1,0 +1,911 @@
+---
+title: 'Content Slots'
+---
+
+import { EventContentShowcase } from '@/components/showcase/EventContentShowcase';
+import { CustomDetailPanelShowcase } from '@/components/showcase/CustomDetailPanelShowcase';
+import { ColorPickerShowcase } from '@/components/showcase/ColorPickerShowcase';
+import { CustomDetailDialogShowcase } from '@/components/showcase/CustomDetailDialogShowcase';
+import { ContextMenuShowcase } from '@/components/showcase/ContextMenuShowcase';
+import { MobileEventDetailShowcase } from '@/components/showcase/MobileEventDetailShowcase';
+
+# Content Slots
+
+DayFlow uses a slot-based architecture that allows you to inject custom UI components from your preferred framework (React, Vue, etc.) directly into the core calendar engine.
+
+This is powered by the `ContentSlot` mechanism. While the core engine provides default implementations for most UI elements (using Preact), you can override them to match your application's design or to use specific libraries.
+
+## Table of Contents
+
+- [How it Works](#how-it-works)
+- [Available Slots](#available-slots)
+- [Event Content](#event-content)
+- [Event Detail Content](#event-detail-content)
+- [Event Detail Dialog](#event-detail-dialog)
+- [Mobile Event Detail](#mobile-event-detail)
+- [Injecting a Custom Color Picker](#example-injecting-a-custom-color-picker)
+- [Context Menu](#context-menu-slots)
+- [Year View Grid Popup](#year-view-grid-popup)
+
+## How it Works
+
+1. **Core Defines a Slot**: Inside `@dayflow/core`, certain UI areas are wrapped in a `ContentSlot`. Each slot has a `generatorName` and `generatorArgs`.
+2. **You Provide the Implementation**: You pass a component or a render function to the `DayFlowCalendar` component. The adapter then portals your component into the exact location defined by the core.
+
+## Available Slots
+
+| Generator Name                    | Description                                                                                             | Arguments                                                                 |
+| :-------------------------------- | :------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------ |
+| `colorPicker`                     | A small color picker used for event colors.                                                             | `{ color, onChange, onChangeComplete }`                                   |
+| `createCalendarDialogColorPicker` | A full-featured color picker used in dialogs.                                                           | `{ color, onChange, onAccept, onCancel, styles }`                         |
+| `eventContent*`                   | Custom rendering for event cards (e.g. `eventContentDay`).                                              | `{ event, viewType, isAllDay, isMobile, isSelected, isDragging, layout }` |
+| `eventContextMenu`                | Custom right-click context menu for events.                                                             | `{ event, onClose }`                                                      |
+| `eventDetailContent`              | The content shown in the popover/panel when event details open.                                         | `{ event, isAllDay, onEventDelete, onEventUpdate, onClose, app }`         |
+| `eventDetailDialog`               | Custom dialog shown when event details open. Requires `useEventDetailDialog: true` in `useCalendarApp`. | `{ event, isOpen, isAllDay, onEventDelete, onEventUpdate, onClose, app }` |
+| `gridContextMenu`                 | Custom right-click context menu for calendar cells/grid.                                                | `{ date, viewType, onClose }`                                             |
+| `gridPopupContent`                | Custom popup content for Year view grid mode (when `gridDateClick: 'popup'`).                           | `{ date, events }`                                                        |
+| `mobileEventDetail`               | Custom mobile event detail drawer/dialog.                                                               | `{ isOpen, onClose, onSave, onEventDelete, draftEvent, app, timeFormat }` |
+| `sidebarCalendarColorPicker`      | A color picker used for calendar colors in the sidebar.                                                 | `{ color, onChange, onChangeComplete }`                                   |
+| `titleBarSlot`                    | Extra content in the sidebar title bar.                                                                 | `{ isCollapsed, toggleCollapsed }`                                        |
+
+## Event Content
+
+The `eventContent` slots allow you to completely customize how events are rendered within the calendar. Unlike other slots, event content **must** be specified per view to ensure the layout remains consistent with each view's specific event structure.
+
+### View-Specific Slots
+
+| Slot Name                 | Description                             |
+| :------------------------ | :-------------------------------------- |
+| `eventContentDay`         | Overrides timed events in Day view.     |
+| `eventContentWeek`        | Overrides timed events in Week view.    |
+| `eventContentMonth`       | Overrides events in Month view.         |
+| `eventContentYear`        | Overrides events in Year view.          |
+| `eventContentAllDayDay`   | Overrides all-day events in Day view.   |
+| `eventContentAllDayWeek`  | Overrides all-day events in Week view.  |
+| `eventContentAllDayMonth` | Overrides all-day events in Month view. |
+| `eventContentAllDayYear`  | Overrides all-day events in Year view.  |
+
+<EventContentShowcase />
+
+<details>
+<summary>View Source Code</summary>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar } from '@dayflow/react';
+
+    export const EventContentShowcase = () => {
+      return (
+        <DayFlowCalendar
+          calendar={calendar}
+          // Customize event rendering for Day View
+          eventContentDay={({ event, isSelected }) => (
+            <div className='custom-event-card'>
+              <span>{event.title}</span>
+              {/* ... add your custom icons or layout */}
+            </div>
+          )}
+          // Customize event rendering for Month View
+          eventContentMonth={({ event }) => (
+            <div className='flex items-center gap-1'>
+              <span>🗓️</span>
+              <span className='truncate'>{event.title}</span>
+            </div>
+          )}
+          // Omit other view overrides for brevity...
+        />
+      );
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <!-- Customize event rendering for Day View -->
+        <template #eventContentDay="{ event, isSelected }">
+          <div class="custom-event-card">
+            <span>{{ event.title }}</span>
+          </div>
+        </template>
+
+        <!-- Customize event rendering for Month View -->
+        <template #eventContentMonth="{ event }">
+          <div class="flex items-center gap-1">
+            <span>🗓️</span>
+            <span class="truncate">{{ event.title }}</span>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventContentDay]="dayContent"
+      [eventContentMonth]="monthContent"
+    >
+    </dayflow-calendar>
+
+    <ng-template #dayContent let-args>
+      <div class="custom-event-card">
+        <span>{{ args.event.title }}</span>
+      </div>
+    </ng-template>
+
+    <ng-template #monthContent let-args>
+      <div class="flex items-center gap-1">
+        <span>🗓️</span>
+        <span class="truncate">{{ args.event.title }}</span>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar
+      {calendar}
+      eventContentDay={CustomDayContent}
+      eventContentMonth={CustomMonthContent}
+    />
+
+    <!-- CustomDayContent.svelte -->
+    <script lang="ts">
+      import type { EventContentSlotArgs } from '@dayflow/core';
+      let { event } = $props<EventContentSlotArgs>();
+    </script>
+    <div class="custom-event-card">
+      <span>{event.title}</span>
+    </div>
+
+    <!-- CustomMonthContent.svelte -->
+    <script lang="ts">
+      import type { EventContentSlotArgs } from '@dayflow/core';
+      let { event } = $props<EventContentSlotArgs>();
+    </script>
+    <div class="flex items-center gap-1">
+      <span>🗓️</span>
+      <span class="truncate">{event.title}</span>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+</details>
+
+## Event Detail Content
+
+The `eventDetailContent` slot lets you customize the content displayed in the event detail popover or panel when event details open.
+
+<CustomDetailPanelShowcase />
+
+<details>
+<summary>View Source Code</summary>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar } from '@dayflow/react';
+    import { useCallback } from 'react';
+
+    export const CustomDetailPanelShowcase = () => {
+      const detailPanel = useCallback(
+        ({ event, onEventDelete, onEventUpdate, onClose }) => {
+          return (
+            <div className='p-4 space-y-3'>
+              <h5 className='font-bold'>{event.title}</h5>
+              <p>{event.description}</p>
+
+              <div className='flex gap-2'>
+                <button
+                  onClick={() => onEventUpdate({ ...event, title: 'Updated' })}
+                >
+                  Update
+                </button>
+                <button onClick={() => onEventDelete(event.id)}>Delete</button>
+              </div>
+            </div>
+          );
+        },
+        []
+      );
+
+      return (
+        <DayFlowCalendar calendar={calendar} eventDetailContent={detailPanel} />
+      );
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #eventDetailContent="{ event, onEventDelete, onEventUpdate, onClose }">
+          <div class="p-4 space-y-3">
+            <h5 class="font-bold">{{ event.title }}</h5>
+            <p>{{ event.description }}</p>
+
+            <div class="flex gap-2">
+              <button @click="onEventUpdate({ ...event, title: 'Updated' })">
+                Update
+              </button>
+              <button @click="onEventDelete(event.id)">Delete</button>
+            </div>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventDetailContent]="detailPanel"
+    >
+    </dayflow-calendar>
+
+    <ng-template #detailPanel let-args>
+      <div class="p-4 space-y-3">
+        <h5 class="font-bold">{{ args.event.title }}</h5>
+        <p>{{ args.event.description }}</p>
+
+        <div class="flex gap-2">
+          <button (click)="args.onEventUpdate({ ...args.event, title: 'Updated' })">
+            Update
+          </button>
+          <button (click)="args.onEventDelete(args.event.id)">Delete</button>
+        </div>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} eventDetailContent={CustomDetailPanel} />
+
+    <!-- CustomDetailPanel.svelte -->
+    <script lang="ts">
+      import type { EventDetailContentSlotArgs } from '@dayflow/core';
+      let { event, onEventDelete, onEventUpdate } = $props<EventDetailContentSlotArgs>();
+    </script>
+
+    <div class="p-4 space-y-3">
+      <h5 class="font-bold">{event.title}</h5>
+      <p>{event.description}</p>
+
+      <div class="flex gap-2">
+        <button onclick={() => onEventUpdate({ ...event, title: 'Updated' })}>
+          Update
+        </button>
+        <button onclick={() => onEventDelete(event.id)}>Delete</button>
+      </div>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+</details>
+
+## Event Detail Dialog
+
+If you prefer a modal/dialog interface for viewing and editing event details, you can use the `eventDetailDialog` slot. This is particularly useful for mobile-first applications or when you need more space for complex event data.
+
+> **Prerequisite**: set `useEventDetailDialog: true` in `useCalendarApp` to activate dialog mode. Without it the slot is never triggered.
+
+> **Opt out instead**: if you want to suppress the built-in floating panel without replacing it with your own dialog, set `useEventDetailPanel: false` in your `useCalendarApp` configuration instead of using a slot.
+
+<CustomDetailDialogShowcase />
+
+<details>
+<summary>View Source Code</summary>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar } from '@dayflow/react';
+    import { useCallback } from 'react';
+
+    export const CustomDetailDialogShowcase = () => {
+      const customDialog = useCallback(({ event, isOpen, onClose }) => {
+        if (!isOpen) return null;
+
+        return (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'>
+            <div className='bg-white p-6 rounded-lg shadow-xl'>
+              <h2>{event.title}</h2>
+              {/* ... build your custom dialog UI here */}
+              <button onClick={onClose}>Close</button>
+            </div>
+          </div>
+        );
+      }, []);
+
+      return (
+        <DayFlowCalendar calendar={calendar} eventDetailDialog={customDialog} />
+      );
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #eventDetailDialog="{ event, isOpen, onClose }">
+          <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div class="bg-white p-6 rounded-lg shadow-xl">
+              <h2>{{ event.title }}</h2>
+              <button @click="onClose()">Close</button>
+            </div>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventDetailDialog]="customDialog"
+    >
+    </dayflow-calendar>
+
+    <ng-template #customDialog let-args>
+      <div *ngIf="args.isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="bg-white p-6 rounded-lg shadow-xl">
+          <h2>{{ args.event.title }}</h2>
+          <button (click)="args.onClose()">Close</button>
+        </div>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} eventDetailDialog={CustomDialog} />
+
+    <!-- CustomDialog.svelte -->
+    <script lang="ts">
+      import type { EventDetailDialogSlotArgs } from '@dayflow/core';
+      let { event, isOpen, onClose } = $props<EventDetailDialogSlotArgs>();
+    </script>
+
+    {#if isOpen}
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="bg-white p-6 rounded-lg shadow-xl">
+          <h2>{event.title}</h2>
+          <button onclick={onClose}>Close</button>
+        </div>
+      </div>
+    {/if}
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+</details>
+
+## Mobile Event Detail
+
+When DayFlow is viewed on mobile devices (or small screens), it uses a dedicated `mobileEventDetail` slot to handle event creation and editing. By default, this is a full-screen drawer.
+
+<MobileEventDetailShowcase />
+
+<details>
+<summary>View Source Code</summary>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar } from '@dayflow/react';
+    import { useCallback } from 'react';
+
+    export const MobileEventDetailShowcase = () => {
+      const customMobileDrawer = useCallback(
+        ({ isOpen, onClose, onSave, onEventDelete, draftEvent }) => {
+          if (!isOpen || !draftEvent) return null;
+
+          return (
+            <div className='fixed inset-0 z-50 flex flex-col bg-white'>
+              <header className='flex items-center justify-between p-4 border-b'>
+                <button onClick={onClose}>Back</button>
+                <h2>{draftEvent.id ? 'Edit' : 'New'} Event</h2>
+                <button onClick={() => onSave(draftEvent)}>Save</button>
+              </header>
+              <div className='p-4'>
+                <input
+                  defaultValue={draftEvent.title}
+                  onChange={e => (draftEvent.title = e.target.value)}
+                />
+                {/* ... build your mobile-optimized UI */}
+              </div>
+            </div>
+          );
+        },
+        []
+      );
+
+      return (
+        <DayFlowCalendar
+          calendar={calendar}
+          mobileEventDetail={customMobileDrawer}
+        />
+      );
+    };
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #mobileEventDetail="{ isOpen, onClose, onSave, onEventDelete, draftEvent }">
+          <div v-if="isOpen && draftEvent" class="fixed inset-0 z-50 flex flex-col bg-white">
+            <header class="flex items-center justify-between p-4 border-b">
+              <button @click="onClose()">Back</button>
+              <h2>{{ draftEvent.id ? 'Edit' : 'New' }} Event</h2>
+              <button @click="onSave(draftEvent)">Save</button>
+            </header>
+            <div class="p-4">
+              <input
+                :value="draftEvent.title"
+                @input="draftEvent.title = $event.target.value"
+              />
+            </div>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [mobileEventDetail]="customMobileDrawer"
+    >
+    </dayflow-calendar>
+
+    <ng-template #customMobileDrawer let-args>
+      <div *ngIf="args.isOpen && args.draftEvent" class="fixed inset-0 z-50 flex flex-col bg-white">
+        <header class="flex items-center justify-between p-4 border-b">
+          <button (click)="args.onClose()">Back</button>
+          <h2>{{ args.draftEvent.id ? 'Edit' : 'New' }} Event</h2>
+          <button (click)="args.onSave(args.draftEvent)">Save</button>
+        </header>
+        <div class="p-4">
+          <input
+            [value]="args.draftEvent.title"
+            (input)="args.draftEvent.title = $any($event.target).value"
+          />
+        </div>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} mobileEventDetail={CustomMobileDrawer} />
+
+    <!-- CustomMobileDrawer.svelte -->
+    <script lang="ts">
+      import type { MobileEventDetailSlotArgs } from '@dayflow/core';
+      let { isOpen, onClose, onSave, draftEvent } = $props<MobileEventDetailSlotArgs>();
+    </script>
+
+    {#if isOpen && draftEvent}
+      <div class="fixed inset-0 z-50 flex flex-col bg-white">
+        <header class="flex items-center justify-between p-4 border-b">
+          <button onclick={onClose}>Back</button>
+          <h2>{draftEvent.id ? 'Edit' : 'New'} Event</h2>
+          <button onclick={() => onSave(draftEvent)}>Save</button>
+        </header>
+        <div class="p-4">
+          <input
+            value={draftEvent.title}
+            oninput={(e) => { if(draftEvent) draftEvent.title = e.currentTarget.value; }}
+          />
+        </div>
+      </div>
+    {#/if}
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+</details>
+
+## Example: Injecting a Custom Color Picker
+
+By default, DayFlow uses a built-in `BlossomColorPicker`. If you prefer to use a library like `react-color` or `vue-color`, you can inject it using the `colorPicker` slots.
+
+<DocImg src='/images/docs/colorPicker.png' alt='Color Picker' />
+
+### React Example
+
+Install `react-color`:
+
+<PackageTabs pkg='react-color' />
+
+Inject it into `DayFlowCalendar`:
+
+<ColorPickerShowcase />
+
+<details>
+<summary>View Source Code</summary>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar } from '@dayflow/react';
+    import { SketchPicker, PhotoshopPicker } from 'react-color';
+
+    function MyCalendar() {
+      return (
+        <DayFlowCalendar
+          calendar={calendar}
+          colorPicker={args => (
+            <SketchPicker
+              color={args.color}
+              onChange={color => args.onChange({ hex: color.hex })}
+            />
+          )}
+          createCalendarDialogColorPicker={args => (
+            <PhotoshopPicker
+              color={args.color}
+              onChange={color => args.onChange({ hex: color.hex })}
+              onAccept={args.onAccept}
+              onCancel={args.onCancel}
+            />
+          )}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #colorPicker="args">
+          <SketchPicker
+            :color="args.color"
+            @change="args.onChange({ hex: $event.hex })"
+          />
+        </template>
+        <template #createCalendarDialogColorPicker="args">
+          <PhotoshopPicker
+            :color="args.color"
+            @change="args.onChange({ hex: $event.hex })"
+            @accept="args.onAccept"
+            @cancel="args.onCancel"
+          />
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    import { SketchPicker, PhotoshopPicker } from 'vue-color';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [colorPicker]="picker"
+      [createCalendarDialogColorPicker]="dialogPicker"
+    >
+    </dayflow-calendar>
+
+    <ng-template #picker let-args>
+      <sketch-picker
+        [color]="args.color"
+        (change)="args.onChange({ hex: $event.hex })"
+      >
+      </sketch-picker>
+    </ng-template>
+
+    <ng-template #dialogPicker let-args>
+      <photoshop-picker
+        [color]="args.color"
+        (change)="args.onChange({ hex: $event.hex })"
+        (accept)="args.onAccept()"
+        (cancel)="args.onCancel()"
+      >
+      </photoshop-picker>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar
+      {calendar}
+      colorPicker={CustomColorPicker}
+      createCalendarDialogColorPicker={CustomDialogColorPicker}
+    />
+
+    <!-- CustomColorPicker.svelte -->
+    <script lang="ts">
+      import type { ColorPickerSlotArgs } from '@dayflow/core';
+      let { color, onChange } = $props<ColorPickerSlotArgs>();
+    </script>
+
+    <!-- Render custom picker element/component here -->
+
+    <!-- CustomDialogColorPicker.svelte -->
+    <script lang="ts">
+      import type { CreateCalendarDialogColorPickerSlotArgs } from '@dayflow/core';
+      let { color, onChange, onAccept, onCancel } = $props<CreateCalendarDialogColorPickerSlotArgs>();
+    </script>
+
+    <!-- Render custom dialog picker element/component here -->
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+</details>
+
+## Context Menu Slots
+
+The `eventContextMenu` and `gridContextMenu` slots let you replace the default right-click menus with fully custom React components. Both slots receive an `onClose` callback to dismiss the menu.
+
+- **`eventContextMenu`** — triggered when the user right-clicks an event. Receives `{ event, onClose }`.
+- **`gridContextMenu`** — triggered when the user right-clicks an empty area of the calendar grid. Receives `{ date, viewType, onClose }`.
+
+Right-click on any event or empty cell to see the custom menus in action:
+
+<ContextMenuShowcase />
+
+<details>
+<summary>View Source Code</summary>
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar } from '@dayflow/react';
+    import type {
+      EventContextMenuSlotArgs,
+      GridContextMenuSlotArgs,
+    } from '@dayflow/core';
+    import { useCallback } from 'react';
+
+    function MyCalendar() {
+      const eventContextMenu = useCallback(
+        ({ event, onClose }: EventContextMenuSlotArgs) => (
+          <div className='custom-menu'>
+            <button
+              onClick={() => {
+                /* duplicate */ onClose();
+              }}
+            >
+              Duplicate
+            </button>
+            <button
+              onClick={() => {
+                /* share */ onClose();
+              }}
+            >
+              Share
+            </button>
+            <button
+              onClick={() => {
+                calendar.deleteEvent(event.id);
+                onClose();
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        ),
+        []
+      );
+
+      const gridContextMenu = useCallback(
+        ({ date, onClose }: GridContextMenuSlotArgs) => (
+          <div className='custom-menu'>
+            <button
+              onClick={() => {
+                /* create event at date */ onClose();
+              }}
+            >
+              New Event
+            </button>
+            <button
+              onClick={() => {
+                /* set reminder */ onClose();
+              }}
+            >
+              Remind me
+            </button>
+          </div>
+        ),
+        []
+      );
+
+      return (
+        <DayFlowCalendar
+          calendar={calendar}
+          eventContextMenu={eventContextMenu}
+          gridContextMenu={gridContextMenu}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #eventContextMenu="{ event, onClose }">
+          <div class="custom-menu">
+            <button @click="onClose()">Duplicate</button>
+            <button @click="onClose()">Share</button>
+            <button @click="calendar.deleteEvent(event.id); onClose()">Delete</button>
+          </div>
+        </template>
+
+        <template #gridContextMenu="{ date, onClose }">
+          <div class="custom-menu">
+            <button @click="onClose()">New Event</button>
+            <button @click="onClose()">Remind me</button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar } from '@dayflow/vue';
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [eventContextMenu]="eventMenu"
+      [gridContextMenu]="gridMenu"
+    >
+    </dayflow-calendar>
+
+    <ng-template #eventMenu let-args>
+      <div class="custom-menu">
+        <button (click)="args.onClose()">Duplicate</button>
+        <button (click)="args.onClose()">Share</button>
+        <button (click)="calendar.deleteEvent(args.event.id); args.onClose()">Delete</button>
+      </div>
+    </ng-template>
+
+    <ng-template #gridMenu let-args>
+      <div class="custom-menu">
+        <button (click)="args.onClose()">New Event</button>
+        <button (click)="args.onClose()">Remind me</button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar
+      {calendar}
+      eventContextMenu={CustomEventMenu}
+      gridContextMenu={CustomGridMenu}
+    />
+
+    <!-- CustomEventMenu.svelte -->
+    <script lang="ts">
+      import type { EventContextMenuSlotArgs } from '@dayflow/core';
+      let { event, onClose, calendar } = $props<EventContextMenuSlotArgs>();
+    </script>
+
+    <div class="custom-menu">
+      <button onclick={onClose}>Duplicate</button>
+      <button onclick={onClose}>Share</button>
+      <button onclick={() => { calendar.deleteEvent(event.id); onClose(); }}>Delete</button>
+    </div>
+
+    <!-- CustomGridMenu.svelte -->
+    <script lang="ts">
+      import type { GridContextMenuSlotArgs } from '@dayflow/core';
+      let { onClose } = $props<GridContextMenuSlotArgs>();
+    </script>
+
+    <div class="custom-menu">
+      <button onclick={onClose}>New Event</button>
+      <button onclick={onClose}>Remind me</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+</details>
+
+## Year View Grid Popup
+
+When the Year view runs in `grid` mode with `gridDateClick: 'popup'` (the default), clicking a date cell opens a popup listing that day's events. The `gridPopupContent` slot lets you replace that popup's body with your own UI.
+
+The slot must be passed as a prop on `<DayFlowCalendar>` — **not** in `createYearView`. Framework-rendered nodes (React, Vue, etc.) must flow through the slot system; passing them through the core view config will crash Preact.
+
+```tsx
+import {
+  useCalendarApp,
+  DayFlowCalendar,
+  createYearView,
+  ViewType,
+  type GridPopupContentSlotArgs,
+} from '@dayflow/react';
+
+function renderYearGridPopup({ date, events }: GridPopupContentSlotArgs) {
+  return (
+    <div className='rounded-xl border bg-white p-3 shadow-xl'>
+      <div className='text-sm font-semibold'>{date.toDateString()}</div>
+      {events.length === 0 ? (
+        <div className='text-gray-400'>No events</div>
+      ) : (
+        events.map(e => <div key={e.id}>{e.title}</div>)
+      )}
+    </div>
+  );
+}
+
+function MyCalendar() {
+  const calendar = useCalendarApp({
+    views: [
+      createYearView({
+        mode: 'grid',
+        gridDateClick: 'popup',
+      }),
+    ],
+    defaultView: ViewType.YEAR,
+  });
+
+  return (
+    <DayFlowCalendar
+      calendar={calendar}
+      gridPopupContent={renderYearGridPopup}
+    />
+  );
+}
+```

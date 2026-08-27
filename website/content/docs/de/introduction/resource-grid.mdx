@@ -1,0 +1,225 @@
+---
+title: Ressourcenraster
+description: Vertikale Ressourcenraster-Ansicht von DayFlow Pro mit einer Spalte je Ressource, Gruppierungsmodi nach Datum und Planungsinteraktionen per Drag-and-drop.
+status: pro
+---
+
+# Ressourcenraster
+
+`@dayflow-pro/resource-grid` stellt ein vertikales Planungsraster bereit, in dem die Zeit von oben nach unten verläuft und Ressourcen als Spalten dargestellt werden. Es eignet sich gut für die Buchung von Räumen, Geräten, Studios, Arbeitsplätzen oder Personalschichten.
+
+Probieren Sie die [Live-Demo](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_grid) aus
+
+## Installation
+
+<PackageTabs pkg='@dayflow-pro/resource-grid' />
+
+Die Installationsschritte finden Sie im Leitfaden [Pro-Installation](/docs-de/introduction/pro-installation).
+
+## Grundlegende Verwendung
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceGridView({
+          mode: 'resourceView',
+          resources: [
+            { id: 'room-a', title: 'Room A' },
+            { id: 'room-b', title: 'Room B' },
+          ],
+          visibleDays: 3,
+          hourHeight: 72,
+          firstHour: 8,
+          lastHour: 20,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Ansichtsmodi
+
+| Modus             | Beschreibung                                                                                      |
+| :---------------- | :------------------------------------------------------------------------------------------------ |
+| `resourceView`    | Ressourcen bilden die Hauptspalten, die Datumsangaben wiederholen sich innerhalb jeder Ressource. |
+| `resourcesByDate` | Datumsangaben bilden die Hauptspalten, die Ressourcen wiederholen sich innerhalb jedes Datums.    |
+
+Die Standardkonfiguration des Pakets lautet:
+
+```ts
+{
+  visibleDays: 7,
+  showWeekend: true,
+  onlyShowEventDays: false,
+  dayWidth: 120,
+  hourHeight: 72,
+  firstHour: 0,
+  lastHour: 24,
+  stickyHeaders: true,
+}
+```
+
+## Ressourcen- und Terminmodell
+
+Ressourcen sind bewusst einfach gehalten:
+
+```ts
+type Resource = {
+  id: string;
+  title: string;
+  avatar?: string;
+  color?: string;
+  meta?: Record<string, unknown>;
+};
+```
+
+Termine können `resourceId` direkt speichern oder über einen Callback auflösen:
+
+```tsx
+const event = {
+  id: 'booking-1',
+  title: 'Studio recording',
+  start: new Date(2026, 4, 8, 10, 0),
+  end: new Date(2026, 4, 8, 12, 0),
+  resourceId: 'room-a',
+};
+```
+
+Die Auflösungsreihenfolge ist:
+
+1. `getResourceId(event)`, sofern angegeben
+2. `event.resourceId`
+3. `event.calendarId`
+
+## Filterung und Sichtbarkeit
+
+Das Raster kann sowohl Ressourcen als auch Tage filtern:
+
+| Eigenschaft                           | Typ                                 | Hinweise                                                           |
+| :------------------------------------ | :---------------------------------- | :----------------------------------------------------------------- |
+| `visibleResourceIds`                  | `string[]`                          | Beschränkt das Raster auf eine bestimmte Teilmenge von Ressourcen. |
+| `isResourceVisible`                   | `(resource) => boolean`             | Eigenes Prädikat, um Ressourcen vollständig auszublenden.          |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | Folgt automatisch der Sichtbarkeit des Kalenders.                  |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | Überschreibt die Zuordnung von Ressource zu Kalender.              |
+| `showWeekend`                         | `boolean`                           | Schließt Wochenendtage ein oder aus.                               |
+| `onlyShowEventDays`                   | `boolean`                           | Entfernt sichtbare Tage ohne passende Termine.                     |
+
+Wenn die Kalendersynchronisierung aktiviert ist, lautet die Ersatzzuordnung `resource.meta?.calendarId ?? resource.id`.
+
+Wenn `onlyShowEventDays` alle Tage aus dem aktuellen Zeitraum entfernt, fällt die Ansicht auf den normalen Datumsbereich zurück, anstatt ein leeres Raster anzuzeigen.
+
+## Layout-Konfiguration
+
+| Eigenschaft          | Typ                               | Hinweise                                                          |
+| :------------------- | :-------------------------------- | :---------------------------------------------------------------- |
+| `license`            | `PackageLicenseConfig`            | Optionale Angabe, wenn Sie keine globale Registrierung verwenden. |
+| `visibleDays`        | `number`                          | Anzahl der ab dem aktuellen Datum erzeugten Tage.                 |
+| `hourHeight`         | `number`                          | Höhe einer Stundenzeile in Pixeln.                                |
+| `firstHour`          | `number`                          | Erste sichtbare Stunde.                                           |
+| `lastHour`           | `number`                          | Letzte sichtbare Stunde.                                          |
+| `dayWidth`           | `number`                          | Basisbreite für jede Spalte.                                      |
+| `stickyHeaders`      | `boolean`                         | Hält die Kopfzeilen beim Scrollen fixiert.                        |
+| `initialScrollState` | `{ left?: number; top?: number }` | Legt die anfängliche Scrollposition fest.                         |
+
+Zusätzlich werden Spalten automatisch gestreckt, wenn das Ansichtsfenster breiter ist als der konfigurierte Inhalt und der aktuelle Modus dies zulässt.

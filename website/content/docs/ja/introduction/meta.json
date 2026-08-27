@@ -1,0 +1,14 @@
+{
+  "title": "はじめに",
+  "defaultOpen": true,
+  "pages": [
+    "index",
+    "events",
+    "views",
+    "resource-grid",
+    "resource-timeline",
+    "dayflow-calendar",
+    "use-calendar-app",
+    "pro-installation"
+  ]
+}

@@ -1,0 +1,769 @@
+---
+title: 'Mode sombre'
+---
+
+import { DefaultColorPalette } from '@/components/ColorPalette';
+
+# Mode sombre
+
+DayFlow Calendar prend en charge le mode sombre de manière complète, dès l'installation. Le calendrier adapte automatiquement son apparence à votre préférence de thème : tous les composants d'interface, les couleurs d'événement et les éléments interactifs suivent.
+
+## Fonctionnalités
+
+- **Trois modes de thème** : clair, sombre et automatique (préférence système)
+- **Ajustement automatique des couleurs** : des couleurs d'événement optimisées pour les fonds clairs comme sombres
+- **Bascule fluide** : changement de thème instantané, sans scintillement
+- **Synchronisation système** : le mode automatique suit la préférence de thème du système d'exploitation
+- **Couleurs personnalisées** : définissez des couleurs distinctes pour les modes clair et sombre
+
+## Démarrage rapide
+
+### Configuration de base
+
+Activez le mode sombre en définissant la configuration `theme` :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        theme: {
+          mode: 'dark', // 'light' | 'dark' | 'auto'
+        },
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'dark', // 'light' | 'dark' | 'auto'
+      },
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        theme: {
+          mode: 'dark', // 'light' | 'dark' | 'auto'
+        },
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        theme: {
+          mode: 'dark', // 'light' | 'dark' | 'auto'
+        },
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Modes de thème
+
+### Mode clair
+
+Thème par défaut, avec des fonds clairs et un texte sombre.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'light',
+      },
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'light',
+      },
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    calendar = {
+      theme: {
+        mode: 'light',
+      },
+    };
+    ```
+  </Tab>
+  <Tab>
+    ```svelte
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'light',
+      },
+    });
+    ```
+  </Tab>
+</FrameworkTabs>
+
+### Mode sombre
+
+Thème sombre, avec des fonds sombres et un texte clair.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'dark',
+      },
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'dark',
+      },
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    calendar = {
+      theme: {
+        mode: 'dark',
+      },
+    };
+    ```
+  </Tab>
+  <Tab>
+    ```svelte
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'dark',
+      },
+    });
+    ```
+  </Tab>
+</FrameworkTabs>
+
+### Mode automatique
+
+Suit automatiquement la préférence de thème du système et se met à jour lorsque celle-ci change.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'auto',
+      },
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'auto',
+      },
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    calendar = {
+      theme: {
+        mode: 'auto',
+      },
+    };
+    ```
+  </Tab>
+  <Tab>
+    ```svelte
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'auto',
+      },
+    });
+    ```
+  </Tab>
+</FrameworkTabs>
+
+## Changer de thème
+
+### Changements de thème par programmation
+
+Utilisez l'API du calendrier pour changer de thème dynamiquement :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp } from '@dayflow/react';
+
+    function ThemeToggle() {
+      const calendar = useCalendarApp({
+        theme: { mode: 'light' },
+      });
+
+      const toggleTheme = () => {
+        const currentTheme = calendar.app.getTheme();
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        calendar.app.setTheme(nextTheme);
+      };
+
+      return <button onClick={toggleTheme}>Toggle Theme</button>;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <button @click="toggleTheme()">Toggle Theme</button>
+    </template>
+
+    <script setup>
+    import { useCalendarApp } from '@dayflow/vue';
+
+    const calendar = useCalendarApp({
+      theme: { mode: 'light' },
+    });
+
+    const toggleTheme = () => {
+      const currentTheme = calendar.app.getTheme();
+      const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+      calendar.app.setTheme(nextTheme);
+    };
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+
+    @Component({
+      selector: 'app-theme-toggle',
+      standalone: true,
+      template: `<button (click)="toggleTheme()">Toggle Theme</button>`
+    })
+    export class ThemeToggleComponent {
+      calendar = {
+        theme: { mode: 'light' },
+      };
+
+      toggleTheme() {
+        const currentTheme = this.calendar.app.getTheme();
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        this.calendar.app.setTheme(nextTheme);
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { useCalendarApp } from '@dayflow/svelte';
+
+      const calendar = useCalendarApp({
+        theme: { mode: 'light' },
+      });
+
+      function toggleTheme() {
+        const currentTheme = calendar.app.getTheme();
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        calendar.app.setTheme(nextTheme);
+      }
+    </script>
+
+    <button onclick={toggleTheme}>Toggle Theme</button>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### S'abonner aux changements de thème
+
+Écoutez les changements de thème pour mettre à jour votre interface :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useEffect, useState } from 'react';
+    import type { ThemeMode } from '@dayflow/core';
+
+    function MyComponent({ calendar }) {
+      const [theme, setTheme] = useState<ThemeMode>('light');
+
+      useEffect(() => {
+        const handleThemeChange = (newTheme: ThemeMode) => {
+          setTheme(newTheme);
+        };
+
+        // Subscribe to theme changes
+        calendar.app.subscribeThemeChange(handleThemeChange);
+
+        // Cleanup
+        return () => {
+          calendar.app.unsubscribeThemeChange(handleThemeChange);
+        };
+      }, [calendar.app]);
+
+      return <div>Current theme: {theme}</div>;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <div>Current theme: {{ theme }}</div>
+    </template>
+
+    <script setup>
+    import { ref, onMounted, onUnmounted } from 'vue';
+
+    const props = defineProps({
+      calendar: Object,
+    });
+
+    const theme = ref('light');
+
+    const handleThemeChange = (newTheme) => {
+      theme.value = newTheme;
+    };
+
+    onMounted(() => {
+      props.calendar.app.subscribeThemeChange(handleThemeChange);
+    });
+
+    onUnmounted(() => {
+      props.calendar.app.unsubscribeThemeChange(handleThemeChange);
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+    import type { ThemeMode } from '@dayflow/core';
+
+    @Component({
+      selector: 'app-my-component',
+      standalone: true,
+      template: `<div>Current theme: {{ theme }}</div>`
+    })
+    export class MyComponent implements OnInit, OnDestroy {
+      @Input() calendar!: any;
+      theme: ThemeMode = 'light';
+
+      handleThemeChange = (newTheme: ThemeMode) => {
+        this.theme = newTheme;
+      };
+
+      ngOnInit() {
+        this.calendar.app.subscribeThemeChange(this.handleThemeChange);
+      }
+
+      ngOnDestroy() {
+        this.calendar.app.unsubscribeThemeChange(this.handleThemeChange);
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script lang="ts">
+      import { onMount, onDestroy } from 'svelte';
+      import type { ThemeMode } from '@dayflow/core';
+
+      let { calendar } = $props<{ calendar: any }>();
+      let theme = $state<ThemeMode>('light');
+
+      const handleThemeChange = (newTheme: ThemeMode) => {
+        theme = newTheme;
+      };
+
+      onMount(() => {
+        calendar.app.subscribeThemeChange(handleThemeChange);
+      });
+
+      onDestroy(() => {
+        calendar.app.unsubscribeThemeChange(handleThemeChange);
+      });
+    </script>
+
+    <div>Current theme: {theme}</div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Couleurs de thème personnalisées
+
+Définissez des couleurs distinctes pour les modes clair et sombre sur chaque type de calendrier :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'auto',
+      },
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            // Light mode colors
+            lineColor: '#0066cc',
+            eventColor: '#e6f2ff',
+            eventSelectedColor: '#cce4ff',
+            textColor: '#003d7a',
+          },
+          darkColors: {
+            // Dark mode colors
+            lineColor: '#4da6ff',
+            eventColor: '#1a3d5c',
+            eventSelectedColor: '#2a5a8a',
+            textColor: '#b3d9ff',
+          },
+        },
+      ],
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'auto',
+      },
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            // Light mode colors
+            lineColor: '#0066cc',
+            eventColor: '#e6f2ff',
+            eventSelectedColor: '#cce4ff',
+            textColor: '#003d7a',
+          },
+          darkColors: {
+            // Dark mode colors
+            lineColor: '#4da6ff',
+            eventColor: '#1a3d5c',
+            eventSelectedColor: '#2a5a8a',
+            textColor: '#b3d9ff',
+          },
+        },
+      ],
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    calendar = {
+      theme: {
+        mode: 'auto',
+      },
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            // Light mode colors
+            lineColor: '#0066cc',
+            eventColor: '#e6f2ff',
+            eventSelectedColor: '#cce4ff',
+            textColor: '#003d7a',
+          },
+          darkColors: {
+            // Dark mode colors
+            lineColor: '#4da6ff',
+            eventColor: '#1a3d5c',
+            eventSelectedColor: '#2a5a8a',
+            textColor: '#b3d9ff',
+          },
+        },
+      ],
+    };
+    ```
+  </Tab>
+  <Tab>
+    ```svelte
+    const calendar = useCalendarApp({
+      theme: {
+        mode: 'auto',
+      },
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            // Light mode colors
+            lineColor: '#0066cc',
+            eventColor: '#e6f2ff',
+            eventSelectedColor: '#cce4ff',
+            textColor: '#003d7a',
+          },
+          darkColors: {
+            // Dark mode colors
+            lineColor: '#4da6ff',
+            eventColor: '#1a3d5c',
+            eventSelectedColor: '#2a5a8a',
+            textColor: '#b3d9ff',
+          },
+        },
+      ],
+    });
+    ```
+  </Tab>
+</FrameworkTabs>
+
+### Recommandations de couleurs
+
+Pour une lisibilité et une accessibilité optimales :
+
+**Mode clair :**
+
+- Couleurs de trait : des couleurs vives et saturées (#0066cc, #16a34a)
+- Couleurs d'événement : des teintes claires (#e6f2ff, #dcfce7)
+- Couleurs de texte : des tons foncés pour le contraste (#003d7a, #14532d)
+
+**Mode sombre :**
+
+- Couleurs de trait : des variantes plus claires et lumineuses (#4da6ff, #4ade80)
+- Couleurs d'événement : des fonds sombres et désaturés (#1a3d5c, #1e4d2b)
+- Couleurs de texte : des tons clairs pour rester lisibles (#b3d9ff, #bbf7d0)
+
+## Couleurs par défaut des types de calendrier
+
+DayFlow fournit 10 types de calendrier par défaut, avec des couleurs de mode sombre préconfigurées :
+
+<DefaultColorPalette />
+
+## Référence de l'API
+
+### Configuration du thème
+
+```typescript
+interface ThemeConfig {
+  mode: 'light' | 'dark' | 'auto';
+}
+```
+
+### Méthodes de l'application calendrier
+
+```typescript
+// Get current theme mode
+app.getTheme(): ThemeMode
+
+// Set theme mode
+app.setTheme(mode: ThemeMode): void
+
+// Subscribe to theme changes
+app.subscribeThemeChange(callback: (theme: ThemeMode) => void): void
+
+// Unsubscribe from theme changes
+app.unsubscribeThemeChange(callback: (theme: ThemeMode) => void): void
+```
+
+### Couleurs des types de calendrier
+
+```typescript
+interface CalendarTypeColors {
+  lineColor: string; // Border and accent color
+  eventColor: string; // Event background color
+  eventSelectedColor: string; // Selected event background color
+  textColor: string; // Text color
+}
+
+interface CalendarType {
+  id: string;
+  name: string;
+  colors: CalendarTypeColors; // Light mode colors
+  darkColors?: CalendarTypeColors; // Dark mode colors (optional)
+}
+```
+
+## Exemples
+
+### Bascule de thème simple
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { useState } from 'react';
+    import { Sun, Moon } from 'lucide-react';
+
+    function SimpleThemeToggle() {
+      const calendar = useCalendarApp({
+        theme: { mode: 'light' },
+      });
+
+      const [isDark, setIsDark] = useState(false);
+
+      const toggleTheme = () => {
+        const nextTheme = isDark ? 'light' : 'dark';
+        calendar.app.setTheme(nextTheme);
+        setIsDark(!isDark);
+      };
+
+      return (
+        <div>
+          <button onClick={toggleTheme}>{isDark ? <Sun /> : <Moon />}</button>
+          <DayFlowCalendar calendar={calendar} />
+        </div>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <div>
+        <button @click="toggleTheme()">
+          <Sun v-if="isDark" />
+          <Moon v-else />
+        </button>
+        <DayFlowCalendar :calendar="calendar" />
+      </div>
+    </template>
+
+    <script setup>
+    import { ref } from 'vue';
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { Sun, Moon } from 'lucide-vue-next';
+
+    const calendar = useCalendarApp({
+      theme: { mode: 'light' },
+    });
+
+    const isDark = ref(false);
+
+    const toggleTheme = () => {
+      const nextTheme = isDark.value ? 'light' : 'dark';
+      calendar.app.setTheme(nextTheme);
+      isDark.value = !isDark.value;
+    };
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-theme-toggle',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <div>
+          <button (click)="toggleTheme()">
+            {{ isDark ? 'Sun' : 'Moon' }}
+          </button>
+          <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+        </div>
+      `
+    })
+    export class SimpleThemeToggleComponent {
+      calendar = {
+        theme: { mode: 'light' },
+      };
+      isDark = false;
+
+      toggleTheme() {
+        this.isDark = !this.isDark;
+        const nextTheme = this.isDark ? 'dark' : 'light';
+        this.calendar.app.setTheme(nextTheme);
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { Sun, Moon } from 'lucide-svelte';
+
+      const calendar = useCalendarApp({
+        theme: { mode: 'light' },
+      });
+
+      let isDark = $state(false);
+
+      function toggleTheme() {
+        isDark = !isDark;
+        const nextTheme = isDark ? 'dark' : 'light';
+        calendar.app.setTheme(nextTheme);
+      }
+    </script>
+
+    <div>
+      <button onclick={toggleTheme}>
+        {#if isDark}
+          <Sun />
+        {:else}
+          <Moon />
+        {/if}
+      </button>
+      <DayFlowCalendar {calendar} />
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Documentation associée
+
+- [Configurer l'application de calendrier](/docs-fr/introduction/use-calendar-app) : configuration principale du calendrier
+- [Types de calendrier](/docs-fr/introduction/events#styliser-les-événements-avec-les-types-de-calendrier) : catégorisation et couleurs des événements
+- [Guide de personnalisation des thèmes](/docs-fr/guides/theme-customization) : thématisation avancée

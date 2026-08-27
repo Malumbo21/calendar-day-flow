@@ -1,0 +1,225 @@
+---
+title: Grille de ressources
+description: Vue en grille de ressources verticale de DayFlow Pro, avec une colonne par ressource, des modes de regroupement par date et des interactions de planification par glisser-déposer.
+status: pro
+---
+
+# Grille de ressources
+
+`@dayflow-pro/resource-grid` fournit une grille de planification verticale où le temps s'écoule de haut en bas et où les ressources sont affichées en colonnes. Elle convient parfaitement à la réservation de salles, de matériel, de studios, de bureaux ou de créneaux d'équipe.
+
+Essayez la [démo en direct](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_grid)
+
+## Installation
+
+<PackageTabs pkg='@dayflow-pro/resource-grid' />
+
+Consultez le guide d'[installation de Pro](/docs-fr/introduction/pro-installation) pour les étapes d'installation.
+
+## Utilisation de base
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceGridView({
+          mode: 'resourceView',
+          resources: [
+            { id: 'room-a', title: 'Room A' },
+            { id: 'room-b', title: 'Room B' },
+          ],
+          visibleDays: 3,
+          hourHeight: 72,
+          firstHour: 8,
+          lastHour: 20,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Modes d'affichage
+
+| Mode              | Description                                                                                          |
+| :---------------- | :--------------------------------------------------------------------------------------------------- |
+| `resourceView`    | Les ressources constituent les colonnes principales, les dates étant répétées dans chaque ressource. |
+| `resourcesByDate` | Les dates constituent les colonnes principales, les ressources étant répétées dans chaque date.      |
+
+La configuration par défaut du paquet est la suivante :
+
+```ts
+{
+  visibleDays: 7,
+  showWeekend: true,
+  onlyShowEventDays: false,
+  dayWidth: 120,
+  hourHeight: 72,
+  firstHour: 0,
+  lastHour: 24,
+  stickyHeaders: true,
+}
+```
+
+## Modèle de ressources et d'événements
+
+Les ressources sont volontairement simples :
+
+```ts
+type Resource = {
+  id: string;
+  title: string;
+  avatar?: string;
+  color?: string;
+  meta?: Record<string, unknown>;
+};
+```
+
+Les événements peuvent stocker `resourceId` directement ou le résoudre via un callback :
+
+```tsx
+const event = {
+  id: 'booking-1',
+  title: 'Studio recording',
+  start: new Date(2026, 4, 8, 10, 0),
+  end: new Date(2026, 4, 8, 12, 0),
+  resourceId: 'room-a',
+};
+```
+
+L'ordre de résolution est le suivant :
+
+1. `getResourceId(event)`, s'il est fourni
+2. `event.resourceId`
+3. `event.calendarId`
+
+## Filtrage et visibilité
+
+La grille peut filtrer à la fois les ressources et les jours :
+
+| Propriété                             | Type                                | Notes                                                                        |
+| :------------------------------------ | :---------------------------------- | :--------------------------------------------------------------------------- |
+| `visibleResourceIds`                  | `string[]`                          | Limite la grille à un sous-ensemble de ressources donné.                     |
+| `isResourceVisible`                   | `(resource) => boolean`             | Prédicat personnalisé pour masquer entièrement des ressources.               |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | Suit automatiquement la visibilité du calendrier.                            |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | Remplace la correspondance entre ressource et calendrier.                    |
+| `showWeekend`                         | `boolean`                           | Inclut ou exclut les jours de week-end.                                      |
+| `onlyShowEventDays`                   | `boolean`                           | Supprime les jours visibles qui ne comportent aucun événement correspondant. |
+
+Lorsque la synchronisation avec les calendriers est activée, la correspondance de repli est `resource.meta?.calendarId ?? resource.id`.
+
+Si `onlyShowEventDays` supprime tous les jours de la plage actuelle, la vue revient à la plage de dates normale au lieu d'afficher une grille vide.
+
+## Configuration de la mise en page
+
+| Propriété            | Type                              | Notes                                                                        |
+| :------------------- | :-------------------------------- | :--------------------------------------------------------------------------- |
+| `license`            | `PackageLicenseConfig`            | Remplacement facultatif lorsque vous n'utilisez pas l'enregistrement global. |
+| `visibleDays`        | `number`                          | Nombre de jours générés à partir de la date actuelle.                        |
+| `hourHeight`         | `number`                          | Hauteur en pixels d'une ligne d'une heure.                                   |
+| `firstHour`          | `number`                          | Première heure visible.                                                      |
+| `lastHour`           | `number`                          | Dernière heure visible.                                                      |
+| `dayWidth`           | `number`                          | Largeur de base utilisée pour chaque colonne.                                |
+| `stickyHeaders`      | `boolean`                         | Maintient les en-têtes fixes lors du défilement.                             |
+| `initialScrollState` | `{ left?: number; top?: number }` | Définit la position de défilement initiale.                                  |
+
+L'implémentation étire également les colonnes automatiquement lorsque la fenêtre est plus large que le contenu configuré et que le mode actuel le permet.

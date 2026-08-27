@@ -1,0 +1,213 @@
+---
+title: '键盘快捷键插件'
+---
+
+# 键盘快捷键插件
+
+键盘快捷键 (Keyboard Shortcuts) 插件为日历提供了全局键盘控制功能，支持导航、事件管理和剪贴板操作。
+
+## 安装
+
+安装插件包：
+
+<PackageTabs pkg='@dayflow/plugin-keyboard-shortcuts' />
+
+## 使用方法
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          /* 视图 */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // 可选配置
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    const calendar = useCalendarApp({
+      views: [
+        /* 视图 */
+      ],
+      plugins: [
+        createKeyboardShortcutsPlugin({
+          // 可选配置
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* 视图 */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // 可选配置
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+      const calendar = useCalendarApp({
+        views: [
+          /* 视图 */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // 可选配置
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 默认快捷键
+
+| 操作              | 快捷键 (Mac)                  | 快捷键 (Windows/Linux) |
+| :---------------- | :---------------------------- | :--------------------- |
+| **跳转到今天**    | `Cmd + T`                     | `Ctrl + T`             |
+| **搜索**          | `Cmd + F`                     | `Ctrl + F`             |
+| **新建事件**      | `Cmd + N`                     | `Ctrl + N`             |
+| **视图导航**      | `左箭头` / `右箭头`           | `左箭头` / `右箭头`    |
+| **循环选择事件**  | `Tab` / `Shift + Tab`         | `Tab` / `Shift + Tab`  |
+| **撤销**          | `Cmd + Z`                     | `Ctrl + Z`             |
+| **重做**          | `Cmd + Shift + Z` / `Cmd + Y` | `Ctrl + Y`             |
+| **复制事件**      | `Cmd + C`                     | `Ctrl + C`             |
+| **剪切事件**      | `Cmd + X`                     | `Ctrl + X`             |
+| **粘贴事件**      | `Cmd + V`                     | `Ctrl + V`             |
+| **删除事件**      | `Backspace` / `Delete`        | `Backspace` / `Delete` |
+| **关闭弹窗/面板** | `Esc`                         | `Esc`                  |
+
+## 配置项
+
+您可以自定义按键映射并为每个操作提供自定义回调函数：
+
+```tsx
+createKeyboardShortcutsPlugin({
+  keyMap: {
+    today: 't',
+    search: 'f',
+    prev: 'ArrowLeft',
+    next: 'ArrowRight',
+    undo: 'z',
+    redo: 'y',
+    delete: 'Delete',
+    newEvent: 'n',
+  },
+  callbacks: {
+    undo: app => {
+      console.log('自定义撤销逻辑');
+      app.undo();
+    },
+    redo: app => {
+      console.log('自定义重放逻辑');
+      if ((app as any).redo) (app as any).redo();
+    },
+    delete: app => {
+      if (confirm('您确定要删除吗？')) {
+        const selectedId = app.state.selectedEventId;
+        if (selectedId) app.deleteEvent(selectedId);
+      }
+    },
+  },
+});
+```
+
+### 可选回调函数
+
+`callbacks` 对象支持以下回调：
+
+- `undo`, `redo`, `paste` (接收 `app` 参数)
+- `copy`, `cut`, `delete` (接收 `app` 和 `event?: Event` 参数)
+- `today`, `search`, `prev`, `next`, `newEvent`, `dismiss` (接收 `app` 参数)
+- `tab` (接收 `app` 和 `reverse: boolean` 参数)
+
+## 插件 API
+
+通过以下方式获取插件句柄，以便在运行时控制快捷键行为：
+
+```tsx
+import { type KeyboardShortcutsService } from '@dayflow/plugin-keyboard-shortcuts';
+
+const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+```
+
+### KeyboardShortcutsService
+
+| 方法          | 返回值    | 说明                                |
+| :------------ | :-------- | :---------------------------------- |
+| `enable()`    | `void`    | 重新启用快捷键处理                  |
+| `disable()`   | `void`    | 暂停所有快捷键，直到调用 `enable()` |
+| `isEnabled()` | `boolean` | 返回快捷键当前是否处于激活状态      |
+
+一个典型的使用场景是：当自定义弹窗或富文本编辑器打开时，临时屏蔽日历快捷键：
+
+```tsx
+function MyModal() {
+  const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+
+  useEffect(() => {
+    kb?.disable();
+    return () => kb?.enable(); // 卸载时恢复
+  }, []);
+
+  // ...
+}
+```
+
+也可以通过编程方式关闭当前打开的 UI：
+
+```tsx
+app.dismissUI();
+```

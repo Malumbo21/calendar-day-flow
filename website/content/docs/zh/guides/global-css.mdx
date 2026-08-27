@@ -1,0 +1,521 @@
+---
+title: '全局 CSS 类'
+---
+
+# 全局 CSS 类
+
+DayFlow 提供了一组带有 `df-` 前缀的 CSS 类，允许您自定义日历组件的外观。这些类旨在方便地进行样式定制，无需修改核心库。
+
+## 选择正确的 CSS 入口
+
+请根据项目是否已经使用 Tailwind CSS 来选择样式入口：
+
+| 入口                    | 包含内容                                | 适用场景               |
+| ----------------------- | --------------------------------------- | ---------------------- |
+| `styles.css`            | 完整包，包含 Tailwind preflight / reset | 不使用 Tailwind 的项目 |
+| `styles.components.css` | 仅组件样式，不包含 CSS Reset            | 已使用 Tailwind 的项目 |
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+做主题覆盖时，推荐优先使用 `--df-color-*` 变量或下面列出的稳定 `df-*` 语义类。
+
+## 目录
+
+- [通用类](#通用)
+- [语义辅助类](#语义辅助类)
+- [布局与动效辅助类](#布局与动效辅助类)
+- [日视图类](#日视图)
+- [周视图类](#周视图)
+- [月视图类](#月视图)
+- [年视图类](#年视图)
+- [迷你日历类](#迷你日历)
+- [侧边栏类](#侧边栏)
+- [导航类](#导航)
+- [事件详情类](#事件详情)
+- [内容插槽类](#内容插槽)
+- [事件状态属性](#事件状态属性)
+
+---
+
+## 通用
+
+所有日历视图中使用的通用 CSS 类。
+
+| 类名                       | 描述                                                          |
+| -------------------------- | ------------------------------------------------------------- |
+| `df-calendar-container`    | 包裹侧边栏和日历的最外层根容器，支持 `--df-calendar-height`。 |
+| `df-calendar`              | 日历主容器（包含头部和视图内容）                              |
+| `df-header`                | 日历头部区域（包含标题、今天按钮和视图切换器）                |
+| `df-header-left`           | 头部左侧区域（标题和导航按钮）                                |
+| `df-header-mid`            | 头部中间区域（当前日期范围标题）                              |
+| `df-header-right`          | 头部右侧区域（视图切换器和搜索）                              |
+| `df-navigation`            | 导航控件容器                                                  |
+| `df-view-header-container` | 次级视图头部区域的共享容器                                    |
+| `df-view-header-title`     | 视图级标题文本的共享类                                        |
+| `df-view-header-subtitle`  | 视图级副标题文本的共享类                                      |
+| `df-event`                 | 所有事件的基础类                                              |
+| `df-event-title`           | 事件标题文本                                                  |
+| `df-event-time`            | 事件时间文本                                                  |
+| `df-event-color-bar`       | 事件左侧的颜色条（日/周视图）                                 |
+| `df-month-event-color-bar` | 普通事件的颜色指示器（月视图）                                |
+| `df-all-day-row`           | 全天事件行容器                                                |
+| `df-all-day-label`         | 全天标签文本                                                  |
+| `df-all-day-content`       | 全天事件内容区域                                              |
+| `df-all-day-cell`          | 单个全天事件单元格                                            |
+| `df-date-number`           | 日期数字显示                                                  |
+| `df-current-time-line`     | 当前时间指示线容器                                            |
+| `df-current-time-label`    | 当前时间标签文本                                              |
+| `df-current-time-bar`      | 当前时间水平线                                                |
+| `df-calendar-checkbox`     | 日历列表及相关控件中复用的共享复选框样式                      |
+| `df-portal`                | 通过 portal 渲染的浮层根作用域类                              |
+| `df-range-picker`          | Range Picker 触发器与弹层共用的根作用域类                     |
+
+---
+
+## 语义辅助类
+
+这次样式重构后，DayFlow 对外公开了一组稳定的 `df-*` 语义类，用来表达按钮填充态、选中态、危险操作态、焦点环等主题语义。它们定义在共享基础样式中，适合在自定义 slot、插件 UI 或包裹层里复用。
+
+| 类名                      | 用途                                    |
+| ------------------------- | --------------------------------------- |
+| `df-fill-primary`         | 主色填充背景 + 自动前景文字             |
+| `df-fill-secondary`       | 次色填充背景 + 自动前景文字             |
+| `df-fill-destructive`     | 危险态填充背景 + 自动前景文字           |
+| `df-tint-primary`         | 主色 10% 轻染背景                       |
+| `df-tint-primary-md`      | 主色 20% 轻染背景                       |
+| `df-tint-primary-lg`      | 主色 30% 轻染背景                       |
+| `df-hover-primary`        | 主色语义悬停态                          |
+| `df-hover-primary-md`     | 更明显的主色悬停态                      |
+| `df-hover-primary-solid`  | 主色实心按钮的悬停态                    |
+| `df-hover-base`           | 使用 DayFlow hover token 的默认悬停背景 |
+| `df-hover-muted`          | muted 风格悬停背景                      |
+| `df-hover-destructive`    | 危险态悬停效果                          |
+| `df-text-primary`         | 主色文字                                |
+| `df-text-muted`           | 弱化文字                                |
+| `df-text-primary-fg`      | 主色填充背景上的文字                    |
+| `df-text-secondary-fg`    | 次色填充背景上的文字                    |
+| `df-text-destructive`     | 危险态文字                              |
+| `df-text-destructive-fg`  | 危险态填充背景上的文字                  |
+| `df-bg-base`              | 基础表面背景                            |
+| `df-bg-card`              | 卡片背景                                |
+| `df-bg-sidebar`           | 侧边栏风格的 muted 背景                 |
+| `df-bg-secondary`         | 次级 muted 背景                         |
+| `df-bg-tertiary`          | 第三级背景 / 分隔面                     |
+| `df-border-base`          | 基础边框                                |
+| `df-border-light`         | 更轻的柔和边框                          |
+| `df-border-strong`        | 使用主色 token 的强调边框               |
+| `df-border-primary`       | 主色边框                                |
+| `df-border-primary-soft`  | 柔和主色边框                            |
+| `df-ring-primary`         | 主色 ring 颜色 token                    |
+| `df-ring-primary-solid`   | 纯主色 ring 颜色                        |
+| `df-shadow-sm`            | 小层级阴影                              |
+| `df-shadow-md`            | 中层级阴影                              |
+| `df-shadow-primary`       | 主色阴影 token                          |
+| `df-focus-ring`           | `:focus` 时同时设置主色边框与 ring      |
+| `df-focus-ring-only`      | `:focus` 时仅应用主色 ring              |
+| `df-focus-border-primary` | `:focus` 时仅应用主色边框               |
+
+推荐优先使用这些 `df-*` 类或 `--df-color-*` 变量来做主题定制，不要再依赖 `bg-primary`、`text-primary`、`hover:bg-primary/90` 这类旧的内部 Tailwind 语义类名。
+
+---
+
+## 布局与动效辅助类
+
+这些类适合在自定义 slot 内容或插件 UI 中复用 DayFlow 现有的布局和入场动画行为。
+
+| 类名                      | 用途                             |
+| ------------------------- | -------------------------------- |
+| `df-content-slot-stacked` | 让内容插槽纵向堆叠并填满可用高度 |
+| `df-scrollbar-hide`       | 隐藏滚动条但保留滚动行为         |
+| `df-animate-in`           | 入场动画的基础时间参数类         |
+| `df-fade-in`              | 淡入动画辅助类                   |
+| `df-zoom-in-95`           | 轻微缩放进入动画辅助类           |
+| `df-animate-slide-up`     | 向上滑入动画                     |
+| `df-animate-slide-down`   | 向下滑出动画                     |
+
+---
+
+## 日视图
+
+日视图特有的 CSS 类。
+
+| 类名                | 描述                                  |
+| ------------------- | ------------------------------------- |
+| `df-day-view`       | 日视图容器                            |
+| `df-day-event`      | 日视图中的单个事件                    |
+| `df-day-time-grid`  | 时间网格容器                          |
+| `df-time-column`    | 时间列（左侧显示小时的侧边栏）        |
+| `df-time-slot`      | 单个时间槽容器（左侧列）              |
+| `df-time-label`     | 时间标签文本（例如 "1 PM"）           |
+| `df-time-grid-row`  | 时间网格中的水平行                    |
+| `df-time-grid-cell` | 时间网格中的单个单元格                |
+| `df-right-panel`    | 日视图右侧面板（迷你日历 + 事件列表） |
+
+---
+
+## 周视图
+
+周视图特有的 CSS 类。
+
+| 类名                 | 描述                           |
+| -------------------- | ------------------------------ |
+| `df-week-view`       | 周视图容器                     |
+| `df-week-event`      | 周视图中的单个事件             |
+| `df-week-header`     | 带有星期名称的周头部容器       |
+| `df-week-header-row` | 包含星期名称的固定标题行       |
+| `df-week-day-cell`   | 头部中的单个星期单元格         |
+| `df-time-column`     | 时间列（左侧显示小时的侧边栏） |
+| `df-time-slot`       | 单个时间槽容器（左侧列）       |
+| `df-time-label`      | 时间标签文本                   |
+| `df-time-grid-row`   | 时间网格中的水平行             |
+| `df-time-grid-cell`  | 时间网格中的单个单元格         |
+
+---
+
+## 月视图
+
+月视图特有的 CSS 类。
+
+| 类名                             | 描述                         |
+| -------------------------------- | ---------------------------- |
+| `df-month-view`                  | 月视图容器                   |
+| `df-month-grid`                  | 月视图的主要网格容器         |
+| `df-month-day-cell`              | 月视图中的单个日期单元格     |
+| `df-month-date-number-container` | 日期数字区域的容器           |
+| `df-month-date-number`           | 月视图中的日期数字           |
+| `df-month-more-events`           | 隐藏事件的 "+ x 更多" 指示器 |
+| `df-month-title`                 | 滚动时的浮动月份标题         |
+
+---
+
+## 年视图
+
+年视图特有的 CSS 类。这些类特别适用于自定义年度概览中的事件外观。
+
+| 类名                      | 描述                                            |
+| ------------------------- | ----------------------------------------------- |
+| `df-year-event`           | 事件外层容器 - 包裹整个事件元素                 |
+| `df-event-year-content`   | 年视图事件内容容器 - 包含图标、标题和其他内容   |
+| `df-event-year-title`     | 年视图事件标题文本 - 用于自定义标题对齐、字体等 |
+| `df-event-icon-svg`       | 事件渲染中通用的 SVG 图标类，年视图也会复用     |
+| `df-event-year-indicator` | 年视图定时事件颜色指示器 - 颜色点/条            |
+| `df-year-grid-month`      | Grid Year View 中的月份卡片容器                 |
+| `df-year-fixed-day-cell`  | Fixed Week Year View 中的日期单元格             |
+
+---
+
+## 迷你日历
+
+迷你日历组件（通常位于侧边栏或日视图）的 CSS 类。
+
+| 类名                           | 描述                              |
+| ------------------------------ | --------------------------------- |
+| `df-mini-calendar`             | 迷你日历容器                      |
+| `df-mini-calendar-body`        | 迷你日历主体包裹层                |
+| `df-mini-calendar-header-nav`  | 月份导航行                        |
+| `df-mini-calendar-nav-btn`     | 上一月 / 下一月按钮               |
+| `df-mini-calendar-month-label` | 当前月份标签                      |
+| `df-mini-calendar-grid`        | 日期网格容器                      |
+| `df-mini-calendar-header`      | 星期标题单元格（例如 "一", "二"） |
+| `df-mini-calendar-day`         | 迷你日历日期按钮的基础类          |
+| `df-mini-calendar-day-cell`    | 日期单元格的视觉表面              |
+| `df-mini-calendar-day-number`  | 日期数字标签                      |
+| `df-mini-calendar-dots`        | 日期单元格中的事件圆点容器        |
+| `df-mini-calendar-dot`         | 单个事件圆点                      |
+
+---
+
+## 侧边栏
+
+侧边栏组件的 CSS 类。
+
+| 类名                      | 描述                      |
+| ------------------------- | ------------------------- |
+| `df-sidebar`              | 侧边栏容器                |
+| `df-sidebar-header`       | 侧边栏头部容器            |
+| `df-sidebar-toggle`       | 侧边栏折叠/展开切换按钮   |
+| `df-sidebar-header-title` | 侧边栏头部标题（"日历"）  |
+| `df-sidebar-list-shell`   | 侧边栏列表的可滚动包裹层  |
+| `df-sidebar-list`         | 日历列表容器              |
+| `df-sidebar-list-item`    | 列表中的单个日历项        |
+| `df-sidebar-row`          | 每个列表项里的交互行      |
+| `df-sidebar-chip`         | 小型标签 / chip           |
+| `df-sidebar-dialog`       | 侧边栏模态框 / 对话框容器 |
+| `df-sidebar-button`       | 侧边栏按钮的共享类        |
+
+---
+
+## 导航
+
+导航按钮的 CSS 类。
+
+| 类名                       | 描述                                  |
+| -------------------------- | ------------------------------------- |
+| `df-nav-button`            | 导航箭头按钮的基础类（上一个/下一个） |
+| `df-calendar-nav-button`   | 日历导航箭头按钮的样式类              |
+| `df-today-button`          | “今天”按钮的基础类                    |
+| `df-calendar-today-button` | 日历“今天”按钮的样式类                |
+
+---
+
+## 事件详情
+
+事件详情面板和对话框的 CSS 类。
+
+| 类名                       | 描述                            |
+| -------------------------- | ------------------------------- |
+| `df-event-detail-panel`    | 浮动事件详情面板                |
+| `df-event-dialog-overlay`  | 事件详情对话框的 overlay 根节点 |
+| `df-event-dialog-backdrop` | 事件详情对话框的背景遮罩        |
+| `df-dialog-container`      | 对话框内容容器                  |
+| `df-event-dialog-close`    | 事件详情对话框的关闭按钮        |
+| `df-portal`                | 浮层根节点作用域                |
+
+---
+
+## 内容插槽
+
+用于内容插槽渲染系统的 CSS 类。
+
+| 类名              | 描述                                                 |
+| ----------------- | ---------------------------------------------------- |
+| `df-content-slot` | 内容插槽的容器                                       |
+| `df-slot-[id]`    | 分配给特定插槽实例的动态类，其中 `[id]` 是唯一标识符 |
+
+---
+
+## 事件状态属性
+
+DayFlow 暴露的不只是事件状态标记。当前项目里，事件、网格、浮层、抽屉以及部分内部布局辅助节点都会使用 `data-*` 属性。下面这份表覆盖了当前代码里实际存在的属性。其中大多数可以直接拿来写 CSS，少数则主要用于浮层控制或 click-outside 这类结构化逻辑。
+
+### 事件元素
+
+| 属性                   | 可选值                                         | 描述                                            |
+| ---------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| `data-view`            | `"day"` `"week"` `"month"` `"year"` `"agenda"` | 当前正在渲染该事件或事件片段的视图              |
+| `data-all-day`         | `"true"` `"false"`                             | 是否为全天事件                                  |
+| `data-selected`        | `"true"` `"false"`                             | 事件是否处于选中状态                            |
+| `data-dragging`        | `"true"` `"false"`                             | 事件是否正在被拖拽                              |
+| `data-resizing`        | `"true"` `"false"`                             | 事件是否正在被调整大小                          |
+| `data-popping`         | `"true"` `"false"`                             | 交互时事件是否处于弹起 / 提升的视觉状态         |
+| `data-editable`        | `"true"` `"false"`                             | 是否允许通过内置 UI 编辑                        |
+| `data-viewable`        | `"true"` `"false"`                             | 是否允许打开事件详情 UI                         |
+| `data-draggable`       | `"true"` `"false"`                             | 该事件是否启用拖拽                              |
+| `data-multi-day`       | `"true"` `"false"`                             | 是否为跨天事件                                  |
+| `data-month-stack`     | `"true"` `"false"`                             | 是否处于月视图的堆叠布局中                      |
+| `data-touch-handles`   | `"true"` `"false"`                             | 是否需要显示 / 预留触控调整手柄                 |
+| `data-axis`            | 视图相关关键字                                 | 紧凑 / timed 事件内容的方向提示                 |
+| `data-density`         | 视图相关关键字                                 | 紧凑事件内容的密度提示                          |
+| `data-position`        | 视图相关关键字                                 | 分段或紧凑事件渲染中的位置提示                  |
+| `data-segment-shape`   | `"full"` `"start"` `"middle"` `"end"`          | 多段事件的圆角形状                              |
+| `data-segment-days`    | 数字字符串                                     | 月视图片段所覆盖的天数                          |
+| `data-event-id`        | 事件 id 字符串                                 | 挂在交互事件节点 / 面板锚点节点上的原始事件标识 |
+| `data-continued-left`  | `"true"` `"false"`                             | Agenda 全天 badge 是否从前一天延续而来          |
+| `data-continued-right` | `"true"` `"false"`                             | Agenda 全天 badge 是否延续到后一天              |
+
+### 日期、网格与布局状态
+
+| 属性                     | 可选值                 | 描述                                              |
+| ------------------------ | ---------------------- | ------------------------------------------------- |
+| `data-today`             | `"true"` `"false"`     | 标记今天对应的日期、section 或头部单元格          |
+| `data-other-month`       | `"true"` `"false"`     | 标记属于上个月或下个月的日期                      |
+| `data-current-month`     | `"true"` `"false"`     | 标记当前月份范围内的日期                          |
+| `data-date`              | 日期字符串             | 挂在网格 / 年视图单元格上的具体日期值             |
+| `data-first-day`         | `"true"` `"false"`     | 标记分组年/月结构中的第一个可见日期               |
+| `data-weekend`           | `"true"` `"false"`     | 是否为周末单元格 / 标签                           |
+| `data-has-events`        | `"true"` `"false"`     | 单元格内是否包含至少一个事件                      |
+| `data-heat-level`        | 数字字符串             | 网格年视图热力等级                                |
+| `data-visible`           | `"true"` `"false"`     | 用于虚拟化或条件渲染的通用可见状态标记            |
+| `data-layout`            | 布局关键字             | 月视图 / 虚拟滚动渲染使用的内部布局模式           |
+| `data-layout-ready`      | `"true"` `"false"`     | 虚拟布局是否已完成首轮测量                        |
+| `data-trailing-border`   | `"true"` `"false"`     | 月视图单元格是否应绘制尾部边框                    |
+| `data-scrollbar-space`   | `"true"` `"false"`     | 当前视图是否为滚动条预留空间                      |
+| `data-secondary-tz`      | `"true"` `"false"`     | 是否启用了辅助时区轴                              |
+| `data-show-all-day`      | `"true"` `"false"`     | 是否显示全天行                                    |
+| `data-sliding-view`      | `"true"` `"false"`     | 视图是否处于滑动 / 过渡状态                       |
+| `data-mobile`            | `"true"` `"false"`     | 某些紧凑片段使用的移动端渲染提示                  |
+| `data-switcher-mode`     | `"buttons"` `"select"` | 内置视图切换器当前使用的模式                      |
+| `data-inside-pill`       | `"true"` `"false"`     | Compact header 内容是否被渲染进 today pill        |
+| `data-sidebar-collapsed` | `"true"` `"false"`     | 侧边栏是否折叠                                    |
+| `data-sidebar-enabled`   | `"true"` `"false"`     | 当前 calendar shell 是否带着 sidebar 插件一起挂载 |
+| `data-df-theme`          | 主题关键字             | 主题化布局包装节点发出的主题标记                  |
+
+### 控件、输入与搜索
+
+| 属性                     | 可选值                             | 描述                                           |
+| ------------------------ | ---------------------------------- | ---------------------------------------------- |
+| `data-active`            | `"true"` `"false"`                 | 通用 active 状态标记，用于开关、tab、picker 等 |
+| `data-open`              | `"true"` `"false"`                 | 下拉、抽屉或搜索区域是否处于打开状态           |
+| `data-bordered`          | `"true"` `"false"`                 | header 是否绘制底部边框                        |
+| `data-loading`           | `"true"` `"false"`                 | 异步按钮 / 操作的加载状态                      |
+| `data-ready`             | `"true"` `"false"`                 | quick-create 浮层是否完成初始定位              |
+| `data-placement`         | 位置关键字                         | popup / quick-create 的定位提示                |
+| `data-checked`           | `"true"` `"false"`                 | 自定义开关的选中状态                           |
+| `data-disabled`          | `"true"` `"false"`                 | 自定义开关 / 输入的禁用状态                    |
+| `data-kind`              | 组件相关关键字                     | mobile event drawer 中的区块 / 字段类型        |
+| `data-expanded`          | `"true"` `"false"`                 | 抽屉区块是否展开                               |
+| `data-closing`           | `"true"` `"false"`                 | mobile drawer 是否处于关闭过渡阶段             |
+| `data-tone`              | `"default"` `"today"` `"upcoming"` | 搜索结果日期分组标题使用的语义色调             |
+| `data-mini-calendar-dot` | 存在属性                           | mini calendar 事件圆点的标记                   |
+
+### Sidebar 插件状态
+
+| 属性                   | 可选值             | 描述                                           |
+| ---------------------- | ------------------ | ---------------------------------------------- |
+| `data-active`          | `"true"` `"false"` | 侧边栏中的日历行是否处于 active 状态           |
+| `data-collapsed`       | `"true"` `"false"` | 侧边栏 source group 或折叠面板是否处于收起状态 |
+| `data-draggable`       | `"true"` `"false"` | 侧边栏日历项是否允许拖拽                       |
+| `data-dragging`        | `"true"` `"false"` | 侧边栏日历项当前是否正在拖拽                   |
+| `data-position`        | `"top"` `"bottom"` | 侧边栏内拖拽排序时 drop indicator 所在的位置   |
+| `data-selected`        | `"true"` `"false"` | 侧边栏下拉菜单 / import 对话框中的选中状态     |
+| `data-submenu-content` | 存在属性           | 标记 sidebar 子菜单 portal 内容节点            |
+
+### 浮层与交互钩子
+
+| 属性                            | 可选值   | 描述                             |
+| ------------------------------- | -------- | -------------------------------- |
+| `data-event-detail-panel`       | 存在属性 | 浮动事件详情面板根节点           |
+| `data-event-detail-dialog`      | 存在属性 | 模态事件详情对话框根节点         |
+| `data-range-picker-popup`       | 存在属性 | range picker 弹层根节点          |
+| `data-calendar-picker-dropdown` | 存在属性 | calendar picker 下拉层根节点     |
+| `data-grid-day-cell`            | 存在属性 | 网格型年视图中的可点击日期单元格 |
+| `data-grid-day-popup`           | 存在属性 | 年视图日期 popup 根节点          |
+
+### 示例
+
+```css
+/* 选中状态的事件 */
+.df-event[data-selected='true'] {
+  outline: 2px solid var(--df-color-primary);
+}
+
+/* 拖拽中的事件 */
+.df-event[data-dragging='true'] {
+  opacity: 0.6;
+}
+
+/* 仅针对月视图的事件 */
+.df-event[data-view='month'] {
+  font-size: 11px;
+}
+
+/* 仅针对全天事件 */
+.df-event[data-all-day='true'] {
+  font-weight: 600;
+}
+
+/* 强调今天对应的 Agenda section 或紧凑网格单元格 */
+[data-today='true'] {
+  background-color: color-mix(in srgb, var(--df-color-primary) 8%, transparent);
+}
+```
+
+---
+
+## 如何自定义
+
+要自定义外观，建议优先覆盖这些类或 `--df-color-*` 变量。大多数主题层面的调整不需要 `!important`；只有在你明确要压过某条高特异性局部规则时才需要它。
+
+### 示例
+
+```css
+/* 更改所有事件的圆角 */
+.df-event {
+  border-radius: 8px !important;
+}
+
+/* 自定义当前时间指示器 */
+.df-current-time-line {
+  z-index: 100;
+}
+.df-current-time-bar {
+  height: 3px !important;
+  background-color: #ef4444 !important;
+}
+
+/* 自定义特定视图 */
+.df-day-view .df-event {
+  border-left: 4px solid #3b82f6;
+}
+
+/* 设置侧边栏样式 */
+.df-sidebar {
+  background-color: #f8fafc !important;
+}
+
+/* 设置迷你日历样式 */
+.df-mini-calendar-day:hover {
+  background-color: #e2e8f0;
+}
+
+/* 在自定义 slot / 插件 UI 中复用 DayFlow 的语义类 */
+.my-custom-primary-chip {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
+}
+
+/* 深色模式覆盖 */
+.dark .df-calendar {
+  background-color: #111827;
+}
+
+/* 设置事件详情面板样式 */
+.df-event-detail-panel {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+```
+
+## 使用技巧
+
+1. **特异性**: 如果样式未生效，可以通过在日历外层包裹一个自定义类来增加特异性：
+
+   ```css
+   .my-custom-calendar .df-event { ... }
+   ```
+
+2. **响应式设计**: 使用媒体查询为移动设备调整样式：
+
+   ```css
+   @media (max-width: 768px) {
+     .df-event-title {
+       font-size: 10px;
+     }
+     .df-time-label {
+       font-size: 10px;
+     }
+   }
+   ```
+
+3. **深色模式**: 使用 `.dark` 选择器为深色模式设置特定样式：
+
+   ```css
+   .dark .df-month-day-cell {
+     border-color: #374151;
+   }
+   ```
+
+4. **CSS 变量**: DayFlow 使用 `--df-color-*` 自定义属性来设置颜色。在 `.df-calendar-container`（和 `.df-portal` 用于浮层）上覆盖它们，可以实现作用域隔离的颜色修改：
+   ```css
+   .df-calendar-container,
+   .df-portal {
+     --df-color-primary: #3b82f6;
+     --df-color-primary-foreground: #ffffff;
+   }
+   ```
+
+## 从旧版本升级
+
+<Callout title="破坏性变更：calendar-event 类已移除" type="warn">
+  事件元素上的 `calendar-event` 类已被移除。如果你的样式表中有 `.calendar-event { ... }`，请改为 `.df-event { ... }`。
+
+之前出现在 DayFlow DOM 元素上的 Tailwind utility 类（`flex`、`rounded-md`、`shadow-sm` 等）也已被全部移除。这些类从未属于公开 API。请使用文档中列出的 `df-*` 类和 `data-*` 属性进行所有 CSS 自定义。
+
+</Callout>
+
+## 相关文档
+
+- [主题自定义](/docs-zh/guides/theme-customization) - 高级主题选项
+- [深色模式](/docs-zh/features/dark-mode) - 深色模式配置

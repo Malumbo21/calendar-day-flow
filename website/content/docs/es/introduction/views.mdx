@@ -1,0 +1,803 @@
+---
+title: Vistas
+---
+
+# Vistas del calendario
+
+DayFlow ofrece cinco tipos de vista, cada uno optimizado para casos de uso y necesidades distintas. Puedes cambiar de vista mediante código o dar a los usuarios una interfaz para hacerlo.
+
+## Vistas disponibles
+
+### Vista de día
+
+La vista de día se centra en una única jornada con franjas horarias detalladas: ideal para gestionar la agenda del día.
+
+#### Configuración
+
+| Propiedad             | Tipo             | Valor por defecto | Descripción                                                       |
+| :-------------------- | :--------------- | :---------------- | :---------------------------------------------------------------- |
+| `showAllDay`          | `boolean`        | `true`            | Indica si se muestra la fila de eventos de día completo.          |
+| `scrollToCurrentTime` | `boolean`        | `true`            | Indica si se desplaza hasta la hora actual al cargar.             |
+| `timeFormat`          | `'12h' \| '24h'` | `'24h'`           | Formato de hora del eje temporal.                                 |
+| `secondaryTimeZone`   | `string`         | `undefined`       | Línea temporal de referencia secundaria, solo en la vista de día. |
+| `hourHeight`          | `number`         | `72`              | Altura en píxeles de cada fila horaria de la rejilla.             |
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createDayView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createDayView()],
+        defaultView: ViewType.DAY,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createDayView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createDayView()],
+      defaultView: ViewType.DAY,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createDayView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createDayView()],
+        defaultView: ViewType.DAY,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createDayView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createDayView()],
+        defaultView: ViewType.DAY,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Vista de semana
+
+La vista de semana muestra una rejilla de 7 días con franjas horarias, donde cada evento aparece con su hora exacta de inicio y fin.
+
+#### Configuración
+
+| Propiedad             | Tipo                                                 | Valor por defecto | Descripción                                                                                                                                                 |
+| :-------------------- | :--------------------------------------------------- | :---------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `showWeekends`        | `boolean`                                            | `true`            | Indica si se muestran el sábado y el domingo.                                                                                                               |
+| `showAllDay`          | `boolean`                                            | `true`            | Indica si se muestra la fila de eventos de día completo.                                                                                                    |
+| `startOfWeek`         | `number`                                             | `1`               | Día en que empieza la semana (0 = domingo, 1 = lunes, etc.).                                                                                                |
+| `scrollToCurrentTime` | `boolean`                                            | `true`            | Indica si se desplaza hasta la hora actual al cargar.                                                                                                       |
+| `timeFormat`          | `'12h' \| '24h'`                                     | `'24h'`           | Formato de hora del eje temporal.                                                                                                                           |
+| `secondaryTimeZone`   | `string`                                             | `undefined`       | Línea temporal de referencia secundaria, solo en la vista de semana.                                                                                        |
+| `gridDateClick`       | `'day-view' \| 'none' \| function`                   | `undefined`       | Acción al hacer clic en una celda de fecha.                                                                                                                 |
+| `gridDateDoubleClick` | `'create-event' \| 'day-view' \| 'none' \| function` | `'create-event'`  | Acción al hacer doble clic en una celda de fecha. `'create-event'` (valor por defecto) crea un evento de una hora en la posición (hora) donde se hizo clic. |
+| `hourHeight`          | `number`                                             | `72`              | Altura en píxeles de cada fila horaria de la rejilla.                                                                                                       |
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createWeekView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createWeekView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      defaultView: ViewType.WEEK,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createWeekView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createWeekView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Vista de mes
+
+La vista de mes muestra la rejilla de calendario tradicional con todos los días del mes.
+
+#### Configuración
+
+| Propiedad             | Tipo                                                                | Valor por defecto | Descripción                                                                                                                                     |
+| :-------------------- | :------------------------------------------------------------------ | :---------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `showWeekNumbers`     | `boolean`                                                           | `false`           | Indica si se muestran los números de semana.                                                                                                    |
+| `showMonthIndicator`  | `boolean`                                                           | `true`            | Indica si se muestra el título indicador del mes al desplazarse.                                                                                |
+| `startOfWeek`         | `number`                                                            | `1`               | Día en que empieza la semana (0 = domingo, 1 = lunes, etc.).                                                                                    |
+| `snapToMonth`         | `boolean`                                                           | `false`           | Si está activado, la vista se ajusta al inicio del mes predominante cuando el usuario deja de desplazarse.                                      |
+| `gridDateClick`       | `'week-view' \| 'day-view' \| 'none' \| function`                   | `undefined`       | Acción al hacer clic en una celda de fecha.                                                                                                     |
+| `gridDateDoubleClick` | `'create-event' \| 'week-view' \| 'day-view' \| 'none' \| function` | `'create-event'`  | Acción al hacer doble clic en una celda de fecha. `'create-event'` (valor por defecto) crea un evento de 9:00 a 10:00 en la fecha seleccionada. |
+| `eventHeight`         | `number`                                                            | `16`              | Altura en píxeles de cada fila de evento en la rejilla mensual.                                                                                 |
+| `scroll`              | `MonthScrollConfig`                                                 | —                 | Controla el bloqueo del desplazamiento y la animación al cambiar de mes. Ver más abajo.                                                         |
+
+#### MonthScrollConfig
+
+| Propiedad    | Tipo                    | Valor por defecto | Descripción                                                                                                                                                                                                                                |
+| :----------- | :---------------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disabled`   | `boolean`               | `false`           | Desactiva el desplazamiento continuo. El mes solo puede cambiarse con los botones de navegación Anterior / Siguiente.                                                                                                                      |
+| `transition` | `'fade'` \| `undefined` | `undefined`       | Animación al cambiar de mes (solo se aplica con `disabled: true`). `'fade'` desvanece el mes actual con un desplazamiento horizontal y hace aparecer el siguiente. Si se omite, se conserva la animación de desplazamiento suave original. |
+
+```tsx
+createMonthView({
+  scroll: {
+    disabled: true, // lock to one month at a time, Prev/Next only
+    transition: 'fade', // optional fade animation (omit to keep smooth scroll)
+  },
+});
+```
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createMonthView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createMonthView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      defaultView: ViewType.MONTH,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createMonthView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createMonthView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Vista de agenda
+
+La vista de agenda muestra los eventos como una lista cronológica agrupada por día. Funciona especialmente bien en diseños móviles, en la planificación a largo plazo y en feeds donde el usuario quiere revisar rápidamente lo que viene.
+
+#### Configuración
+
+| Propiedad             | Tipo                               | Valor por defecto | Descripción                                                 |
+| :-------------------- | :--------------------------------- | :---------------- | :---------------------------------------------------------- |
+| `daysToShow`          | `number`                           | `14`              | Número de días consecutivos que se renderizan en la lista.  |
+| `showEmptyDays`       | `boolean`                          | `true`            | Indica si los días sin eventos siguen visibles en la lista. |
+| `timeFormat`          | `'12h' \| '24h'`                   | `'24h'`           | Formato de hora de las filas de eventos con horario.        |
+| `gridDateClick`       | `'day-view' \| 'none' \| function` | `undefined`       | Acción al hacer clic en la sección de un día.               |
+| `gridDateDoubleClick` | `'day-view' \| 'none' \| function` | `'day-view'`      | Acción al hacer doble clic en la sección de un día.         |
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createAgendaView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({
+            daysToShow: 14,
+            timeFormat: '12h',
+            gridDateDoubleClick: 'day-view',
+          }),
+        ],
+        defaultView: ViewType.AGENDA,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createAgendaView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [
+        createAgendaView({
+          daysToShow: 14,
+          timeFormat: '12h',
+          gridDateDoubleClick: 'day-view',
+        }),
+      ],
+      defaultView: ViewType.AGENDA,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createAgendaView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createAgendaView({
+            daysToShow: 14,
+            timeFormat: '12h',
+            gridDateDoubleClick: 'day-view',
+          }),
+        ],
+        defaultView: ViewType.AGENDA,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createAgendaView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({
+            daysToShow: 14,
+            timeFormat: '12h',
+            gridDateDoubleClick: 'day-view',
+          }),
+        ],
+        defaultView: ViewType.AGENDA,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Vista de año
+
+La vista de año ofrece un panorama anual completo. La vista de año de DayFlow admite tres modos: `year-canvas` (rejilla continua), `fixed-week` (columnas fijas de 52 semanas) y `grid` (una rejilla de meses de 4x3, ideal para mapas de calor).
+
+#### Configuración
+
+| Propiedad                   | Tipo                                                 | Valor por defecto | Descripción                                                                                                                        |
+| :-------------------------- | :--------------------------------------------------- | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`                      | `'year-canvas' \| 'fixed-week' \| 'grid'`            | `'year-canvas'`   | Modo de visualización de la vista de año.                                                                                          |
+| `startOfWeek`               | `number`                                             | `1`               | Día en que empieza la semana (0 = domingo, 1 = lunes, etc.). Se usa en los modos `fixed-week` y `grid`.                            |
+| `showTimedEventsInYearView` | `boolean`                                            | `false`           | Indica si los eventos con horario se muestran en la vista de año (puntos, indicadores o intensidad).                               |
+| `gridDateClick`             | `'popup' \| 'day-view' \| 'none' \| function`        | `'popup'`         | (Modo grid) Acción al hacer clic en una celda de fecha.                                                                            |
+| `gridDateDoubleClick`       | `'create-event' \| 'day-view' \| 'none' \| function` | `'create-event'`  | (Modo grid) Acción al hacer doble clic en una celda de fecha. `'create-event'` (valor por defecto) crea un evento de 9:00 a 10:00. |
+| `gridHeatmapLevels`         | `number`                                             | `5`               | (Modo grid) Número de niveles de intensidad del mapa de calor.                                                                     |
+
+#### Personalizar el mapa de calor (modo grid)
+
+Con `mode: 'grid'`, el calendario funciona como un mapa de calor en el que la intensidad (el color) de cada día depende del número de eventos. Puedes personalizar los colores redefiniendo estas variables CSS en tu CSS global:
+
+```css
+/* Light Mode Heatmap */
+.df-year-grid-month {
+  --heat-1: #ebf5ff;
+  --heat-2: #cfe8ff;
+  --heat-3: #91d5ff;
+  --heat-4: #60a5fa;
+  --heat-5: #3b82f6;
+}
+
+/* Dark Mode Heatmap */
+.dark .df-year-grid-month {
+  --heat-1: #1e3a5f;
+  --heat-2: #2563eb;
+  --heat-3: #1e40af;
+  --heat-4: #3b82f6;
+  --heat-5: #93c5fd;
+}
+```
+
+Si cambias `gridHeatmapLevels` a otro número (por ejemplo, `3`), define las variables hasta ese número (de `--heat-1` a `--heat-3`).
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createYearView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          createYearView({
+            mode: 'grid',
+            showTimedEventsInYearView: true,
+            gridHeatmapLevels: 5,
+          }),
+        ],
+        defaultView: ViewType.YEAR,
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createYearView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [
+        createYearView({
+          mode: 'grid',
+          showTimedEventsInYearView: true,
+          gridHeatmapLevels: 5,
+        }),
+      ],
+      defaultView: ViewType.YEAR,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createYearView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createYearView({
+            mode: 'grid',
+            showTimedEventsInYearView: true,
+            gridHeatmapLevels: 5,
+          }),
+        ],
+        defaultView: ViewType.YEAR,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createYearView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [
+          createYearView({
+            mode: 'grid',
+            showTimedEventsInYearView: true,
+            gridHeatmapLevels: 5,
+          }),
+        ],
+        defaultView: ViewType.YEAR,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Usar varias vistas
+
+Puedes registrar varias vistas y permitir que los usuarios cambien entre ellas:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createAgendaView,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createYearView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MultiViewCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({ daysToShow: 10 }),
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        callbacks: {
+          onViewChange: view => {
+            console.log('View changed to:', view);
+          },
+        },
+      });
+
+      return (
+        <div className='h-screen'>
+          <DayFlowCalendar calendar={calendar} />
+        </div>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <div class="h-screen">
+        <DayFlowCalendar :calendar="calendar" />
+      </div>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import {
+      createAgendaView,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createYearView,
+      ViewType,
+    } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [
+        createAgendaView({ daysToShow: 10 }),
+        createDayView(),
+        createWeekView(),
+        createMonthView(),
+        createYearView(),
+      ],
+      defaultView: ViewType.MONTH,
+      initialDate: new Date(),
+      callbacks: {
+        onViewChange: (view) => {
+          console.log('View changed to:', view);
+        },
+      },
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import {
+      createAgendaView,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createYearView,
+      ViewType,
+    } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <div class="h-screen">
+          <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+        </div>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createAgendaView({ daysToShow: 10 }),
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        callbacks: {
+          onViewChange: (view: any) => {
+            console.log('View changed to:', view);
+          },
+        },
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import {
+        createAgendaView,
+        createDayView,
+        createWeekView,
+        createMonthView,
+        createYearView,
+        ViewType,
+      } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({ daysToShow: 10 }),
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        callbacks: {
+          onViewChange: (view) => {
+            console.log('View changed to:', view);
+          },
+        },
+      });
+    </script>
+
+    <div class="h-screen">
+      <DayFlowCalendar {calendar} />
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Control de las vistas por código
+
+### Cambiar de vista
+
+```tsx
+// Change to a specific view
+calendar.changeView(ViewType.WEEK);
+
+// Get current view
+const currentView = calendar.app.getCurrentView();
+console.log(currentView.type); // 'week'
+```
+
+### Navegación
+
+Todas las vistas admiten los mismos métodos de navegación:
+
+```tsx
+// Go to today
+calendar.goToToday();
+
+// Go to previous period (day/week/month/agenda/year depending on current view)
+calendar.goToPrevious();
+
+// Go to next period
+calendar.goToNext();
+
+// Go to a specific date
+calendar.selectDate(new Date(2024, 9, 15));
+```
+
+## El enum ViewType
+
+```tsx
+enum ViewType {
+  DAY = 'day',
+  WEEK = 'week',
+  MONTH = 'month',
+  AGENDA = 'agenda',
+  YEAR = 'year',
+}
+```

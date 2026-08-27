@@ -1,0 +1,803 @@
+---
+title: 뷰
+---
+
+# 캘린더 뷰
+
+DayFlow는 서로 다른 사용 사례와 요구에 맞춰 최적화된 다섯 가지 뷰 타입을 제공합니다. 코드로 뷰를 전환할 수도 있고, 사용자가 직접 전환할 수 있는 UI를 제공할 수도 있습니다.
+
+## 사용 가능한 뷰
+
+### 일(Day) 뷰
+
+일 뷰는 하루를 세밀한 시간 슬롯으로 보여 주므로, 하루 일정을 관리하기에 적합합니다.
+
+#### 설정
+
+| 속성                  | 타입             | 기본값      | 설명                                                |
+| :-------------------- | :--------------- | :---------- | :-------------------------------------------------- |
+| `showAllDay`          | `boolean`        | `true`      | 종일 이벤트 행을 표시할지 여부입니다.               |
+| `scrollToCurrentTime` | `boolean`        | `true`      | 처음 로드할 때 현재 시각으로 스크롤할지 여부입니다. |
+| `timeFormat`          | `'12h' \| '24h'` | `'24h'`     | 시간 축에 사용할 시간 형식입니다.                   |
+| `secondaryTimeZone`   | `string`         | `undefined` | 일 뷰에서만 표시되는 보조 기준 타임라인입니다.      |
+| `hourHeight`          | `number`         | `72`        | 시간 그리드에서 각 시간 행의 높이(픽셀)입니다.      |
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createDayView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createDayView()],
+        defaultView: ViewType.DAY,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createDayView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createDayView()],
+      defaultView: ViewType.DAY,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createDayView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createDayView()],
+        defaultView: ViewType.DAY,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createDayView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createDayView()],
+        defaultView: ViewType.DAY,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### 주(Week) 뷰
+
+주 뷰는 시간 슬롯이 있는 7일 그리드를 보여 주며, 각 이벤트의 정확한 시작·종료 시각을 표시합니다.
+
+#### 설정
+
+| 속성                  | 타입                                                 | 기본값           | 설명                                                                                                                 |
+| :-------------------- | :--------------------------------------------------- | :--------------- | :------------------------------------------------------------------------------------------------------------------- |
+| `showWeekends`        | `boolean`                                            | `true`           | 토요일과 일요일을 표시할지 여부입니다.                                                                               |
+| `showAllDay`          | `boolean`                                            | `true`           | 종일 이벤트 행을 표시할지 여부입니다.                                                                                |
+| `startOfWeek`         | `number`                                             | `1`              | 한 주의 시작 요일입니다(0 = 일요일, 1 = 월요일 등).                                                                  |
+| `scrollToCurrentTime` | `boolean`                                            | `true`           | 처음 로드할 때 현재 시각으로 스크롤할지 여부입니다.                                                                  |
+| `timeFormat`          | `'12h' \| '24h'`                                     | `'24h'`          | 시간 축에 사용할 시간 형식입니다.                                                                                    |
+| `secondaryTimeZone`   | `string`                                             | `undefined`      | 주 뷰에서만 표시되는 보조 기준 타임라인입니다.                                                                       |
+| `gridDateClick`       | `'day-view' \| 'none' \| function`                   | `undefined`      | 날짜 셀을 클릭했을 때의 동작입니다.                                                                                  |
+| `gridDateDoubleClick` | `'create-event' \| 'day-view' \| 'none' \| function` | `'create-event'` | 날짜 셀을 더블 클릭했을 때의 동작입니다. `'create-event'`(기본값)는 클릭한 위치(시각)에 1시간짜리 이벤트를 만듭니다. |
+| `hourHeight`          | `number`                                             | `72`             | 시간 그리드에서 각 시간 행의 높이(픽셀)입니다.                                                                       |
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createWeekView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createWeekView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createWeekView()],
+      defaultView: ViewType.WEEK,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createWeekView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createWeekView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createWeekView()],
+        defaultView: ViewType.WEEK,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### 월(Month) 뷰
+
+월 뷰는 한 달의 모든 날짜를 보여 주는 전통적인 캘린더 그리드입니다.
+
+#### 설정
+
+| 속성                  | 타입                                                                | 기본값           | 설명                                                                                                            |
+| :-------------------- | :------------------------------------------------------------------ | :--------------- | :-------------------------------------------------------------------------------------------------------------- |
+| `showWeekNumbers`     | `boolean`                                                           | `false`          | 주 번호를 표시할지 여부입니다.                                                                                  |
+| `showMonthIndicator`  | `boolean`                                                           | `true`           | 스크롤할 때 월 표시 제목을 보여 줄지 여부입니다.                                                                |
+| `startOfWeek`         | `number`                                                            | `1`              | 한 주의 시작 요일입니다(0 = 일요일, 1 = 월요일 등).                                                             |
+| `snapToMonth`         | `boolean`                                                           | `false`          | 활성화하면 스크롤을 멈췄을 때 가장 많이 보이는 달의 시작으로 맞춰집니다.                                        |
+| `gridDateClick`       | `'week-view' \| 'day-view' \| 'none' \| function`                   | `undefined`      | 날짜 셀을 클릭했을 때의 동작입니다.                                                                             |
+| `gridDateDoubleClick` | `'create-event' \| 'week-view' \| 'day-view' \| 'none' \| function` | `'create-event'` | 날짜 셀을 더블 클릭했을 때의 동작입니다. `'create-event'`(기본값)는 클릭한 날짜에 9:00~10:00 이벤트를 만듭니다. |
+| `eventHeight`         | `number`                                                            | `16`             | 월 그리드에서 각 이벤트 행의 높이(픽셀)입니다.                                                                  |
+| `scroll`              | `MonthScrollConfig`                                                 | —                | 스크롤 잠금과 월 전환 애니메이션을 제어합니다. 아래를 참고하세요.                                               |
+
+#### MonthScrollConfig
+
+| 속성         | 타입                    | 기본값      | 설명                                                                                                                                                                                                                |
+| :----------- | :---------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `disabled`   | `boolean`               | `false`     | 연속 스크롤을 비활성화합니다. 이전 / 다음 내비게이션 버튼으로만 달을 바꿀 수 있습니다.                                                                                                                              |
+| `transition` | `'fade'` \| `undefined` | `undefined` | 달을 전환할 때의 애니메이션입니다(`disabled: true`일 때만 적용). `'fade'`는 현재 달을 가로로 밀면서 서서히 사라지게 하고 다음 달을 서서히 나타나게 합니다. 생략하면 기존의 부드러운 스크롤 애니메이션이 유지됩니다. |
+
+```tsx
+createMonthView({
+  scroll: {
+    disabled: true, // lock to one month at a time, Prev/Next only
+    transition: 'fade', // optional fade animation (omit to keep smooth scroll)
+  },
+});
+```
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createMonthView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createMonthView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      defaultView: ViewType.MONTH,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createMonthView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createMonthView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### 아젠다(Agenda) 뷰
+
+아젠다 뷰는 이벤트를 날짜별로 묶어 시간순 목록으로 보여 줍니다. 모바일 레이아웃, 장기 계획, 그리고 다가올 일정을 빠르게 훑어보는 피드 형태에 특히 잘 맞습니다.
+
+#### 설정
+
+| 속성                  | 타입                               | 기본값       | 설명                                                  |
+| :-------------------- | :--------------------------------- | :----------- | :---------------------------------------------------- |
+| `daysToShow`          | `number`                           | `14`         | 아젠다 목록에 표시할 연속 날짜 수입니다.              |
+| `showEmptyDays`       | `boolean`                          | `true`       | 이벤트가 없는 날짜도 목록에 계속 표시할지 여부입니다. |
+| `timeFormat`          | `'12h' \| '24h'`                   | `'24h'`      | 시간이 지정된 이벤트 행에 사용할 시간 형식입니다.     |
+| `gridDateClick`       | `'day-view' \| 'none' \| function` | `undefined`  | 날짜 구획을 클릭했을 때의 동작입니다.                 |
+| `gridDateDoubleClick` | `'day-view' \| 'none' \| function` | `'day-view'` | 날짜 구획을 더블 클릭했을 때의 동작입니다.            |
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createAgendaView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({
+            daysToShow: 14,
+            timeFormat: '12h',
+            gridDateDoubleClick: 'day-view',
+          }),
+        ],
+        defaultView: ViewType.AGENDA,
+        initialDate: new Date(),
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createAgendaView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [
+        createAgendaView({
+          daysToShow: 14,
+          timeFormat: '12h',
+          gridDateDoubleClick: 'day-view',
+        }),
+      ],
+      defaultView: ViewType.AGENDA,
+      initialDate: new Date(),
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createAgendaView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createAgendaView({
+            daysToShow: 14,
+            timeFormat: '12h',
+            gridDateDoubleClick: 'day-view',
+          }),
+        ],
+        defaultView: ViewType.AGENDA,
+        initialDate: new Date(),
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createAgendaView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({
+            daysToShow: 14,
+            timeFormat: '12h',
+            gridDateDoubleClick: 'day-view',
+          }),
+        ],
+        defaultView: ViewType.AGENDA,
+        initialDate: new Date(),
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### 연간(Year) 뷰
+
+연간 뷰는 한 해 전체를 한눈에 보여 줍니다. DayFlow의 연간 뷰는 `year-canvas`(연속 그리드), `fixed-week`(52주 고정 열), `grid`(히트맵에 적합한 4×3 월 그리드) 세 가지 모드를 지원합니다.
+
+#### 설정
+
+| 속성                        | 타입                                                 | 기본값           | 설명                                                                                                          |
+| :-------------------------- | :--------------------------------------------------- | :--------------- | :------------------------------------------------------------------------------------------------------------ |
+| `mode`                      | `'year-canvas' \| 'fixed-week' \| 'grid'`            | `'year-canvas'`  | 연간 뷰의 표시 모드입니다.                                                                                    |
+| `startOfWeek`               | `number`                                             | `1`              | 한 주의 시작 요일입니다(0 = 일요일, 1 = 월요일 등). `fixed-week`와 `grid` 모드에서 사용됩니다.                |
+| `showTimedEventsInYearView` | `boolean`                                            | `false`          | 연간 뷰에 시간이 지정된 이벤트를 표시할지 여부입니다(점, 표시자, 농도).                                       |
+| `gridDateClick`             | `'popup' \| 'day-view' \| 'none' \| function`        | `'popup'`        | (grid 모드) 날짜 셀을 클릭했을 때의 동작입니다.                                                               |
+| `gridDateDoubleClick`       | `'create-event' \| 'day-view' \| 'none' \| function` | `'create-event'` | (grid 모드) 날짜 셀을 더블 클릭했을 때의 동작입니다. `'create-event'`(기본값)는 9:00~10:00 이벤트를 만듭니다. |
+| `gridHeatmapLevels`         | `number`                                             | `5`              | (grid 모드) 히트맵 농도 단계 수입니다.                                                                        |
+
+#### 히트맵 커스터마이징 (grid 모드)
+
+`mode: 'grid'`을 사용하면 캘린더가 히트맵처럼 동작하여, 각 날짜의 농도(색상)가 이벤트 수에 따라 결정됩니다. 전역 CSS에서 다음 CSS 변수를 재정의해 색상을 바꿀 수 있습니다:
+
+```css
+/* Light Mode Heatmap */
+.df-year-grid-month {
+  --heat-1: #ebf5ff;
+  --heat-2: #cfe8ff;
+  --heat-3: #91d5ff;
+  --heat-4: #60a5fa;
+  --heat-5: #3b82f6;
+}
+
+/* Dark Mode Heatmap */
+.dark .df-year-grid-month {
+  --heat-1: #1e3a5f;
+  --heat-2: #2563eb;
+  --heat-3: #1e40af;
+  --heat-4: #3b82f6;
+  --heat-5: #93c5fd;
+}
+```
+
+`gridHeatmapLevels`를 다른 값(예: `3`)으로 바꾼다면, 그 수에 맞춰 변수도 함께 정의해야 합니다(예: `--heat-1`부터 `--heat-3`까지).
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createYearView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          createYearView({
+            mode: 'grid',
+            showTimedEventsInYearView: true,
+            gridHeatmapLevels: 5,
+          }),
+        ],
+        defaultView: ViewType.YEAR,
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createYearView, ViewType } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [
+        createYearView({
+          mode: 'grid',
+          showTimedEventsInYearView: true,
+          gridHeatmapLevels: 5,
+        }),
+      ],
+      defaultView: ViewType.YEAR,
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createYearView, ViewType } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createYearView({
+            mode: 'grid',
+            showTimedEventsInYearView: true,
+            gridHeatmapLevels: 5,
+          }),
+        ],
+        defaultView: ViewType.YEAR,
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createYearView, ViewType } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [
+          createYearView({
+            mode: 'grid',
+            showTimedEventsInYearView: true,
+            gridHeatmapLevels: 5,
+          }),
+        ],
+        defaultView: ViewType.YEAR,
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 여러 뷰 함께 사용하기
+
+여러 뷰를 등록해 사용자가 서로 전환할 수 있게 할 수 있습니다:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createAgendaView,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createYearView,
+      ViewType,
+    } from '@dayflow/react';
+
+    function MultiViewCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({ daysToShow: 10 }),
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        callbacks: {
+          onViewChange: view => {
+            console.log('View changed to:', view);
+          },
+        },
+      });
+
+      return (
+        <div className='h-screen'>
+          <DayFlowCalendar calendar={calendar} />
+        </div>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <div class="h-screen">
+        <DayFlowCalendar :calendar="calendar" />
+      </div>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import {
+      createAgendaView,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createYearView,
+      ViewType,
+    } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [
+        createAgendaView({ daysToShow: 10 }),
+        createDayView(),
+        createWeekView(),
+        createMonthView(),
+        createYearView(),
+      ],
+      defaultView: ViewType.MONTH,
+      initialDate: new Date(),
+      callbacks: {
+        onViewChange: (view) => {
+          console.log('View changed to:', view);
+        },
+      },
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import {
+      createAgendaView,
+      createDayView,
+      createWeekView,
+      createMonthView,
+      createYearView,
+      ViewType,
+    } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <div class="h-screen">
+          <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+        </div>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createAgendaView({ daysToShow: 10 }),
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        callbacks: {
+          onViewChange: (view: any) => {
+            console.log('View changed to:', view);
+          },
+        },
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import {
+        createAgendaView,
+        createDayView,
+        createWeekView,
+        createMonthView,
+        createYearView,
+        ViewType,
+      } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [
+          createAgendaView({ daysToShow: 10 }),
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        defaultView: ViewType.MONTH,
+        initialDate: new Date(),
+        callbacks: {
+          onViewChange: (view) => {
+            console.log('View changed to:', view);
+          },
+        },
+      });
+    </script>
+
+    <div class="h-screen">
+      <DayFlowCalendar {calendar} />
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 코드로 뷰 제어하기
+
+### 뷰 전환
+
+```tsx
+// Change to a specific view
+calendar.changeView(ViewType.WEEK);
+
+// Get current view
+const currentView = calendar.app.getCurrentView();
+console.log(currentView.type); // 'week'
+```
+
+### 탐색
+
+모든 뷰가 동일한 탐색 메서드를 지원합니다:
+
+```tsx
+// Go to today
+calendar.goToToday();
+
+// Go to previous period (day/week/month/agenda/year depending on current view)
+calendar.goToPrevious();
+
+// Go to next period
+calendar.goToNext();
+
+// Go to a specific date
+calendar.selectDate(new Date(2024, 9, 15));
+```
+
+## ViewType 열거형
+
+```tsx
+enum ViewType {
+  DAY = 'day',
+  WEEK = 'week',
+  MONTH = 'month',
+  AGENDA = 'agenda',
+  YEAR = 'year',
+}
+```

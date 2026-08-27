@@ -1,0 +1,172 @@
+---
+title: 'ドラッグ＆ドロップ プラグイン'
+---
+
+# ドラッグ＆ドロップ プラグイン
+
+ドラッグ＆ドロッププラグインは、カレンダーグリッド上で直接イベントを移動、リサイズ、作成できるインタラクティブなイベント管理機能を提供します。
+
+## インストール
+
+お好みのパッケージマネージャーを使用してプラグインをインストールします：
+
+<PackageTabs pkg='@dayflow/plugin-drag' />
+
+```tsx
+import { createDragPlugin } from '@dayflow/plugin-drag';
+```
+
+## 使い方
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+
+    function MyCalendar() {
+      const dragPlugin = createDragPlugin({
+        enableDrag: true,
+        enableResize: true,
+        enableCreate: true,
+        onEventDrop: (updated, original) => {
+          console.log('Event moved:', updated);
+        },
+        onEventResize: (updated, original) => {
+          console.log('Event resized:', updated);
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* ビュー */
+        ],
+        plugins: [dragPlugin],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+
+    const dragPlugin = createDragPlugin({
+      enableDrag: true,
+      enableResize: true,
+      enableCreate: true,
+      onEventDrop: (updated, original) => {
+        console.log('Event moved:', updated);
+      },
+      onEventResize: (updated, original) => {
+        console.log('Event resized:', updated);
+      },
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* ビュー */
+      ],
+      plugins: [dragPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createDragPlugin } from '@dayflow/plugin-drag';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* ビュー */
+        ],
+        plugins: [
+          createDragPlugin({
+            enableDrag: true,
+            enableResize: true,
+            enableCreate: true,
+            onEventDrop: (updated, original) => {
+              console.log('Event moved:', updated);
+            },
+            onEventResize: (updated, original) => {
+              console.log('Event resized:', updated);
+            },
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createDragPlugin } from '@dayflow/plugin-drag';
+
+      const dragPlugin = createDragPlugin({
+        enableDrag: true,
+        enableResize: true,
+        enableCreate: true,
+        onEventDrop: (updated, original) => {
+          console.log('Event moved:', updated);
+        },
+        onEventResize: (updated, original) => {
+          console.log('Event resized:', updated);
+        },
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* ビュー */
+        ],
+        plugins: [dragPlugin],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 設定項目
+
+| プロパティ           | 型           | デフォルト値               | 説明                                                           |
+| :------------------- | :----------- | :------------------------- | :------------------------------------------------------------- |
+| `enableDrag`         | `boolean`    | `true`                     | ドラッグによるイベントの移動を許可するかどうか。               |
+| `enableResize`       | `boolean`    | `true`                     | ドラッグによるイベント期間の変更を許可するかどうか。           |
+| `enableCreate`       | `boolean`    | `true`                     | グリッドのダブルクリックによるイベント作成を許可するかどうか。 |
+| `enableAllDayCreate` | `boolean`    | `true`                     | 終日行でのドラッグによる終日イベントの作成を許可するかどうか。 |
+| `supportedViews`     | `ViewType[]` | `[DAY, WEEK, MONTH, YEAR]` | ドラッグ機能が有効になるビューのリスト。                       |
+| `onEventDrop`        | `Function`   | -                          | イベントが移動（ドラッグ＆ドロップ）された時のコールバック。   |
+| `onEventResize`      | `Function`   | -                          | イベントがリサイズされた時のコールバック。                     |
+
+## プラグイン API
+
+ドラッグサービスにアクセスして、設定を動的に更新できます：
+
+```tsx
+const dragService = calendar.app.getPlugin<DragService>('drag');
+
+// 動的にリサイズ機能を無効にする
+dragService.updateConfig({ enableResize: false });
+```

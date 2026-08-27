@@ -1,0 +1,190 @@
+---
+title: '@dayflow/sync-core'
+---
+
+# @dayflow/sync-core
+
+`@dayflow/sync-core`에는 DayFlow 동기화 연동에서 사용하는 제공자 중립적인 조정(reconciliation) 헬퍼가 들어 있습니다. 대부분의 애플리케이션은 이 패키지를 직접 가져올 필요가 없습니다. 먼저 제공자 패키지를 사용하세요:
+
+- CalDAV 서버에는 [`@dayflow/caldav`](/docs-ko/caldav/caldav)
+- Google 캘린더에는 [`@dayflow/google-sync`](/docs-ko/caldav/google-sync)
+- Outlook 캘린더에는 [`@dayflow/outlook-sync`](/docs-ko/caldav/outlook-sync)
+
+직접 제공자를 만들거나, 백엔드 작업으로 동기화하거나, 제품 전용 캘린더·이벤트 데이터베이스를 원격 제공자 레코드와 맞춰야 할 때 `@dayflow/sync-core`를 사용하세요.
+
+## 설치
+
+<PackageTabs pkg='@dayflow/sync-core' />
+
+## 담당 범위
+
+`@dayflow/sync-core`는 제공자에 종속되지 않는 diff·적용 계층을 담당합니다:
+
+| 헬퍼                           | 사용하는 상황                                                                     |
+| :----------------------------- | :-------------------------------------------------------------------------------- |
+| `applyProviderEventsToDayFlow` | 제공자 바인딩이 이미 DayFlow 이벤트로 매핑하고 삭제된 원격 참조를 확보한 경우     |
+| `applyRemoteSnapshot`          | 전체 또는 일부 제공자 스냅숏이 있고 이를 `CalendarApp`에 적용하려는 경우          |
+| `reconcileProviderCalendars`   | 원격 캘린더를 자체 데이터베이스 레코드로 동기화하는 경우                          |
+| `reconcileProviderEvents`      | 원격 이벤트를 자체 데이터베이스로 동기화하면서 정규화된 변경 레코드가 필요한 경우 |
+
+제공자 어댑터, 인증 흐름, 토큰 갱신, 자격 증명 저장, 히스토리 영속화, 백그라운드 작업, 재시도 큐, 데이터베이스 스키마는 제공하지 않습니다.
+
+## 제공자 이벤트를 DayFlow에 적용하기
+
+제공자 패키지는 원격 이벤트를 DayFlow `Event` 객체로 변환한 뒤 `applyProviderEventsToDayFlow`를 호출합니다. 기존 이벤트를 먼저 제공자 식별자로, 그다음 DayFlow ID로 대조하고, 동기화 루프를 막기 위해 `source: 'remote'`로 변경 사항을 적용합니다.
+
+```ts
+import { applyProviderEventsToDayFlow } from '@dayflow/sync-core';
+
+const delta = applyProviderEventsToDayFlow({
+  app: calendar.app,
+  events: mappedRemoteEvents,
+  deleted: deletedRemoteRefs,
+  getProviderEventId: event => event.meta?.myProvider?.href,
+  getDeletedProviderEventId: deleted => deleted.href,
+  resolveUpdate: (remote, existing) => ({
+    ...remote,
+    meta: {
+      ...existing.meta,
+      ...remote.meta,
+    },
+  }),
+});
+
+console.log(delta.added, delta.updated, delta.deleted);
+```
+
+CalDAV의 `href`, Google 이벤트 id, Graph 이벤트 id처럼 안정적인 제공자 식별자를 사용하세요. 그래야 나중에 DayFlow id 전략을 바꾸더라도 로컬 상태에 이벤트가 중복되지 않습니다.
+
+## 원격 스냅숏 적용하기
+
+`applyRemoteSnapshot`은 DayFlow 캘린더와 이벤트의 스냅숏을 앱에 반영합니다.
+
+```ts
+import { applyRemoteSnapshot } from '@dayflow/sync-core';
+
+const delta = await applyRemoteSnapshot(
+  calendar.app,
+  {
+    calendars: remoteCalendars,
+    events: remoteEvents,
+  },
+  {
+    isOwnedCalendar: calendar => calendar.source === 'Custom Provider',
+    isOwnedEvent: event => event.meta?.provider === 'custom',
+    resolveConflict: (remote, local) => ({
+      ...remote,
+      meta: {
+        ...local.meta,
+        ...remote.meta,
+      },
+    }),
+    snapshotMode: 'authoritative',
+  }
+);
+```
+
+까다로운 부분은 삭제입니다. `snapshotMode`의 기본값은 `'partial'`이므로, 스냅숏에 없는 로컬 소유 레코드는 그대로 보존됩니다. 표시 범위 동기화, 필터링된 조회, 페이지 단위 제공자 응답에는 이 방식이 안전합니다:
+
+```ts
+await applyRemoteSnapshot(calendar.app, partialSnapshot, {
+  isOwnedCalendar,
+  isOwnedEvent,
+  snapshotMode: 'partial',
+});
+```
+
+`snapshotMode: 'authoritative'`는 스냅숏이 제공자가 소유한 모든 캘린더와 이벤트를 온전히 담고 있을 때만 사용하세요. 제공자별 정리 정책을 위한 하위 수준 플래그 `deleteMissingCalendars`와 `deleteMissingEvents`도 그대로 남아 있습니다.
+
+## 데이터베이스 레코드 조정하기
+
+애플리케이션이 제공자 레코드를 데이터베이스에 저장한 뒤 DayFlow에 적용한다면 `reconcileProviderCalendars`와 `reconcileProviderEvents`를 사용하세요.
+
+```ts
+import {
+  reconcileProviderCalendars,
+  reconcileProviderEvents,
+} from '@dayflow/sync-core';
+
+const calendarResult = await reconcileProviderCalendars({
+  provider: 'custom',
+  remoteCalendars,
+  existingCalendars: await db.calendar.findMany({ where: { accountId } }),
+  getRemoteCalendarId: remote => remote.id,
+  getRecordId: record => record.id,
+  getRecordExternalCalendarId: record => record.externalCalendarId,
+  mapRemoteCalendar: (remote, existing) => ({
+    id: existing?.id ?? crypto.randomUUID(),
+    accountId,
+    provider: 'custom',
+    externalCalendarId: remote.id,
+    name: remote.name,
+    color: remote.color ?? null,
+    readOnly: remote.readOnly,
+    syncEnabled: existing?.syncEnabled ?? true,
+    syncToken: existing?.syncToken ?? null,
+    syncStatus: 'idle',
+  }),
+  save: records => db.calendar.upsertMany(records),
+  deactivate: records =>
+    db.calendar.updateMany(
+      records.map(record => ({ ...record, syncEnabled: false }))
+    ),
+});
+
+const eventResult = await reconcileProviderEvents({
+  provider: 'custom',
+  calendarId: localCalendar.id,
+  remoteEvents,
+  deletedRemoteEvents,
+  existingRecords: await db.event.findMany({
+    where: { calendarId: localCalendar.id },
+  }),
+  getRemoteEventId: remote => remote.id,
+  getDeletedRemoteEventId: deleted => deleted.id,
+  getRecordExternalEventId: record => record.externalEventId,
+  isRecordDeleted: record => Boolean(record.deletedAt),
+  mapRemoteEvent: (remote, existing) => ({
+    id: existing?.id ?? crypto.randomUUID(),
+    accountId,
+    calendarId: localCalendar.id,
+    provider: 'custom',
+    externalEventId: remote.id,
+    title: remote.title,
+    description: remote.description ?? null,
+    startsAt: remote.startsAt,
+    endsAt: remote.endsAt,
+    timezone: remote.timezone ?? null,
+    allDay: remote.allDay,
+    location: remote.location ?? null,
+    rawData: remote,
+    externalUpdatedAt: remote.updatedAt ?? null,
+    localUpdatedAt: existing?.localUpdatedAt ?? null,
+    syncStatus: 'synced',
+    deletedAt: null,
+  }),
+  save: records => db.event.upsertMany(records),
+  softDelete: record =>
+    db.event.update(record.id, { deletedAt: new Date().toISOString() }),
+});
+
+await db.syncHistory.insertMany([
+  ...calendarResult.changes,
+  ...eventResult.changes,
+]);
+```
+
+이 헬퍼들은 `calendar.created`, `event.updated`, `event.deleted` 같은 정규화된 변경 객체를 반환합니다. 그 변경을 감사 로그로 남길지, 알림으로 보낼지, 분석에 쓸지, 아무것도 하지 않을지는 애플리케이션이 결정합니다.
+
+## 쓰지 않아도 되는 경우
+
+표준 원격 캘린더를 연결하려는 목적만으로 `@dayflow/sync-core`를 추가하지 마세요. 제공자 패키지들이 이미 내부적으로 알맞은 `sync-core` 헬퍼를 사용하고 있으며, 제공자별 매핑·메타데이터·권한·원격 반영 동작·DayFlow 연결 컨트롤러까지 함께 제공합니다.
+
+다음 경계를 넘을 때만 직접 사용하세요:
+
+| 경계                      | sync-core가 도움이 되는 이유                                                          |
+| :------------------------ | :------------------------------------------------------------------------------------ |
+| 직접 만드는 제공자 패키지 | 공식 제공자와 동일한 DayFlow 적용 동작을 공유할 수 있습니다.                          |
+| 백엔드 주도 동기화        | DayFlow를 렌더링하기 전에 제공자 레코드를 데이터베이스에서 조정할 수 있습니다.        |
+| 감사·히스토리 파이프라인  | 히스토리를 제공자 어댑터에 묶지 않고 정규화된 `SyncChange` 객체를 소비할 수 있습니다. |
+| id 전략 마이그레이션      | DayFlow 로컬 id를 바꾸면서도 안정적인 제공자 식별자로 대조할 수 있습니다.             |

@@ -2,6 +2,7 @@ import { generate as DefaultImage } from 'fumadocs-ui/og';
 import { notFound } from 'next/navigation';
 import { ImageResponse } from 'next/og';
 
+import type { LanguageCode } from '@/lib/i18n';
 import { getPageImage, source } from '@/lib/source';
 
 export const dynamic = 'force-static';
@@ -12,7 +13,9 @@ export async function GET(
   { params }: RouteContext<'/og/docs/[...slug]'>
 ) {
   const { slug } = await params;
-  const page = source.getPage(slug.slice(0, -1));
+  // `[locale, ...pageSlugs, 'image.png']` — see `getPageImage`.
+  const [locale, ...rest] = slug;
+  const page = source.getPage(rest.slice(0, -1), locale as LanguageCode);
   if (!page) notFound();
 
   return new ImageResponse(
@@ -29,8 +32,9 @@ export async function GET(
 }
 
 export function generateStaticParams() {
+  // No locale argument: every language gets its own image, and the locale-led
+  // segments keep identically-slugged pages from colliding.
   return source.getPages().map(page => ({
-    lang: page.locale,
     slug: getPageImage(page).segments,
   }));
 }

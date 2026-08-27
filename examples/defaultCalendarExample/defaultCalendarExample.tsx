@@ -6,7 +6,7 @@ import {
   ViewType,
 } from '@dayflow/core';
 import { createDragPlugin } from '@dayflow/plugin-drag';
-import { createLocalizationPlugin, zh } from '@dayflow/plugin-localization';
+import { createLocalizationPlugin, zh, fr } from '@dayflow/plugin-localization';
 import {
   useCalendarApp,
   DayFlowCalendar,
@@ -97,7 +97,7 @@ const DefaultCalendarExample: React.FC<{
           showEventDots: true,
         }),
         createLocalizationPlugin({
-          locales: [zh],
+          locales: [zh, fr],
         }),
         createKeyboardShortcutsPlugin({
           callbacks: {
@@ -183,8 +183,8 @@ const DefaultCalendarExample: React.FC<{
         });
         console.log('create event:', event);
       },
-      onEventClick: (event: Event) => {
-        console.log('click event:', event);
+      onEventClick: (event: Event, e: MouseEvent) => {
+        console.log('click event:', event, e);
       },
       onEventDoubleClick: (event: Event) => {
         console.log('double click event:', event);
@@ -245,11 +245,13 @@ const DefaultCalendarExample: React.FC<{
     theme: { mode: themeMode },
     events: events,
     calendars,
+    eventDetailTrigger: 'click',
     defaultCalendar: 'work',
+    // switcherMode: 'select',
     // useEventDetailDialog: true,
     // switcherMode: 'select',
     plugins,
-    // locale: zh,
+    locale: 'zh',
     defaultView: ViewType.MONTH,
     // useEventDetailDialog: true,
     // switcherMode: 'select' as const,

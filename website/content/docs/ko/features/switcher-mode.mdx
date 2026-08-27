@@ -1,0 +1,95 @@
+---
+title: '뷰 전환기 모드'
+---
+
+import { SwitcherModeShowcase } from '@/components/showcase/FeatureShowcase';
+
+# 뷰 전환기 모드
+
+`switcherMode` 옵션은 헤더의 뷰 전환기를 어떤 형태로 렌더링할지 결정합니다. 라이브러리는 서로 다른 레이아웃에 맞춘 두 가지 모드를 제공합니다:
+
+- **`buttons`** – 가운데 정렬된 버튼 그룹으로, 데스크톱에 적합한 기본 레이아웃입니다.
+- **`select`** – 전환기를 드롭다운으로 압축합니다. 모바일이나 공간이 좁은 툴바에 적합합니다.
+
+아래 대화형 예제에서 동일한 데이터와 설정으로 두 모드를 비교해 보세요.
+
+<SwitcherModeShowcase />
+
+## 빠른 시작
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createMonthView,
+    } from '@dayflow/react';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      switcherMode: 'select', // default switcherMode: 'buttons'
+    });
+
+    <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createMonthView } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      switcherMode: 'select', // default switcherMode: 'buttons'
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createMonthView } from '@dayflow/core';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createMonthView()],
+        switcherMode: 'select', // default switcherMode: 'buttons'
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        switcherMode: 'select', // default switcherMode: 'buttons'
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+`switcherMode`를 `'buttons'`와 `'select'` 사이에서 바꿔 보면 두 방식의 차이를 바로 확인할 수 있습니다.

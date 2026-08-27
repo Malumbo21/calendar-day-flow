@@ -1,0 +1,95 @@
+---
+title: 'Modi des Ansichtsumschalters'
+---
+
+import { SwitcherModeShowcase } from '@/components/showcase/FeatureShowcase';
+
+# Modi des Ansichtsumschalters
+
+Die Option `switcherMode` steuert, wie der Ansichtsumschalter in der Kopfzeile dargestellt wird. Die Bibliothek bringt zwei Modi für unterschiedliche Layouts mit:
+
+- **`buttons`** – das voreingestellte, desktopfreundliche Layout mit zentrierter Schaltflächengruppe.
+- **`select`** – fasst den Umschalter zu einem Auswahlmenü zusammen, ideal für Mobilgeräte oder kompakte Toolbars.
+
+Vergleichen Sie beide Modi im interaktiven Beispiel unten – mit identischen Daten und identischer Konfiguration.
+
+<SwitcherModeShowcase />
+
+## Schnellstart
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createMonthView,
+    } from '@dayflow/react';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      switcherMode: 'select', // default switcherMode: 'buttons'
+    });
+
+    <DayFlowCalendar calendar={calendar} />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createMonthView } from '@dayflow/core';
+
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+      switcherMode: 'select', // default switcherMode: 'buttons'
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createMonthView } from '@dayflow/core';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [createMonthView()],
+        switcherMode: 'select', // default switcherMode: 'buttons'
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        switcherMode: 'select', // default switcherMode: 'buttons'
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+Schalten Sie `switcherMode` zwischen `'buttons'` und `'select'` um, um beide Varianten sofort zu sehen.

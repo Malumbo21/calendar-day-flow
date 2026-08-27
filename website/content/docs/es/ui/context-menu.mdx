@@ -1,0 +1,185 @@
+---
+title: Menú contextual
+---
+
+# Menú contextual
+
+Un menú contextual componible, basado en portales, para la interfaz de DayFlow. Admite submenús anidados, etiquetas, separadores y un selector de color integrado. Se cierra solo al hacer clic fuera, al desplazarse, al redimensionar o al pulsar `Escape`.
+
+## Instalación
+
+<PackageTabs pkg='@dayflow/ui-context-menu' />
+
+En proyectos que ya usan Tailwind CSS, importa el bundle de solo componentes:
+
+```css
+@import '@dayflow/ui-context-menu/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+En proyectos sin Tailwind CSS, importa en su lugar la hoja de estilos completa:
+
+```tsx
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuLabel,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
+  ContextMenuSubContent,
+  ContextMenuColorPicker,
+} from '@dayflow/ui-context-menu';
+import '@dayflow/ui-context-menu/dist/styles.css';
+```
+
+## Uso básico
+
+Renderiza `ContextMenu` en la posición del cursor capturada desde un evento `contextmenu`.
+
+```tsx
+import { useState } from 'react';
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from '@dayflow/ui-context-menu';
+
+function MyComponent() {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  return (
+    <div onContextMenu={handleContextMenu}>
+      Right-click here
+      {menu && (
+        <ContextMenu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          <ContextMenuItem onClick={() => console.log('Edit')}>
+            Edit
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => console.log('Copy')}>
+            Copy
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => console.log('Delete')} danger>
+            Delete
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+    </div>
+  );
+}
+```
+
+## Con etiquetas e iconos
+
+```tsx
+<ContextMenu x={x} y={y} onClose={onClose}>
+  <ContextMenuLabel>Actions</ContextMenuLabel>
+  <ContextMenuItem icon={<PencilIcon />} onClick={() => onEdit()}>
+    Edit Event
+  </ContextMenuItem>
+  <ContextMenuItem icon={<CopyIcon />} onClick={() => onDuplicate()}>
+    Duplicate
+  </ContextMenuItem>
+  <ContextMenuSeparator />
+  <ContextMenuItem icon={<TrashIcon />} onClick={() => onDelete()} danger>
+    Delete
+  </ContextMenuItem>
+</ContextMenu>
+```
+
+## Submenús anidados
+
+Envuelve los elementos con `ContextMenuSub` para crear submenús que se abren al pasar el ratón. El submenú se reposiciona automáticamente para no salirse de la ventana.
+
+```tsx
+<ContextMenu x={x} y={y} onClose={onClose}>
+  <ContextMenuItem onClick={() => onEdit()}>Edit</ContextMenuItem>
+  <ContextMenuSub>
+    <ContextMenuSubTrigger>Move to</ContextMenuSubTrigger>
+    <ContextMenuSubContent>
+      <ContextMenuItem onClick={() => onMove('work')}>Work</ContextMenuItem>
+      <ContextMenuItem onClick={() => onMove('personal')}>
+        Personal
+      </ContextMenuItem>
+    </ContextMenuSubContent>
+  </ContextMenuSub>
+  <ContextMenuSeparator />
+  <ContextMenuItem danger onClick={() => onDelete()}>
+    Delete
+  </ContextMenuItem>
+</ContextMenu>
+```
+
+## Selector de color
+
+`ContextMenuColorPicker` renderiza una fila de muestras predefinidas y, opcionalmente, una acción de «Color personalizado».
+
+```tsx
+<ContextMenu x={x} y={y} onClose={onClose}>
+  <ContextMenuLabel>Calendar Color</ContextMenuLabel>
+  <ContextMenuColorPicker
+    selectedColor={currentColor}
+    onSelect={color => {
+      updateCalendarColor(color);
+      onClose();
+    }}
+    onCustomColor={() => openColorDialog()}
+    customColorLabel='Custom color...'
+  />
+</ContextMenu>
+```
+
+## Elementos desactivados
+
+```tsx
+<ContextMenuItem onClick={() => onPaste()} disabled={!hasClipboard}>
+  Paste
+</ContextMenuItem>
+```
+
+## Referencia de la API
+
+### `ContextMenu`
+
+| Prop        | Tipo                | Descripción                                        |
+| :---------- | :------------------ | :------------------------------------------------- |
+| `x`         | `number`            | Posición horizontal (por ejemplo, `event.clientX`) |
+| `y`         | `number`            | Posición vertical (por ejemplo, `event.clientY`)   |
+| `onClose`   | `() => void`        | Se llama cuando el menú debe cerrarse              |
+| `children`  | `ComponentChildren` | Elementos del menú                                 |
+| `className` | `string`            | Clases CSS adicionales para el contenedor del menú |
+
+### `ContextMenuItem`
+
+| Prop       | Tipo                | Valor por defecto | Descripción                                          |
+| :--------- | :------------------ | :---------------- | :--------------------------------------------------- |
+| `onClick`  | `() => void`        | —                 | Manejador del clic                                   |
+| `children` | `ComponentChildren` | —                 | Etiqueta del elemento                                |
+| `icon`     | `ComponentChildren` | —                 | Icono que se muestra a la izquierda de la etiqueta   |
+| `danger`   | `boolean`           | `false`           | Muestra el elemento en rojo, como acción destructiva |
+| `disabled` | `boolean`           | `false`           | Hace que el elemento no sea interactivo              |
+
+### `ContextMenuColorPicker`
+
+| Prop               | Tipo                      | Valor por defecto | Descripción                                       |
+| :----------------- | :------------------------ | :---------------- | :------------------------------------------------ |
+| `selectedColor`    | `string`                  | —                 | Color activo en este momento (hex)                |
+| `onSelect`         | `(color: string) => void` | —                 | Se llama al pulsar una muestra                    |
+| `onCustomColor`    | `() => void`              | —                 | Se llama al pulsar la fila de color personalizado |
+| `customColorLabel` | `string`                  | `"Custom Color"`  | Etiqueta de la acción de color personalizado      |
+
+### Otras exportaciones
+
+| Componente              | Descripción                                             |
+| :---------------------- | :------------------------------------------------------ |
+| `ContextMenuSeparator`  | Línea divisoria horizontal                              |
+| `ContextMenuLabel`      | Encabezado de sección, no interactivo                   |
+| `ContextMenuSub`        | Contenedor que gestiona el estado abierto de un submenú |
+| `ContextMenuSubTrigger` | Fila que despliega el submenú al pasar el ratón         |
+| `ContextMenuSubContent` | El panel flotante del submenú                           |

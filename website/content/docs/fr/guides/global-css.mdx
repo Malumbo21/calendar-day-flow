@@ -1,0 +1,523 @@
+---
+title: 'Classes CSS globales'
+---
+
+# Classes CSS globales
+
+DayFlow fournit un ensemble de classes CSS préfixées `df-` qui permettent de personnaliser l'apparence des composants du calendrier. Elles sont pensées pour styliser facilement, sans modifier la bibliothèque.
+
+## Choisir le bon point d'entrée CSS
+
+Choisissez la feuille de style selon que votre application utilise déjà Tailwind CSS ou non :
+
+| Point d'entrée          | Contenu                                         | À utiliser quand             |
+| ----------------------- | ----------------------------------------------- | ---------------------------- |
+| `styles.css`            | Bundle complet, préflight Tailwind inclus       | Vous n'utilisez pas Tailwind |
+| `styles.components.css` | Styles de composants uniquement, sans reset CSS | Vous utilisez déjà Tailwind  |
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+Pour surcharger le thème, privilégiez les variables `--df-color-*` ou les classes sémantiques stables `df-*` documentées ci-dessous.
+
+## Sommaire
+
+- [Classes communes](#classes-communes)
+- [Classes utilitaires sémantiques](#classes-utilitaires-sémantiques)
+- [Utilitaires de mise en page et animation](#utilitaires-de-mise-en-page-et-animation)
+- [Classes de la vue Jour](#vue-jour)
+- [Classes de la vue Semaine](#vue-semaine)
+- [Classes de la vue Mois](#vue-mois)
+- [Classes de la vue Année](#vue-année)
+- [Classes du mini-calendrier](#mini-calendrier)
+- [Classes de la barre latérale](#barre-latérale)
+- [Classes de navigation](#navigation)
+- [Classes de détail des événements](#détail-des-événements)
+- [Classes des content slots](#content-slots)
+- [Attributs de statut des événements](#attributs-de-statut-des-événements)
+
+---
+
+## Classes communes
+
+Classes CSS communes, utilisées dans toutes les vues du calendrier.
+
+| Nom de classe              | Description                                                                                   |
+| -------------------------- | --------------------------------------------------------------------------------------------- |
+| `df-calendar-container`    | Conteneur racine externe de la barre latérale et du calendrier ; gère `--df-calendar-height`. |
+| `df-calendar`              | Conteneur principal du calendrier (en-tête et contenu de la vue)                              |
+| `df-header`                | Section d'en-tête du calendrier (titre, bouton Aujourd'hui et sélecteur de vue)               |
+| `df-header-left`           | Partie gauche de l'en-tête (titre et boutons de navigation)                                   |
+| `df-header-mid`            | Partie centrale de l'en-tête (titre de la plage de dates courante)                            |
+| `df-header-right`          | Partie droite de l'en-tête (sélecteur de vue et recherche)                                    |
+| `df-navigation`            | Conteneur des commandes de navigation                                                         |
+| `df-view-header-container` | Conteneur partagé de l'en-tête secondaire de la vue                                           |
+| `df-view-header-title`     | Classe de texte partagée pour le titre des en-têtes de vue                                    |
+| `df-view-header-subtitle`  | Classe de texte partagée pour le sous-titre des en-têtes de vue                               |
+| `df-event`                 | Classe de base de tous les événements                                                         |
+| `df-event-title`           | Texte du titre de l'événement                                                                 |
+| `df-event-time`            | Texte de l'heure de l'événement                                                               |
+| `df-event-color-bar`       | Barre colorée à gauche des événements (vues Jour et Semaine)                                  |
+| `df-month-event-color-bar` | Indicateur coloré des événements ordinaires (vue Mois)                                        |
+| `df-all-day-row`           | Conteneur de la ligne des événements sur la journée entière                                   |
+| `df-all-day-label`         | Texte du libellé « journée entière »                                                          |
+| `df-all-day-content`       | Zone de contenu des événements sur la journée entière                                         |
+| `df-all-day-cell`          | Cellule individuelle d'un événement sur la journée entière                                    |
+| `df-date-number`           | Affichage du numéro de jour                                                                   |
+| `df-current-time-line`     | Conteneur de l'indicateur d'heure actuelle                                                    |
+| `df-current-time-label`    | Texte du libellé d'heure actuelle                                                             |
+| `df-current-time-bar`      | Ligne horizontale de l'heure actuelle                                                         |
+| `df-calendar-checkbox`     | Style de case à cocher partagé par les listes de calendriers et commandes associées           |
+| `df-portal`                | Classe racine de portée pour les surfaces flottantes rendues par portail                      |
+| `df-range-picker`          | Classe racine de portée pour le popup et le conteneur du sélecteur de plage                   |
+
+---
+
+## Classes utilitaires sémantiques
+
+DayFlow expose désormais un ensemble stable de classes sémantiques `df-*` pour les états internes : boutons sélectionnés, dates mises en évidence, actions destructives et anneaux de focus. Elles sont définies dans la CSS de base partagée et peuvent être ciblées sans risque depuis votre propre feuille de style.
+
+Utilisez ces classes pour aligner votre contenu personnalisé, l'interface d'un plugin ou la sortie d'un content slot sur les tokens de thème de DayFlow :
+
+| Nom de classe             | Rôle                                                               |
+| ------------------------- | ------------------------------------------------------------------ |
+| `df-fill-primary`         | Fond rempli en couleur primaire + texte de premier plan assorti    |
+| `df-fill-secondary`       | Fond rempli en couleur secondaire + texte de premier plan assorti  |
+| `df-fill-destructive`     | Fond rempli en couleur destructive + texte de premier plan assorti |
+| `df-tint-primary`         | Teinte primaire à 10 % + texte primaire                            |
+| `df-tint-primary-md`      | Teinte primaire à 20 % + texte primaire                            |
+| `df-tint-primary-lg`      | Teinte primaire à 30 % + texte primaire                            |
+| `df-hover-primary`        | État survolé teinté en couleur primaire                            |
+| `df-hover-primary-md`     | État survolé primaire plus prononcé                                |
+| `df-hover-primary-solid`  | État survolé plein pour les boutons remplis                        |
+| `df-hover-base`           | Fond survolé par défaut, avec le token de survol de DayFlow        |
+| `df-hover-muted`          | Fond survolé atténué                                               |
+| `df-hover-destructive`    | État survolé destructif                                            |
+| `df-text-primary`         | Couleur de texte primaire                                          |
+| `df-text-muted`           | Couleur de texte atténuée                                          |
+| `df-text-primary-fg`      | Couleur de texte sur fond rempli en couleur primaire               |
+| `df-text-secondary-fg`    | Couleur de texte sur fond rempli en couleur secondaire             |
+| `df-text-destructive`     | Couleur de texte destructive                                       |
+| `df-text-destructive-fg`  | Couleur de texte sur fond rempli en couleur destructive            |
+| `df-bg-base`              | Fond de surface de base                                            |
+| `df-bg-card`              | Fond de surface de carte                                           |
+| `df-bg-sidebar`           | Fond atténué, style barre latérale                                 |
+| `df-bg-secondary`         | Fond atténué secondaire                                            |
+| `df-bg-tertiary`          | Fond tertiaire / surface de séparation                             |
+| `df-border-base`          | Bordure de base                                                    |
+| `df-border-light`         | Bordure plus claire / plus douce                                   |
+| `df-border-strong`        | Bordure marquée, avec le token primaire                            |
+| `df-border-primary`       | Couleur de bordure primaire                                        |
+| `df-border-primary-soft`  | Couleur de bordure primaire adoucie                                |
+| `df-ring-primary`         | Couleur de l'anneau primaire de focus / sélection                  |
+| `df-ring-primary-solid`   | Couleur pleine de l'anneau primaire                                |
+| `df-shadow-sm`            | Ombre portée légère                                                |
+| `df-shadow-md`            | Ombre portée moyenne                                               |
+| `df-shadow-primary`       | Token de couleur de l'ombre primaire                               |
+| `df-focus-ring`           | `border-color` et `ring-color` primaires combinés sur `:focus`     |
+| `df-focus-ring-only`      | `ring-color` primaire sur `:focus`, sans toucher à la bordure      |
+| `df-focus-border-primary` | Uniquement le `border-color` primaire sur `:focus`                 |
+
+Pour la thématisation, préférez ces classes ou les variables `--df-color-*`. Évitez de cibler d'anciennes combinaisons internes telles que `bg-primary`, `text-primary` ou `hover:bg-primary/90` sur les éléments internes de DayFlow : ces noms sémantiques Tailwind ne font plus partie du contrat public de style.
+
+---
+
+## Utilitaires de mise en page et animation
+
+Ces classes sont utiles pour que le contenu de vos slots ou l'interface d'un plugin héritent du comportement de mise en page et d'animation de DayFlow.
+
+| Nom de classe             | Rôle                                                                                         |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| `df-content-slot-stacked` | Fait occuper au content slot toute la hauteur disponible et empile son contenu verticalement |
+| `df-scrollbar-hide`       | Masque les barres de défilement tout en conservant le défilement                             |
+| `df-animate-in`           | Utilitaire de base pour le rythme des animations d'entrée                                    |
+| `df-fade-in`              | Utilitaire d'animation en fondu                                                              |
+| `df-zoom-in-95`           | Utilitaire de légère animation de zoom                                                       |
+| `df-animate-slide-up`     | Animation d'entrée par glissement vers le haut                                               |
+| `df-animate-slide-down`   | Animation de sortie par glissement vers le bas                                               |
+
+---
+
+## Vue Jour
+
+Classes CSS propres à la vue Jour.
+
+| Nom de classe       | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| `df-day-view`       | Conteneur de la vue Jour                                                   |
+| `df-day-event`      | Événement individuel dans la vue Jour                                      |
+| `df-day-time-grid`  | Conteneur de la grille horaire                                             |
+| `df-time-column`    | Colonne des heures (bande latérale gauche)                                 |
+| `df-time-slot`      | Conteneur d'un créneau horaire (colonne de gauche)                         |
+| `df-time-label`     | Texte du libellé horaire (par exemple « 13 h »)                            |
+| `df-time-grid-row`  | Ligne horizontale de la grille horaire                                     |
+| `df-time-grid-cell` | Cellule individuelle de la grille horaire                                  |
+| `df-right-panel`    | Panneau de droite de la vue Jour (mini-calendrier et liste des événements) |
+
+---
+
+## Vue Semaine
+
+Classes CSS propres à la vue Semaine.
+
+| Nom de classe        | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
+| `df-week-view`       | Conteneur de la vue Semaine                                |
+| `df-week-event`      | Événement individuel dans la vue Semaine                   |
+| `df-week-header`     | Conteneur de l'en-tête hebdomadaire avec les noms de jours |
+| `df-week-header-row` | Ligne d'en-tête fixe contenant les noms de jours           |
+| `df-week-day-cell`   | Cellule de jour individuelle dans l'en-tête                |
+| `df-time-column`     | Colonne des heures (bande latérale gauche)                 |
+| `df-time-slot`       | Conteneur d'un créneau horaire (colonne de gauche)         |
+| `df-time-label`      | Texte du libellé horaire                                   |
+| `df-time-grid-row`   | Ligne horizontale de la grille horaire                     |
+| `df-time-grid-cell`  | Cellule individuelle de la grille horaire                  |
+
+---
+
+## Vue Mois
+
+Classes CSS propres à la vue Mois.
+
+| Nom de classe                    | Description                                           |
+| -------------------------------- | ----------------------------------------------------- |
+| `df-month-view`                  | Conteneur de la vue Mois                              |
+| `df-month-grid`                  | Conteneur principal de la grille mensuelle            |
+| `df-month-day-cell`              | Cellule de jour individuelle dans la vue Mois         |
+| `df-month-date-number-container` | Conteneur de la zone du numéro de jour                |
+| `df-month-date-number`           | Numéro de jour dans la vue Mois                       |
+| `df-month-more-events`           | Indicateur « + x autres » pour les événements masqués |
+| `df-month-title`                 | Titre de mois flottant pendant le défilement          |
+
+---
+
+## Vue Année
+
+Classes CSS propres à la vue Année. Elles sont particulièrement utiles pour personnaliser l'apparence des événements dans la vue annuelle.
+
+| Nom de classe             | Description                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| `df-year-event`           | Conteneur externe de l'événement : englobe tout l'élément                     |
+| `df-event-year-content`   | Conteneur du contenu de l'événement : icône, titre et reste                   |
+| `df-event-year-title`     | Texte du titre de l'événement : à utiliser pour l'alignement, la police, etc. |
+| `df-event-icon-svg`       | SVG d'icône d'événement, utilisé par tous les rendus, y compris la vue Année  |
+| `df-event-year-indicator` | Indicateur coloré des événements horodatés : le point ou la barre de couleur  |
+| `df-year-grid-month`      | Conteneur de la carte de mois dans la vue Année en mode grille                |
+| `df-year-fixed-day-cell`  | Cellule de jour dans la vue Année à semaines fixes                            |
+
+---
+
+## Mini-calendrier
+
+Classes CSS du composant mini-calendrier (généralement dans la barre latérale ou la vue Jour).
+
+| Nom de classe                  | Description                                                       |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `df-mini-calendar`             | Conteneur du mini-calendrier                                      |
+| `df-mini-calendar-body`        | Conteneur du corps du mini-calendrier                             |
+| `df-mini-calendar-header-nav`  | Ligne de navigation entre les mois                                |
+| `df-mini-calendar-nav-btn`     | Bouton mois précédent / suivant                                   |
+| `df-mini-calendar-month-label` | Libellé du mois courant                                           |
+| `df-mini-calendar-grid`        | Conteneur de la grille des jours                                  |
+| `df-mini-calendar-header`      | Cellule d'en-tête de jour de semaine (par exemple « lu », « ma ») |
+| `df-mini-calendar-day`         | Classe de base du bouton de date du mini-calendrier               |
+| `df-mini-calendar-day-cell`    | Surface stylisée de la cellule de date                            |
+| `df-mini-calendar-day-number`  | Libellé numérique du jour                                         |
+| `df-mini-calendar-dots`        | Conteneur des points d'événement dans une cellule                 |
+| `df-mini-calendar-dot`         | Point d'événement individuel                                      |
+
+---
+
+## Barre latérale
+
+Classes CSS du composant de barre latérale.
+
+| Nom de classe             | Description                                               |
+| ------------------------- | --------------------------------------------------------- |
+| `df-sidebar`              | Conteneur de la barre latérale                            |
+| `df-sidebar-header`       | Conteneur de l'en-tête de la barre latérale               |
+| `df-sidebar-toggle`       | Bouton de repli / dépliage de la barre latérale           |
+| `df-sidebar-header-title` | Titre de l'en-tête de la barre latérale (« Calendriers ») |
+| `df-sidebar-list-shell`   | Conteneur défilant autour des listes                      |
+| `df-sidebar-list`         | Conteneur de la liste des calendriers                     |
+| `df-sidebar-list-item`    | Élément de calendrier individuel dans la liste            |
+| `df-sidebar-row`          | Ligne interactive à l'intérieur de chaque élément         |
+| `df-sidebar-chip`         | Petit libellé / badge de la barre latérale                |
+| `df-sidebar-dialog`       | Conteneur de la fenêtre modale de la barre latérale       |
+| `df-sidebar-button`       | Classe de bouton partagée de la barre latérale            |
+
+---
+
+## Navigation
+
+Classes CSS des boutons de navigation.
+
+| Nom de classe              | Description                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
+| `df-nav-button`            | Classe de base du bouton flèche de navigation (précédent / suivant) |
+| `df-calendar-nav-button`   | Bouton flèche de navigation du calendrier, stylisé                  |
+| `df-today-button`          | Classe de base du bouton « Aujourd'hui »                            |
+| `df-calendar-today-button` | Bouton « Aujourd'hui » du calendrier, stylisé                       |
+
+---
+
+## Détail des événements
+
+Classes CSS des panneaux et boîtes de dialogue de détail d'événement.
+
+| Nom de classe              | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| `df-event-detail-panel`    | Panneau flottant de détail d'événement                   |
+| `df-event-dialog-overlay`  | Racine de la surcouche de la boîte de dialogue de détail |
+| `df-event-dialog-backdrop` | Arrière-plan de la boîte de dialogue de détail           |
+| `df-dialog-container`      | Conteneur du contenu de la boîte de dialogue             |
+| `df-event-dialog-close`    | Bouton de fermeture de la boîte de dialogue de détail    |
+| `df-portal`                | Classe racine de portail partagée                        |
+
+---
+
+## Content Slots
+
+Classes CSS du système de rendu des content slots.
+
+| Nom de classe     | Description                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| `df-content-slot` | Conteneur d'un content slot                                                                    |
+| `df-slot-[id]`    | Classe dynamique attribuée à une instance de slot précise, où `[id]` est un identifiant unique |
+
+---
+
+## Attributs de statut des événements
+
+DayFlow expose bien plus que de simples indicateurs d'état d'événement. Sur les événements, les grilles, les surcouches, les panneaux et les utilitaires internes de mise en page, le projet utilise actuellement les attributs `data-*` suivants. Beaucoup peuvent être ciblés directement en CSS ; quelques-uns servent surtout de points d'ancrage structurels à la logique de surcouche et à la détection des clics extérieurs.
+
+### Éléments d'événement
+
+| Attribut               | Valeurs                                        | Description                                                                      |
+| ---------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| `data-view`            | `"day"` `"week"` `"month"` `"year"` `"agenda"` | Quelle vue rend actuellement l'événement ou son fragment                         |
+| `data-all-day`         | `"true"` `"false"`                             | Si l'événement occupe la journée entière                                         |
+| `data-selected`        | `"true"` `"false"`                             | Si l'événement est sélectionné                                                   |
+| `data-dragging`        | `"true"` `"false"`                             | Si l'événement est en cours de déplacement                                       |
+| `data-resizing`        | `"true"` `"false"`                             | Si l'événement est en cours de redimensionnement                                 |
+| `data-popping`         | `"true"` `"false"`                             | Si l'événement est visuellement mis en avant pendant l'interaction               |
+| `data-editable`        | `"true"` `"false"`                             | Si l'événement est modifiable depuis l'interface intégrée                        |
+| `data-viewable`        | `"true"` `"false"`                             | Si l'interface de détail peut être ouverte                                       |
+| `data-draggable`       | `"true"` `"false"`                             | Si le déplacement est autorisé pour cet événement                                |
+| `data-multi-day`       | `"true"` `"false"`                             | Si l'événement s'étend sur plusieurs jours                                       |
+| `data-month-stack`     | `"true"` `"false"`                             | Si l'événement est rendu dans la mise en page empilée de la vue Mois             |
+| `data-touch-handles`   | `"true"` `"false"`                             | Si les poignées de redimensionnement tactiles doivent être visibles ou réservées |
+| `data-axis`            | Mots-clés selon la vue                         | Indication d'orientation pour les rendus compacts ou horodatés                   |
+| `data-density`         | Mots-clés selon la vue                         | Indication de densité pour le contenu compact                                    |
+| `data-position`        | Mots-clés selon la vue                         | Indication de position pour les rendus segmentés ou compacts                     |
+| `data-segment-shape`   | `"full"` `"start"` `"middle"` `"end"`          | Forme des coins arrondis pour les événements segmentés                           |
+| `data-segment-days`    | Chaîne numérique                               | Nombre de jours représentés par un segment d'événement en vue Mois               |
+| `data-event-id`        | Chaîne d'identifiant                           | Identifiant brut attaché aux nœuds interactifs et aux ancres de panneau          |
+| `data-continued-left`  | `"true"` `"false"`                             | Le badge « journée entière » de l'agenda se poursuit depuis un jour précédent    |
+| `data-continued-right` | `"true"` `"false"`                             | Le badge « journée entière » de l'agenda se poursuit sur un jour suivant         |
+
+### État des dates, grilles et mises en page
+
+| Attribut                 | Valeurs                 | Description                                                                             |
+| ------------------------ | ----------------------- | --------------------------------------------------------------------------------------- |
+| `data-today`             | `"true"` `"false"`      | Marque une date, une section ou une cellule d'en-tête représentant aujourd'hui          |
+| `data-other-month`       | `"true"` `"false"`      | Marque les dates appartenant au mois précédent ou suivant                               |
+| `data-current-month`     | `"true"` `"false"`      | Marque les dates rendues dans le mois courant                                           |
+| `data-date`              | Chaîne de date          | Date concrète attachée aux cellules de grille ou de vue Année                           |
+| `data-first-day`         | `"true"` `"false"`      | Marque le premier jour visible dans une structure groupée par an ou par mois            |
+| `data-weekend`           | `"true"` `"false"`      | Marque les cellules et libellés de week-end                                             |
+| `data-has-events`        | `"true"` `"false"`      | Marque les cellules de grille contenant au moins un événement                           |
+| `data-heat-level`        | Chaîne numérique        | Niveau d'intensité de la carte de chaleur en vue Année mode grille                      |
+| `data-visible`           | `"true"` `"false"`      | Indicateur générique de visibilité pour les mises en page virtuelles ou conditionnelles |
+| `data-layout`            | Mot-clé de mise en page | Marqueur interne du mode de mise en page (rendu mensuel ou défilement virtuel)          |
+| `data-layout-ready`      | `"true"` `"false"`      | Si une mise en page virtualisée a terminé sa première passe de mesure                   |
+| `data-trailing-border`   | `"true"` `"false"`      | Si une cellule de mois doit afficher la bordure finale                                  |
+| `data-scrollbar-space`   | `"true"` `"false"`      | Si une vue réserve de la place pour une barre de défilement                             |
+| `data-secondary-tz`      | `"true"` `"false"`      | Si un axe de fuseau horaire secondaire est actif                                        |
+| `data-show-all-day`      | `"true"` `"false"`      | Si la ligne « journée entière » est activée                                             |
+| `data-sliding-view`      | `"true"` `"false"`      | Si une vue est en cours de glissement / transition                                      |
+| `data-mobile`            | `"true"` `"false"`      | Indication de rendu mobile utilisée par certains fragments de vue compacts              |
+| `data-switcher-mode`     | `"buttons"` `"select"`  | Quel mode du sélecteur de vue intégré est actif                                         |
+| `data-inside-pill`       | `"true"` `"false"`      | Si le contenu compact de l'en-tête est rendu à l'intérieur de la pastille du jour       |
+| `data-sidebar-collapsed` | `"true"` `"false"`      | Si la barre latérale est repliée                                                        |
+| `data-sidebar-enabled`   | `"true"` `"false"`      | Si l'ossature du calendrier est montée avec le plugin de barre latérale                 |
+| `data-df-theme`          | Mot-clé de thème        | Marqueur de thème émis par les conteneurs de mise en page thématisés                    |
+
+### Contrôles, champs et recherche
+
+| Attribut                 | Valeurs                            | Description                                                                      |
+| ------------------------ | ---------------------------------- | -------------------------------------------------------------------------------- |
+| `data-active`            | `"true"` `"false"`                 | Marqueur générique d'état actif pour interrupteurs, onglets et sélecteurs        |
+| `data-open`              | `"true"` `"false"`                 | Si une liste déroulante, un panneau ou une surface de recherche est ouvert       |
+| `data-bordered`          | `"true"` `"false"`                 | Si l'en-tête doit afficher sa bordure inférieure                                 |
+| `data-loading`           | `"true"` `"false"`                 | État de chargement des boutons / actions asynchrones                             |
+| `data-ready`             | `"true"` `"false"`                 | Si une surcouche de création rapide a terminé son positionnement initial         |
+| `data-placement`         | Mot-clé de placement               | Indication de placement pour aligner popups et création rapide                   |
+| `data-checked`           | `"true"` `"false"`                 | État coché des interrupteurs personnalisés                                       |
+| `data-disabled`          | `"true"` `"false"`                 | État désactivé des interrupteurs / champs personnalisés                          |
+| `data-kind`              | Mot-clé selon le composant         | Marqueur de type de section ou de champ utilisé par le panneau mobile            |
+| `data-expanded`          | `"true"` `"false"`                 | État déplié / replié des sections du panneau                                     |
+| `data-closing`           | `"true"` `"false"`                 | Marque le panneau mobile pendant sa transition de fermeture                      |
+| `data-tone`              | `"default"` `"today"` `"upcoming"` | Tonalité sémantique des en-têtes de date dans les résultats de recherche groupés |
+| `data-mini-calendar-dot` | Attribut présent                   | Marqueur attaché aux points d'événement du mini-calendrier                       |
+
+### État du plugin de barre latérale
+
+| Attribut               | Valeurs            | Description                                                                                   |
+| ---------------------- | ------------------ | --------------------------------------------------------------------------------------------- |
+| `data-active`          | `"true"` `"false"` | Met en évidence la ligne du calendrier actif dans la liste                                    |
+| `data-collapsed`       | `"true"` `"false"` | Si un groupe de sources ou un panneau à chevron est replié                                    |
+| `data-draggable`       | `"true"` `"false"` | Si un calendrier de la barre latérale peut être déplacé                                       |
+| `data-dragging`        | `"true"` `"false"` | Si un calendrier de la barre latérale est en cours de déplacement                             |
+| `data-position`        | `"top"` `"bottom"` | Position de l'indicateur de dépôt lors du glissement des calendriers                          |
+| `data-selected`        | `"true"` `"false"` | État d'option sélectionnée dans les listes déroulantes et dialogues d'import                  |
+| `data-submenu-content` | Attribut présent   | Marque le contenu des sous-menus rendus par portail (menus de fusion et surcouches associées) |
+
+### Surcouches et points d'interaction
+
+| Attribut                        | Valeurs          | Description                                                        |
+| ------------------------------- | ---------------- | ------------------------------------------------------------------ |
+| `data-event-detail-panel`       | Attribut présent | Marque la racine du panneau flottant de détail                     |
+| `data-event-detail-dialog`      | Attribut présent | Marque la racine de la boîte de dialogue modale de détail          |
+| `data-range-picker-popup`       | Attribut présent | Marque la racine du popup du sélecteur de plage                    |
+| `data-calendar-picker-dropdown` | Attribut présent | Marque la racine de la liste déroulante de sélection de calendrier |
+| `data-grid-day-cell`            | Attribut présent | Marque les cellules de jour cliquables en vue Année mode grille    |
+| `data-grid-day-popup`           | Attribut présent | Marque la racine du popup de jour de la vue Année                  |
+
+### Exemple
+
+```css
+/* Selected events */
+.df-event[data-selected='true'] {
+  outline: 2px solid var(--df-color-primary);
+}
+
+/* Events while being dragged */
+.df-event[data-dragging='true'] {
+  opacity: 0.6;
+}
+
+/* Only target month-view events */
+.df-event[data-view='month'] {
+  font-size: 11px;
+}
+
+/* All-day events only */
+.df-event[data-all-day='true'] {
+  font-weight: 600;
+}
+
+/* Highlight today's agenda section or compact grid cell */
+[data-today='true'] {
+  background-color: color-mix(in srgb, var(--df-color-primary) 8%, transparent);
+}
+```
+
+---
+
+## Personnalisation
+
+Pour personnaliser l'apparence, ciblez ces classes ou surchargez les variables `--df-color-*` dans votre CSS global. La plupart des changements de thème ne devraient pas nécessiter `!important` ; ne l'utilisez que pour l'emporter délibérément sur une règle locale très spécifique.
+
+### Exemple
+
+```css
+/* Change the background of all events */
+.df-event {
+  border-radius: 8px !important;
+}
+
+/* Customize the current time indicator */
+.df-current-time-line {
+  z-index: 100;
+}
+.df-current-time-bar {
+  height: 3px !important;
+  background-color: #ef4444 !important;
+}
+
+/* Customize specific view */
+.df-day-view .df-event {
+  border-left: 4px solid #3b82f6;
+}
+
+/* Style the sidebar */
+.df-sidebar {
+  background-color: #f8fafc !important;
+}
+
+/* Style mini calendar */
+.df-mini-calendar-day:hover {
+  background-color: #e2e8f0;
+}
+
+/* Reuse DayFlow semantic helpers in your own slot or plugin markup */
+.my-custom-primary-chip {
+  background-color: var(--df-color-primary);
+  color: var(--df-color-primary-foreground);
+}
+
+/* Dark mode overrides */
+.dark .df-calendar {
+  background-color: #111827;
+}
+
+/* Style event detail panel */
+.df-event-detail-panel {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+```
+
+## Conseils d'utilisation
+
+1. **Spécificité** : si vos styles ne s'appliquent pas, augmentez la spécificité en encadrant le calendrier dans une classe à vous :
+
+   ```css
+   .my-custom-calendar .df-event { ... }
+   ```
+
+2. **Design adaptatif** : utilisez des media queries pour ajuster les styles sur mobile :
+
+   ```css
+   @media (max-width: 768px) {
+     .df-event-title {
+       font-size: 10px;
+     }
+     .df-time-label {
+       font-size: 10px;
+     }
+   }
+   ```
+
+3. **Mode sombre** : utilisez le sélecteur `.dark` pour les styles propres au mode sombre :
+
+   ```css
+   .dark .df-month-day-cell {
+     border-color: #374151;
+   }
+   ```
+
+4. **Variables CSS** : DayFlow utilise des propriétés personnalisées `--df-color-*` pour les couleurs. Surchargez-les sur `.df-calendar-container` (et `.df-portal` pour les surfaces flottantes) pour des changements de couleur circonscrits :
+   ```css
+   .df-calendar-container,
+   .df-portal {
+     --df-color-primary: #3b82f6;
+     --df-color-primary-foreground: #ffffff;
+   }
+   ```
+
+## Migrer depuis les versions antérieures
+
+<Callout title="Changement incompatible : suppression de la classe calendar-event" type="warn">
+  La classe `calendar-event` a été retirée des éléments d'événement. Si votre feuille de style cible `.calendar-event { ... }`, remplacez-la par `.df-event { ... }`.
+
+Les classes utilitaires Tailwind internes (`flex`, `rounded-md`, `shadow-sm`, etc.) autrefois présentes sur les éléments DOM de DayFlow ont également été retirées. Elles n'ont jamais fait partie de l'API publique. Pour toute personnalisation CSS, utilisez les classes `df-*` et les attributs `data-*` documentés.
+
+</Callout>
+
+## Documentation associée
+
+- [Personnalisation du thème](/docs-fr/guides/theme-customization) — options de thématisation avancées
+- [Mode sombre](/docs-fr/features/dark-mode) — configuration du mode sombre

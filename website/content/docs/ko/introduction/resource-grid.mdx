@@ -1,0 +1,225 @@
+---
+title: 리소스 그리드
+description: 리소스별 열, 날짜 그룹화 모드, 드래그 기반 일정 조정을 제공하는 DayFlow Pro의 세로형 리소스 그리드 뷰입니다.
+status: pro
+---
+
+# 리소스 그리드
+
+`@dayflow-pro/resource-grid`는 시간이 위에서 아래로 흐르고 리소스가 열로 표시되는 세로형 일정 그리드를 제공합니다. 회의실, 장비, 스튜디오, 좌석, 근무 교대 예약에 적합합니다.
+
+[라이브 데모](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_grid)를 사용해 보세요
+
+## 설치
+
+<PackageTabs pkg='@dayflow-pro/resource-grid' />
+
+설치 단계는 [Pro 설치](/docs-ko/introduction/pro-installation) 가이드를 참고하세요.
+
+## 기본 사용법
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceGridView({
+          mode: 'resourceView',
+          resources: [
+            { id: 'room-a', title: 'Room A' },
+            { id: 'room-b', title: 'Room B' },
+          ],
+          visibleDays: 3,
+          hourHeight: 72,
+          firstHour: 8,
+          lastHour: 20,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 뷰 모드
+
+| 모드              | 설명                                                         |
+| :---------------- | :----------------------------------------------------------- |
+| `resourceView`    | 리소스가 기본 열이 되고, 각 리소스 안에서 날짜가 반복됩니다. |
+| `resourcesByDate` | 날짜가 기본 열이 되고, 각 날짜 안에서 리소스가 반복됩니다.   |
+
+패키지의 기본 설정은 다음과 같습니다:
+
+```ts
+{
+  visibleDays: 7,
+  showWeekend: true,
+  onlyShowEventDays: false,
+  dayWidth: 120,
+  hourHeight: 72,
+  firstHour: 0,
+  lastHour: 24,
+  stickyHeaders: true,
+}
+```
+
+## 리소스 및 이벤트 모델
+
+리소스는 의도적으로 단순하게 설계되어 있습니다:
+
+```ts
+type Resource = {
+  id: string;
+  title: string;
+  avatar?: string;
+  color?: string;
+  meta?: Record<string, unknown>;
+};
+```
+
+이벤트는 `resourceId`를 직접 저장하거나 콜백을 통해 확인할 수 있습니다:
+
+```tsx
+const event = {
+  id: 'booking-1',
+  title: 'Studio recording',
+  start: new Date(2026, 4, 8, 10, 0),
+  end: new Date(2026, 4, 8, 12, 0),
+  resourceId: 'room-a',
+};
+```
+
+확인 순서는 다음과 같습니다:
+
+1. `getResourceId(event)` (제공된 경우)
+2. `event.resourceId`
+3. `event.calendarId`
+
+## 필터링과 표시 여부
+
+그리드는 리소스와 날짜를 모두 필터링할 수 있습니다:
+
+| 속성                                  | 타입                                | 설명                                                |
+| :------------------------------------ | :---------------------------------- | :-------------------------------------------------- |
+| `visibleResourceIds`                  | `string[]`                          | 그리드를 특정 리소스 하위 집합으로 제한합니다.      |
+| `isResourceVisible`                   | `(resource) => boolean`             | 리소스를 완전히 숨기기 위한 사용자 정의 조건입니다. |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | 캘린더의 표시 여부를 자동으로 따릅니다.             |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | 리소스와 캘린더 간 매핑을 재정의합니다.             |
+| `showWeekend`                         | `boolean`                           | 주말을 포함하거나 제외합니다.                       |
+| `onlyShowEventDays`                   | `boolean`                           | 일치하는 이벤트가 없는 날짜를 표시에서 제거합니다.  |
+
+캘린더 동기화가 활성화되면 대체 매핑은 `resource.meta?.calendarId ?? resource.id`입니다.
+
+`onlyShowEventDays`가 현재 범위의 모든 날짜를 제거하면, 뷰는 빈 그리드를 표시하는 대신 일반 날짜 범위로 되돌아갑니다.
+
+## 레이아웃 설정
+
+| 속성                 | 타입                              | 설명                                                     |
+| :------------------- | :-------------------------------- | :------------------------------------------------------- |
+| `license`            | `PackageLicenseConfig`            | 전역 등록을 사용하지 않을 때 지정하는 선택적 설정입니다. |
+| `visibleDays`        | `number`                          | 현재 날짜를 기준으로 생성할 날짜 수입니다.               |
+| `hourHeight`         | `number`                          | 1시간 행의 높이(픽셀)입니다.                             |
+| `firstHour`          | `number`                          | 표시되는 첫 시각입니다.                                  |
+| `lastHour`           | `number`                          | 표시되는 마지막 시각입니다.                              |
+| `dayWidth`           | `number`                          | 각 열에 사용되는 기본 너비입니다.                        |
+| `stickyHeaders`      | `boolean`                         | 스크롤하는 동안 헤더를 고정합니다.                       |
+| `initialScrollState` | `{ left?: number; top?: number }` | 초기 스크롤 위치를 설정합니다.                           |
+
+뷰포트가 설정된 콘텐츠보다 넓고 현재 모드가 허용하는 경우, 열이 자동으로 늘어납니다.

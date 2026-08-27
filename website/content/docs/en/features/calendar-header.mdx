@@ -1,0 +1,115 @@
+---
+title: 'Calendar Header'
+---
+
+# Calendar Header
+
+The calendar header provides navigation controls, the view switcher, and search functionality. You can customize its behavior or replace it entirely.
+
+## Hiding the Header
+
+If you want to build your own navigation or just don't need the default header, you can disable it.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  useCalendarHeader: false, // Hides the default header
+});
+```
+
+## Custom Header
+
+<Callout title='Breaking change from v3.4.1' type='warn'>
+  Passing a function to `useCalendarHeader` is no longer supported. Move your
+  custom header to the `calendarHeader` slot on `DayFlowCalendar` as shown
+  below.
+</Callout>
+
+You can replace the default header with your own component using the `calendarHeader` content slot. Your renderer receives the calendar's state and helper methods so you can drive navigation and search from your own UI.
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    const calendar = useCalendarApp({
+      views: [createMonthView()],
+    });
+
+    <DayFlowCalendar
+      calendar={calendar}
+      calendarHeader={() => (
+        <div className='custom-header'>
+          <button onClick={() => calendar.goToPrevious()}>‹</button>
+          <button onClick={() => calendar.goToToday()}>Today</button>
+          <button onClick={() => calendar.goToNext()}>›</button>
+        </div>
+      )}
+    />;
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <DayFlowCalendar :calendar="calendar">
+      <template #calendarHeader="{ calendar }">
+        <div class="custom-header">
+          <button @click="calendar.goToPrevious()">‹</button>
+          <button @click="calendar.goToToday()">Today</button>
+          <button @click="calendar.goToNext()">›</button>
+        </div>
+      </template>
+    </DayFlowCalendar>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [calendarHeader]="header"
+    >
+    </dayflow-calendar>
+
+    <ng-template #header let-args>
+      <div class="custom-header">
+        <button (click)="args.calendar.goToPrevious()">‹</button>
+        <button (click)="args.calendar.goToToday()">Today</button>
+        <button (click)="args.calendar.goToNext()">›</button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} calendarHeader={CustomHeader} />
+
+    <!-- CustomHeader.svelte -->
+    <script lang="ts">
+      import type { CalendarHeaderProps } from '@dayflow/core';
+      let { calendar } = $props<CalendarHeaderProps>();
+    </script>
+
+    <div class="custom-header">
+      <button onclick={() => calendar.goToPrevious()}>‹</button>
+      <button onclick={() => calendar.goToToday()}>Today</button>
+      <button onclick={() => calendar.goToNext()}>›</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+### Slot Args
+
+The slot renderer receives the following arguments:
+
+| Arg              | Description                                                          |
+| :--------------- | :------------------------------------------------------------------- |
+| `calendar`       | The `CalendarApp` instance.                                          |
+| `switcherMode`   | The current view switcher mode (`buttons` or `select`).              |
+| `onAddCalendar`  | Handler for adding a new calendar.                                   |
+| `onSearchChange` | Handler for updating the search query.                               |
+| `onSearchClick`  | Handler for when the search icon is clicked.                         |
+| `searchValue`    | The current search string.                                           |
+| `isSearchOpen`   | Whether the search UI is currently open.                             |
+| `isEditable`     | Whether the calendar is currently in an editable state.              |
+| `safeAreaLeft`   | Left padding (px) to avoid overlapping traffic lights in macOS mode. |

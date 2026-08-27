@@ -1,0 +1,59 @@
+---
+title: 'Mode lecture seule'
+---
+
+# Mode lecture seule
+
+Vous pouvez facilement passer le calendrier en lecture seule pour empêcher toute modification par les utilisateurs. C'est utile pour les calendriers publics ou les tableaux de bord d'affichage.
+
+Le mode lecture seule ne désactive que l'interface de modification intégrée de DayFlow. Les API programmatiques telles que `calendar.addEvent()`, `calendar.updateEvent()`, `calendar.deleteEvent()` et `calendar.applyEventsChanges()` continuent de fonctionner.
+
+## Utilisation de base
+
+Pour activer le mode lecture seule, passez `readOnly: true` dans la configuration du calendrier.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: true, // Disables built-in mutation UI (dragging, creating, editing)
+});
+```
+
+## Contrôle fin
+
+Vous pouvez aussi fournir un objet `ReadOnlyConfig` pour désactiver certaines fonctions de façon sélective :
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: {
+    draggable: false, // Disables drag-and-drop
+    viewable: true, // Allows clicking to view event details (read-only mode)
+  },
+});
+```
+
+### Options de configuration
+
+| Option      | Type      | Description                                                                                               |
+| :---------- | :-------- | :-------------------------------------------------------------------------------------------------------- |
+| `draggable` | `boolean` | Indique si les événements peuvent être déplacés ou redimensionnés par glisser-déposer.                    |
+| `viewable`  | `boolean` | Indique si le détail des événements peut être consulté (ouverture du panneau ou de la boîte de dialogue). |
+
+Lorsque `readOnly` est actif, le calendrier masque également les boutons « Créer » et les autres éléments d'interface qui déclencheraient normalement des modifications.
+
+## Interface personnalisée
+
+Si vous affichez vos propres boutons, menus ou boîtes de dialogue, utilisez `calendar.canMutateFromUI()` pour décider si les commandes de modification doivent apparaître :
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: true,
+});
+
+const canEdit = calendar.canMutateFromUI();
+```
+
+- `true` : votre interface peut afficher les commandes de création, d'édition et de suppression.
+- `false` : votre interface doit les masquer ou les désactiver.

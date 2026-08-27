@@ -1,0 +1,225 @@
+---
+title: Cuadrícula de recursos
+description: Vista de cuadrícula de recursos vertical de DayFlow Pro, con una columna por recurso, modos de agrupación por fecha e interacciones de planificación mediante arrastre.
+status: pro
+---
+
+# Cuadrícula de recursos
+
+`@dayflow-pro/resource-grid` ofrece una cuadrícula de planificación vertical en la que el tiempo avanza de arriba abajo y los recursos se representan como columnas. Resulta ideal para reservar salas, equipamiento, estudios, escritorios o turnos de personal.
+
+Prueba la [demo en vivo](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_grid)
+
+## Instalación
+
+<PackageTabs pkg='@dayflow-pro/resource-grid' />
+
+Consulta la guía de [instalación de Pro](/docs-es/introduction/pro-installation) para conocer los pasos de instalación.
+
+## Uso básico
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceGridView({
+          mode: 'resourceView',
+          resources: [
+            { id: 'room-a', title: 'Room A' },
+            { id: 'room-b', title: 'Room B' },
+          ],
+          visibleDays: 3,
+          hourHeight: 72,
+          firstHour: 8,
+          lastHour: 20,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceGridView } from '@dayflow-pro/resource-grid';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceGridView } from '@dayflow-pro/resource-grid';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceGridView({
+            mode: 'resourceView',
+            resources: [
+              { id: 'room-a', title: 'Room A' },
+              { id: 'room-b', title: 'Room B' },
+            ],
+            visibleDays: 3,
+            hourHeight: 72,
+            firstHour: 8,
+            lastHour: 20,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Modos de vista
+
+| Modo              | Descripción                                                                               |
+| :---------------- | :---------------------------------------------------------------------------------------- |
+| `resourceView`    | Los recursos son las columnas principales y las fechas se repiten dentro de cada recurso. |
+| `resourcesByDate` | Las fechas son las columnas principales y los recursos se repiten dentro de cada fecha.   |
+
+La configuración predeterminada del paquete es:
+
+```ts
+{
+  visibleDays: 7,
+  showWeekend: true,
+  onlyShowEventDays: false,
+  dayWidth: 120,
+  hourHeight: 72,
+  firstHour: 0,
+  lastHour: 24,
+  stickyHeaders: true,
+}
+```
+
+## Modelo de recursos y eventos
+
+Los recursos son deliberadamente simples:
+
+```ts
+type Resource = {
+  id: string;
+  title: string;
+  avatar?: string;
+  color?: string;
+  meta?: Record<string, unknown>;
+};
+```
+
+Los eventos pueden almacenar `resourceId` directamente o resolverlo mediante una función de retorno:
+
+```tsx
+const event = {
+  id: 'booking-1',
+  title: 'Studio recording',
+  start: new Date(2026, 4, 8, 10, 0),
+  end: new Date(2026, 4, 8, 12, 0),
+  resourceId: 'room-a',
+};
+```
+
+El orden de resolución es:
+
+1. `getResourceId(event)`, si se proporciona
+2. `event.resourceId`
+3. `event.calendarId`
+
+## Filtrado y visibilidad
+
+La cuadrícula puede filtrar tanto recursos como días:
+
+| Propiedad                             | Tipo                                | Notas                                                         |
+| :------------------------------------ | :---------------------------------- | :------------------------------------------------------------ |
+| `visibleResourceIds`                  | `string[]`                          | Limita la cuadrícula a un subconjunto concreto de recursos.   |
+| `isResourceVisible`                   | `(resource) => boolean`             | Predicado personalizado para ocultar recursos por completo.   |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | Sigue automáticamente la visibilidad del calendario.          |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | Sustituye la correspondencia entre recurso y calendario.      |
+| `showWeekend`                         | `boolean`                           | Incluye o excluye los días de fin de semana.                  |
+| `onlyShowEventDays`                   | `boolean`                           | Elimina los días visibles que no tienen eventos coincidentes. |
+
+Cuando la sincronización con calendarios está activada, la correspondencia de reserva es `resource.meta?.calendarId ?? resource.id`.
+
+Si `onlyShowEventDays` elimina todos los días del rango actual, la vista vuelve al rango de fechas normal en lugar de mostrar una cuadrícula vacía.
+
+## Configuración del diseño
+
+| Propiedad            | Tipo                              | Notas                                                   |
+| :------------------- | :-------------------------------- | :------------------------------------------------------ |
+| `license`            | `PackageLicenseConfig`            | Sustitución opcional cuando no usas el registro global. |
+| `visibleDays`        | `number`                          | Número de días generados a partir de la fecha actual.   |
+| `hourHeight`         | `number`                          | Altura en píxeles de la fila de una hora.               |
+| `firstHour`          | `number`                          | Primera hora visible.                                   |
+| `lastHour`           | `number`                          | Última hora visible.                                    |
+| `dayWidth`           | `number`                          | Anchura base utilizada para cada columna.               |
+| `stickyHeaders`      | `boolean`                         | Mantiene las cabeceras fijas al desplazarse.            |
+| `initialScrollState` | `{ left?: number; top?: number }` | Define la posición de desplazamiento inicial.           |
+
+La implementación también estira las columnas automáticamente cuando la ventana es más ancha que el contenido configurado y el modo actual lo permite.

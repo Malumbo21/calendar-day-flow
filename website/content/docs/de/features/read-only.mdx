@@ -1,0 +1,59 @@
+---
+title: 'Nur-Lese-Modus'
+---
+
+# Nur-Lese-Modus
+
+Sie können den Kalender mit wenig Aufwand auf Nur-Lesen umstellen, damit Nutzende nichts ändern können. Das eignet sich für öffentliche Kalender oder reine Anzeige-Dashboards.
+
+Der Nur-Lese-Modus deaktiviert ausschließlich die eingebaute Bearbeitungs-UI von DayFlow. Programmatische APIs wie `calendar.addEvent()`, `calendar.updateEvent()`, `calendar.deleteEvent()` und `calendar.applyEventsChanges()` funktionieren weiterhin.
+
+## Grundlegende Verwendung
+
+Um den Nur-Lese-Modus zu aktivieren, übergeben Sie `readOnly: true` in der Kalenderkonfiguration.
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: true, // Disables built-in mutation UI (dragging, creating, editing)
+});
+```
+
+## Feingranulare Steuerung
+
+Alternativ übergeben Sie ein `ReadOnlyConfig`-Objekt, um gezielt einzelne Funktionen abzuschalten:
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: {
+    draggable: false, // Disables drag-and-drop
+    viewable: true, // Allows clicking to view event details (read-only mode)
+  },
+});
+```
+
+### Konfigurationsoptionen
+
+| Option      | Typ       | Beschreibung                                                                                 |
+| :---------- | :-------- | :------------------------------------------------------------------------------------------- |
+| `draggable` | `boolean` | Legt fest, ob Termine per Drag-and-drop verschoben oder in der Größe geändert werden können. |
+| `viewable`  | `boolean` | Legt fest, ob Termindetails geöffnet werden können (Detail-Panel bzw. Dialog).               |
+
+Ist `readOnly` aktiv, blendet der Kalender außerdem „Erstellen“-Schaltflächen und weitere Bedienelemente aus, die sonst Änderungen auslösen würden.
+
+## Eigene Oberfläche
+
+Wenn Sie eigene Schaltflächen, Menüs oder Dialoge rendern, entscheiden Sie mit `calendar.canMutateFromUI()`, ob Bedienelemente zum Ändern angezeigt werden sollen:
+
+```tsx
+const calendar = useCalendarApp({
+  views: [createMonthView()],
+  readOnly: true,
+});
+
+const canEdit = calendar.canMutateFromUI();
+```
+
+- `true`: Ihre Oberfläche darf Bedienelemente zum Anlegen, Bearbeiten und Löschen zeigen.
+- `false`: Ihre Oberfläche sollte sie ausblenden oder deaktivieren.

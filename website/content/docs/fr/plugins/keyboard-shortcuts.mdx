@@ -1,0 +1,213 @@
+---
+title: 'Plugin de raccourcis clavier'
+---
+
+# Plugin de raccourcis clavier
+
+Le plugin de raccourcis clavier active des commandes globales pour la navigation, la gestion des événements et le presse-papiers.
+
+## Installation
+
+Installez le paquet du plugin :
+
+<PackageTabs pkg='@dayflow/plugin-keyboard-shortcuts' />
+
+## Utilisation
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [
+        createKeyboardShortcutsPlugin({
+          // Optional configuration
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createKeyboardShortcutsPlugin } from '@dayflow/plugin-keyboard-shortcuts';
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createKeyboardShortcutsPlugin({
+            // Optional configuration
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Raccourcis par défaut
+
+| Action                                        | Touche (Mac)                  | Touche (Windows/Linux)     |
+| :-------------------------------------------- | :---------------------------- | :------------------------- |
+| **Aller à aujourd'hui**                       | `Cmd + T`                     | `Ctrl + T`                 |
+| **Rechercher**                                | `Cmd + F`                     | `Ctrl + F`                 |
+| **Nouvel événement**                          | `Cmd + N`                     | `Ctrl + N`                 |
+| **Navigation**                                | `ArrowLeft` / `ArrowRight`    | `ArrowLeft` / `ArrowRight` |
+| **Parcourir les événements**                  | `Tab` / `Shift + Tab`         | `Tab` / `Shift + Tab`      |
+| **Annuler**                                   | `Cmd + Z`                     | `Ctrl + Z`                 |
+| **Rétablir**                                  | `Cmd + Shift + Z` / `Cmd + Y` | `Ctrl + Y`                 |
+| **Copier l'événement**                        | `Cmd + C`                     | `Ctrl + C`                 |
+| **Couper l'événement**                        | `Cmd + X`                     | `Ctrl + X`                 |
+| **Coller l'événement**                        | `Cmd + V`                     | `Ctrl + V`                 |
+| **Supprimer l'événement**                     | `Backspace` / `Delete`        | `Backspace` / `Delete`     |
+| **Fermer les boîtes de dialogue et panneaux** | `Esc`                         | `Esc`                      |
+
+## Configuration
+
+Vous pouvez personnaliser les combinaisons de touches et fournir vos propres callbacks pour chaque action :
+
+```tsx
+createKeyboardShortcutsPlugin({
+  keyMap: {
+    today: 't',
+    search: 'f',
+    prev: 'ArrowLeft',
+    next: 'ArrowRight',
+    undo: 'z',
+    redo: 'y',
+    delete: 'Delete',
+    newEvent: 'n',
+  },
+  callbacks: {
+    undo: app => {
+      console.log('Custom undo logic');
+      app.undo();
+    },
+    redo: app => {
+      console.log('Custom redo logic');
+      if (app.redo) app.redo();
+    },
+    delete: app => {
+      if (confirm('Are you sure?')) {
+        const selectedId = app.state.selectedEventId;
+        if (selectedId) app.deleteEvent(selectedId);
+      }
+    },
+  },
+});
+```
+
+### Callbacks disponibles
+
+L'objet `callbacks` prend en charge les entrées suivantes :
+
+- `undo`, `redo`, `paste` (reçoivent `app`)
+- `copy`, `cut`, `delete` (reçoivent `app` et `event?: Event`)
+- `today`, `search`, `prev`, `next`, `newEvent`, `dismiss` (reçoivent `app`)
+- `tab` (reçoit `app` et `reverse: boolean`)
+
+## API du plugin
+
+Accédez au handle du plugin pour contrôler la gestion des raccourcis à l'exécution :
+
+```tsx
+import { type KeyboardShortcutsService } from '@dayflow/plugin-keyboard-shortcuts';
+
+const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+```
+
+### KeyboardShortcutsService
+
+| Méthode       | Renvoie   | Description                                                |
+| :------------ | :-------- | :--------------------------------------------------------- |
+| `enable()`    | `void`    | Réactive la gestion des raccourcis                         |
+| `disable()`   | `void`    | Supprime tous les raccourcis jusqu'à l'appel de `enable()` |
+| `isEnabled()` | `boolean` | Indique si les raccourcis sont actuellement actifs         |
+
+Un cas fréquent consiste à désactiver les raccourcis du calendrier lorsqu'une fenêtre modale ou un éditeur de texte enrichi est ouvert :
+
+```tsx
+function MyModal() {
+  const kb = app.getPlugin<KeyboardShortcutsService>('keyboard-shortcuts');
+
+  useEffect(() => {
+    kb?.disable();
+    return () => kb?.enable(); // restore on unmount
+  }, []);
+
+  // ...
+}
+```
+
+Vous pouvez également fermer par programmation toute interface ouverte :
+
+```tsx
+app.dismissUI();
+```

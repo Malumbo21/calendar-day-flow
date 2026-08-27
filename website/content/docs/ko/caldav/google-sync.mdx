@@ -1,0 +1,536 @@
+---
+title: '@dayflow/google-sync'
+---
+
+# @dayflow/google-sync
+
+`@dayflow/google-sync`는 DayFlow를 Google Calendar REST API v3에 연결합니다. `@dayflow/caldav`와는 별개의 패키지로, CalDAV가 아니라 Google Calendar API와 직접 통신합니다.
+
+## 설치
+
+<PackageTabs pkg='@dayflow/google-sync' />
+
+## 빠른 시작
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useRef, useEffect, useState } from 'react';
+    import {
+      DayFlowCalendar,
+      useCalendarApp,
+      createMonthView,
+    } from '@dayflow/react';
+    import {
+      attachGoogleSyncToDayFlow,
+      createGoogleSync,
+      createGoogleSyncAdapter,
+      type GoogleDayFlowController,
+      type GoogleSyncStatus,
+    } from '@dayflow/google-sync';
+
+    function MyCalendar() {
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      const controllerRef = useRef<GoogleDayFlowController | null>(null);
+      const [syncStatus, setSyncStatus] = useState<GoogleSyncStatus>({
+        state: 'idle',
+      });
+
+      useEffect(() => {
+        if (controllerRef.current) return;
+
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        const controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: setSyncStatus,
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controllerRef.current = controller;
+        controller.start();
+
+        return () => {
+          controller.stop();
+          controllerRef.current = null;
+        };
+      }, [calendar.app]);
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+      import { ref, onMounted, onBeforeUnmount } from 'vue';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachGoogleSyncToDayFlow,
+        createGoogleSync,
+        createGoogleSyncAdapter,
+      } from '@dayflow/google-sync';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      const syncStatus = ref({ state: 'idle' });
+      let controller;
+
+      onMounted(() => {
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: status => {
+            syncStatus.value = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onBeforeUnmount(() => {
+        controller?.stop();
+      });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component, OnInit, OnDestroy } from '@angular/core';
+    import { CalendarApp, createMonthView } from '@dayflow/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import {
+      attachGoogleSyncToDayFlow,
+      createGoogleSync,
+      createGoogleSyncAdapter,
+      type GoogleDayFlowController,
+      type GoogleSyncStatus,
+    } from '@dayflow/google-sync';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`,
+    })
+    export class AppComponent implements OnInit, OnDestroy {
+      calendar = new CalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      syncStatus: GoogleSyncStatus = { state: 'idle' };
+      private controller?: GoogleDayFlowController;
+
+      ngOnInit() {
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        this.controller = attachGoogleSyncToDayFlow(this.calendar, sync, {
+          writable: true,
+          onStatusChange: status => {
+            this.syncStatus = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        this.controller.start();
+      }
+
+      ngOnDestroy() {
+        this.controller?.stop();
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { onMount, onDestroy } from 'svelte';
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createMonthView } from '@dayflow/core';
+      import {
+        attachGoogleSyncToDayFlow,
+        createGoogleSync,
+        createGoogleSyncAdapter,
+      } from '@dayflow/google-sync';
+
+      const calendar = useCalendarApp({
+        views: [createMonthView()],
+        calendars: [],
+        events: [],
+      });
+
+      let syncStatus = { state: 'idle' };
+      let controller;
+
+      onMount(() => {
+        const adapter = createGoogleSyncAdapter({
+          baseUrl: '/api/google-calendar',
+        });
+
+        const sync = createGoogleSync(adapter);
+        controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+          writable: true,
+          onStatusChange: status => {
+            syncStatus = status;
+          },
+          onWriteError: (error, ctx) =>
+            console.error(`[google-sync] ${ctx.action} failed:`, error.message),
+          onSyncComplete: delta => {
+            console.log(
+              `Sync done: +${delta.events.added} ~${delta.events.updated} -${delta.events.deleted}`
+            );
+          },
+        });
+
+        controller.start();
+      });
+
+      onDestroy(() => {
+        controller?.stop();
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 토큰 주입
+
+### `getToken` 사용하기 (클라이언트 토큰에 권장)
+
+Supabase 세션이나 인증 제공자에서처럼 런타임에 토큰을 얻을 수 있다면 `getToken`을 사용하세요. 모든 요청 전에 호출되므로 토큰 갱신이 투명하게 처리되고, 토큰이 바뀌어도 어댑터를 다시 만들 필요가 없습니다.
+
+```ts
+const adapter = createGoogleSyncAdapter({
+  getToken: async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.provider_token ?? '';
+  },
+});
+```
+
+### 백엔드 프록시 사용하기 (운영 환경에 권장)
+
+Google Calendar API는 CORS를 지원하지만, 브라우저에서 OAuth 토큰을 보내면 네트워크 요청을 들여다볼 수 있는 누구에게나 토큰이 노출됩니다. 운영 환경에서는 토큰을 서버에 두세요:
+
+```ts
+const adapter = createGoogleSyncAdapter({
+  baseUrl: '/api/google-calendar',
+  // No getToken needed — your proxy injects Authorization
+});
+```
+
+```js
+// proxy.mjs (Node.js example)
+import { createServer } from 'node:http';
+
+const {
+  GOOGLE_ACCESS_TOKEN,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REFRESH_TOKEN,
+  PORT = '3002',
+} = process.env;
+
+const GOOGLE_API_BASE = 'https://www.googleapis.com/calendar/v3';
+const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']);
+
+let cachedToken = GOOGLE_ACCESS_TOKEN
+  ? { token: GOOGLE_ACCESS_TOKEN, expiresAt: Infinity }
+  : null;
+
+async function getAccessToken() {
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) {
+    return cachedToken.token;
+  }
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: GOOGLE_REFRESH_TOKEN,
+      grant_type: 'refresh_token',
+    }),
+  });
+  const data = await res.json();
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  };
+  return cachedToken.token;
+}
+
+createServer(async (req, res) => {
+  const upstreamPath = req.url.replace(/^\/api\/google-calendar/, '');
+  const upstreamUrl = `${GOOGLE_API_BASE}${upstreamPath}`;
+
+  if (!ALLOWED_METHODS.has(req.method)) {
+    res.writeHead(405);
+    res.end();
+    return;
+  }
+
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const body =
+    req.method === 'GET' || req.method === 'DELETE'
+      ? undefined
+      : Buffer.concat(chunks).toString();
+
+  const token = await getAccessToken();
+  const upstream = await fetch(upstreamUrl, {
+    method: req.method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(req.headers['if-match']
+        ? { 'If-Match': req.headers['if-match'] }
+        : {}),
+    },
+    body,
+  });
+
+  const responseBody = upstream.status === 204 ? '' : await upstream.text();
+  res.writeHead(upstream.status, { 'Content-Type': 'application/json' });
+  res.end(responseBody);
+}).listen(Number(PORT));
+```
+
+프록시를 실행합니다:
+
+```bash
+# Quick test with an access token
+GOOGLE_ACCESS_TOKEN=ya29.xxx node proxy.mjs
+
+# Long-lived with refresh token
+GOOGLE_CLIENT_ID=xxx \
+GOOGLE_CLIENT_SECRET=xxx \
+GOOGLE_REFRESH_TOKEN=xxx \
+node proxy.mjs
+```
+
+테스트용 액세스 토큰은 [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground)에서 만들 수 있습니다. `https://www.googleapis.com/auth/calendar` 스코프를 선택하세요.
+
+## 동기화 토큰 영속화
+
+기본적으로 Google Calendar 동기화 토큰은 메모리에만 저장되어 페이지를 새로 고치면 사라지고, 다음 세션에서 전체 동기화를 하게 됩니다. `GoogleSyncStorage` 구현을 제공해 토큰을 보존하세요:
+
+```ts
+import { createGoogleSync, type GoogleSyncStorage } from '@dayflow/google-sync';
+
+const storage: GoogleSyncStorage = {
+  getSyncToken: async calendarId =>
+    localStorage.getItem(`google-token:${calendarId}`),
+  setSyncToken: async (calendarId, token) =>
+    token
+      ? localStorage.setItem(`google-token:${calendarId}`, token)
+      : localStorage.removeItem(`google-token:${calendarId}`),
+};
+
+const sync = createGoogleSync(adapter, { storage });
+```
+
+`storage`를 연결하면 각 세션이 전체 이벤트를 처음부터 가져오는 대신 증분 동기화로 시작합니다.
+
+## 로컬 캐시로 초기화하기
+
+동기화된 이벤트를 데이터베이스나 로컬 저장소에 보관한다면, 첫 원격 동기화 전에 DayFlow를 미리 채워 캘린더를 즉시 표시할 수 있습니다:
+
+```ts
+const controller = attachGoogleSyncToDayFlow(calendar.app, sync, {
+  getInitialSnapshot: async () => {
+    const { calendars, events } = await loadFromLocalDB();
+    return { calendars, events };
+  },
+  onSyncComplete: delta => {
+    // Save what changed to your local store
+    saveChanges(delta);
+  },
+  onWriteComplete: (operation, event) => {
+    // Update local store after a successful write-back
+    persistEvent(operation, event);
+  },
+});
+```
+
+`getInitialSnapshot`은 Google Calendar API 요청이 일어나기 전, `start()` 도중 한 번만 호출됩니다. 백그라운드에서 동기화가 도는 동안 DayFlow는 캐시된 데이터로 렌더링됩니다.
+
+## 원격 스냅숏 직접 적용하기
+
+동기화 흐름을 직접 관리하는 애플리케이션이라면, `applyRemoteSnapshot`으로 원격 이벤트 묶음을 제공자에게 다시 전송하지 않고 DayFlow에 적용할 수 있습니다:
+
+```ts
+import { applyRemoteSnapshot, getGoogleMeta } from '@dayflow/google-sync';
+
+const delta = await applyRemoteSnapshot(
+  calendar.app,
+  { calendars, events },
+  {
+    isOwnedEvent: event => Boolean(getGoogleMeta(event)),
+    isOwnedCalendar: calendar => calendar.source === 'Google',
+    snapshotMode: 'authoritative',
+
+    // Optionally preserve local in-progress edits during optimistic sync
+    resolveConflict: (remote, local) =>
+      mergeLocalEditsOntoRemote(remote, local),
+  }
+);
+
+console.log(delta.events.added, delta.events.updated, delta.events.deleted);
+```
+
+`applyRemoteSnapshot`은 들어온 스냅숏과 현재 앱 상태의 차이를 계산한 뒤, 동기화 루프를 막기 위해 `source: 'remote'`로 변경 사항을 적용합니다. 반환값은 작업별 건수를 담은 `RemoteSnapshotDelta`입니다. `snapshotMode: 'authoritative'`는 전체 제공자 스냅숏에만 사용하고, 범위가 제한되었거나 페이지 단위인 스냅숏은 기본 부분 모드를 유지하세요.
+
+## 옵션 레퍼런스
+
+### `attachGoogleSyncToDayFlow` 옵션
+
+| 옵션                 | 타입                                   | 기본값          | 설명                                                                                                  |
+| :------------------- | :------------------------------------- | :-------------- | :---------------------------------------------------------------------------------------------------- |
+| `writable`           | `boolean`                              | `true`          | 로컬 변경 사항을 Google Calendar에 다시 쓰도록 허용합니다.                                            |
+| `onStatusChange`     | `(status: GoogleSyncStatus) => void`   | —               | 동기화 상태가 바뀔 때마다 호출됩니다.                                                                 |
+| `onWriteError`       | `(error: Error, ctx) => void`          | `console.error` | 생성·수정·삭제를 다시 쓰는 데 실패했을 때 호출됩니다. `ctx`에는 `action`과 `eventId`가 들어 있습니다. |
+| `getInitialSnapshot` | `() => Promise<{ events, calendars }>` | —               | 첫 원격 동기화 전에 로컬 캐시로 DayFlow를 채웁니다.                                                   |
+| `onSyncComplete`     | `(delta: GoogleSyncDelta) => void`     | —               | 동기화가 성공할 때마다 변경 건수와 함께 호출됩니다.                                                   |
+| `onWriteComplete`    | `(operation, event) => void`           | —               | 로컬 변경이 Google Calendar에 성공적으로 반영된 뒤 호출됩니다.                                        |
+
+### `createGoogleSyncAdapter` 옵션
+
+| 옵션       | 타입                              | 기본값                                   | 설명                                                                                                                                           |
+| :--------- | :-------------------------------- | :--------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseUrl`  | `string`                          | `https://www.googleapis.com/calendar/v3` | 백엔드 프록시를 가리키도록 바꿀 수 있습니다.                                                                                                   |
+| `fetch`    | `function`                        | `globalThis.fetch`                       | 사용자 정의 fetch 구현입니다(예: 테스트용).                                                                                                    |
+| `getToken` | `() => string \| Promise<string>` | —                                        | 모든 요청 전에 호출되며, `Authorization: Bearer <token>`으로 주입할 액세스 토큰을 반환합니다. `fetch`를 직접 감싸는 대신 이 옵션을 사용하세요. |
+
+### `GoogleSyncStatus`
+
+```ts
+type GoogleSyncStatus = {
+  state: 'idle' | 'syncing' | 'error';
+  lastSyncedAt?: string; // ISO timestamp
+  error?: {
+    message: string;
+    calendarId?: string;
+  };
+};
+```
+
+### `GoogleSyncDelta`
+
+```ts
+type GoogleSyncDelta = {
+  calendars: { added: number; updated: number; deleted: number };
+  events: { added: number; updated: number; deleted: number };
+};
+```
+
+## 컨트롤러 API
+
+```ts
+// Load calendars, sync initial events, and subscribe to visible-range and event changes
+await controller.start();
+
+// Unsubscribe all listeners
+controller.stop();
+
+// Re-sync all calendars for the current visible range
+await controller.refresh();
+
+// Re-sync a specific calendar
+await controller.refresh({ calendarId: 'primary' });
+
+// Re-sync with an explicit range
+await controller.refresh({
+  calendarId: 'primary',
+  range: { start: new Date('2025-01-01'), end: new Date('2025-02-01') },
+});
+
+// Current sync state
+const status = controller.getStatus();
+```
+
+## 동기화 동작 방식
+
+### 캘린더 탐색
+
+`controller.start()`를 호출하면 패키지가 인증된 사용자의 캘린더 목록(`GET /calendarList`)을 가져와 각 캘린더를 DayFlow의 `CalendarType`으로 등록합니다. `accessRole`이 `'reader'`나 `'freeBusyReader'`인 캘린더는 `readOnly: true`로 표시됩니다.
+
+### 이벤트 로딩
+
+이벤트는 현재 표시 중인 날짜 범위에 대해 로드됩니다. 사용자가 이동하면(다음 주, 이전 달 등) 표시 범위 변경 리스너를 통해 새 범위의 이벤트가 자동으로 로드됩니다.
+
+### 증분 동기화
+
+최초 로드 이후에는 Google Calendar의 `syncToken`을 사용해 증분 동기화합니다. 이후 동기화에서는 변경된 이벤트만 가져옵니다. `GoogleSyncStorage`를 제공하면 동기화 토큰이 페이지 새로 고침 후에도 유지되어 다음 세션도 증분으로 시작합니다.
+
+### 원격 반영(쓰기)
+
+`writable: true`이면 로컬 이벤트 변경(생성, 수정, 삭제)이 Google Calendar에 자동으로 반영됩니다:
+
+- **생성**: `POST /calendars/{calendarId}/events`
+- **수정**: `PUT /calendars/{calendarId}/events/{eventId}` (`If-Match: <etag>` 포함)
+- **삭제**: `DELETE /calendars/{calendarId}/events/{eventId}`
+
+수정 요청이 **412 Precondition Failed**(다른 기기에서 이벤트가 변경되어 발생한 ETag 충돌)를 반환하면, 패키지가 최신 ETag를 다시 가져와 한 번 재시도합니다.
+
+반복 이벤트는 **절대** 원격에 반영되지 않으며 읽기 전용입니다.
+
+## Google Calendar API 스코프
+
+OAuth 토큰에는 다음 스코프 중 최소 하나가 포함되어야 합니다:
+
+| 스코프                                              | 접근 권한                                     |
+| :-------------------------------------------------- | :-------------------------------------------- |
+| `https://www.googleapis.com/auth/calendar`          | 읽기·쓰기 전체 권한                           |
+| `https://www.googleapis.com/auth/calendar.readonly` | 읽기 전용 권한(`writable: false`와 함께 사용) |

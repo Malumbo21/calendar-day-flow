@@ -1,0 +1,140 @@
+---
+title: 범위 선택기
+---
+
+# 범위 선택기
+
+Temporal API를 기반으로 만든 날짜·시간 범위 선택기입니다. 날짜만 선택하는 모드와 날짜+시간 모드를 지원하고, 시간대를 인식하며, 키보드 입력과 유연한 팝업 배치를 제공합니다.
+
+## 설치
+
+<PackageTabs pkg='@dayflow/ui-range-picker' />
+
+이미 Tailwind CSS를 쓰는 프로젝트라면 컴포넌트 전용 번들을 가져오세요:
+
+```css
+@import '@dayflow/ui-range-picker/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+Tailwind CSS를 쓰지 않는 프로젝트라면 전체 스타일시트를 가져오세요:
+
+```tsx
+import { RangePicker } from '@dayflow/ui-range-picker';
+import '@dayflow/ui-range-picker/dist/styles.css';
+```
+
+## 기본 사용법
+
+```tsx
+import { useState } from 'react';
+import { Temporal } from 'temporal-polyfill';
+import { RangePicker } from '@dayflow/ui-range-picker';
+import type { ZonedRange } from '@dayflow/ui-range-picker';
+
+function MyComponent() {
+  const [range, setRange] = useState<ZonedRange>([
+    Temporal.Now.zonedDateTimeISO(),
+    Temporal.Now.zonedDateTimeISO().add({ hours: 1 }),
+  ]);
+
+  return <RangePicker value={range} onChange={value => setRange(value)} />;
+}
+```
+
+## 날짜 전용 모드
+
+`showTime={false}`를 전달하면 시간 선택기가 숨겨집니다.
+
+```tsx
+<RangePicker
+  value={range}
+  showTime={false}
+  format='YYYY-MM-DD'
+  onChange={value => setRange(value)}
+/>
+```
+
+## 시간대 지정
+
+```tsx
+<RangePicker
+  value={range}
+  timeZone='America/New_York'
+  onChange={(value, dateStrings) => {
+    console.log('range:', value);
+    console.log('formatted:', dateStrings); // ['2024-10-15 10:00', '2024-10-15 11:00']
+  }}
+/>
+```
+
+## 사용자 지정 시간 형식
+
+```tsx
+<RangePicker
+  value={range}
+  format='MM/DD/YYYY'
+  showTime={{ format: 'hh:mm A' }}
+  onChange={value => setRange(value)}
+  onOk={value => saveToBackend(value)}
+/>
+```
+
+## 팝업 배치
+
+팝업은 기본적으로 `bottomLeft`에 표시되며, 화면 밖으로 넘치지 않도록 자동으로 조정됩니다.
+
+```tsx
+<RangePicker
+  value={range}
+  placement='topRight'
+  autoAdjustOverflow={true}
+  onChange={value => setRange(value)}
+/>
+```
+
+## 로케일
+
+BCP 47 로케일 문자열을 전달하면 월 이름과 요일 레이블이 해당 언어로 표시됩니다.
+
+```tsx
+<RangePicker value={range} locale='zh-CN' onChange={value => setRange(value)} />
+```
+
+## 트리거 너비에 맞추기
+
+```tsx
+<RangePicker
+  value={range}
+  matchTriggerWidth
+  onChange={value => setRange(value)}
+/>
+```
+
+## API 레퍼런스
+
+### `RangePicker`
+
+| Prop                 | 타입                                                            | 기본값         | 설명                                                                              |
+| :------------------- | :-------------------------------------------------------------- | :------------- | :-------------------------------------------------------------------------------- |
+| `value`              | `[Temporal.PlainDate \| PlainDateTime \| ZonedDateTime, ...]`   | —              | 제어 방식의 범위 값입니다. Temporal 타입을 자유롭게 조합할 수 있습니다.           |
+| `format`             | `string`                                                        | `"YYYY-MM-DD"` | 날짜 부분의 표시 및 파싱 형식입니다                                               |
+| `showTime`           | `boolean \| { format?: string }`                                | `true`         | 시간 선택을 켭니다. 객체를 전달하면 시간 형식을 직접 지정할 수 있습니다.          |
+| `showTimeFormat`     | `string`                                                        | `"HH:mm"`      | `showTime`이 `true`일 때 사용하는 기본 시간 형식입니다                            |
+| `onChange`           | `(value: ZonedRange, dateString: [string, string]) => void`     | —              | 선택이 바뀔 때마다 호출됩니다                                                     |
+| `onOk`               | `(value: ZonedRange, dateString: [string, string]) => void`     | —              | 사용자가 OK 버튼으로 선택을 확정할 때 호출됩니다                                  |
+| `timeZone`           | `string`                                                        | —              | IANA 시간대 문자열입니다(예: `"America/New_York"`). 기본값은 시스템 시간대입니다. |
+| `disabled`           | `boolean`                                                       | `false`        | 모든 상호작용을 막습니다                                                          |
+| `placement`          | `'bottomLeft' \| 'bottomRight' \| 'topLeft' \| 'topRight'`      | `'bottomLeft'` | 팝업이 선호하는 위치입니다                                                        |
+| `autoAdjustOverflow` | `boolean`                                                       | `true`         | 팝업이 화면 밖으로 넘칠 경우 배치를 자동으로 반대편으로 뒤집습니다                |
+| `getPopupContainer`  | `() => HTMLElement`                                             | —              | 팝업을 `document.body` 대신 지정한 컨테이너 안에 마운트합니다                     |
+| `matchTriggerWidth`  | `boolean`                                                       | `false`        | 팝업 너비를 트리거 입력 필드의 너비에 맞춥니다                                    |
+| `locale`             | `string \| { code: string; messages?: Record<string, string> }` | `'en-US'`      | 월·요일 레이블에 사용할 BCP 47 로케일 코드입니다                                  |
+
+### `ZonedRange`
+
+```ts
+type ZonedRange = [Temporal.ZonedDateTime, Temporal.ZonedDateTime];
+```
+
+`onChange`와 `onOk` 콜백은 입력 값의 타입과 관계없이 언제나 활성 시간대로 정규화된 `ZonedRange`를 전달받습니다.

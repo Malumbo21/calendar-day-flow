@@ -1,0 +1,155 @@
+---
+title: '이벤트 서비스 플러그인'
+---
+
+# 이벤트 서비스 플러그인
+
+이벤트 서비스 플러그인은 검증, 필터링, 복합 조회 등 고급 이벤트 관리 기능을 제공합니다.
+
+## 설치
+
+이벤트 서비스 플러그인은 현재 `@dayflow/core` 패키지에 포함되어 있습니다.
+
+```tsx
+import { createEventsPlugin } from '@dayflow/core';
+```
+
+## 사용법
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import {
+      useCalendarApp,
+      DayFlowCalendar,
+      createEventsPlugin,
+    } from '@dayflow/react';
+
+    function MyCalendar() {
+      const eventsPlugin = createEventsPlugin({
+        enableValidation: true,
+        maxEventsPerDay: 50,
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [eventsPlugin],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createEventsPlugin } from '@dayflow/core';
+
+    const eventsPlugin = createEventsPlugin({
+      enableValidation: true,
+      maxEventsPerDay: 50,
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [eventsPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createEventsPlugin } from '@dayflow/core';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      eventsPlugin = createEventsPlugin({
+        enableValidation: true,
+        maxEventsPerDay: 50,
+      });
+
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [this.eventsPlugin]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createEventsPlugin } from '@dayflow/core';
+
+      const eventsPlugin = createEventsPlugin({
+        enableValidation: true,
+        maxEventsPerDay: 50,
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [eventsPlugin],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## 설정
+
+| 속성                    | 타입      | 기본값 | 설명                                                  |
+| :---------------------- | :-------- | :----- | :---------------------------------------------------- |
+| `enableAutoRecalculate` | `boolean` | `true` | 날짜가 바뀌면 이벤트 구간을 자동으로 다시 계산합니다. |
+| `enableValidation`      | `boolean` | `true` | 이벤트를 추가하거나 수정하기 전에 객체를 검증합니다.  |
+| `maxEventsPerDay`       | `number`  | `50`   | 하루에 허용되는 최대 이벤트 수입니다.                 |
+
+## 플러그인 API
+
+고급 조회를 하려면 `EventsService`에 접근하세요:
+
+```tsx
+const eventsService = calendar.app.getPlugin<EventsService>('events');
+
+// Get events for a specific day
+const events = eventsService.getByDate(new Date());
+
+// Filter events
+const workEvents = eventsService.filterEvents(
+  allEvents,
+  e => e.calendarId === 'work'
+);
+```
+
+### 사용 가능한 메서드
+
+- `getAll()`: 모든 이벤트를 가져옵니다.
+- `getById(id)`: 특정 이벤트를 찾습니다.
+- `getByDate(date)`: 특정 날짜에 해당하는 이벤트를 가져옵니다.
+- `getByDateRange(start, end)`: 지정한 범위 안의 이벤트를 가져옵니다.
+- `validateEvent(event)`: 검증 오류를 담은 배열을 반환합니다.

@@ -1,0 +1,722 @@
+---
+title: 'Seitenleisten-Plugin'
+---
+
+import { SidebarCustomShowcase } from '@/components/showcase/SidebarShowcases';
+
+# Seitenleisten-Plugin
+
+Das Seitenleisten-Plugin ergänzt Ihren Kalender um eine Leiste zur Kalenderverwaltung. Sie enthält einen Minikalender zur Datumsnavigation, eine Kalenderliste mit Sichtbarkeitsschaltern und alle CRUD-Funktionen (anlegen, umbenennen, umfärben, zusammenführen, löschen, importieren und exportieren).
+
+## Installation
+
+Installieren Sie das Plugin-Paket:
+
+<PackageTabs pkg='@dayflow/plugin-sidebar' />
+
+## Verwendung
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    function MyCalendar() {
+      const sidebarPlugin = createSidebarPlugin({
+        width: 280,
+        createCalendarMode: 'modal',
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [sidebarPlugin],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    const sidebarPlugin = createSidebarPlugin({
+      width: 280,
+      createCalendarMode: 'modal',
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [sidebarPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createSidebarPlugin({
+            width: 280,
+            createCalendarMode: 'modal',
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+      const sidebarPlugin = createSidebarPlugin({
+        width: 280,
+        createCalendarMode: 'modal',
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [sidebarPlugin],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Konfiguration
+
+| Eigenschaft                  | Typ                                                    | Standard                           | Beschreibung                                                |
+| :--------------------------- | :----------------------------------------------------- | :--------------------------------- | :---------------------------------------------------------- |
+| `width`                      | `number \| string`                                     | `'240px'`                          | Breite der Seitenleiste (etwa `280` oder `'20rem'`)         |
+| `miniWidth`                  | `string`                                               | `'50px'`                           | Breite der eingeklappten Seitenleiste                       |
+| `initialCollapsed`           | `boolean`                                              | `false`                            | Legt fest, ob die Seitenleiste eingeklappt startet          |
+| `createCalendarMode`         | `'inline' \| 'modal'`                                  | `'inline'`                         | Darstellung des Formulars zum Anlegen eines Kalenders       |
+| `colorPickerMode`            | `'blossom' \| 'default'`                               | `'default'`                        | Welche Farbwähler-Komponente verwendet wird                 |
+| `onSubscribeCalendar`        | `(calendar, events) => Promise<void>`                  | `undefined`                        | Callback nach dem Anlegen eines Abonnements                 |
+| `onLoadSubscription`         | `(calendar) => Promise<void>`                          | `undefined`                        | Eigener Loader für bestehende Abonnements                   |
+| `onReorder`                  | `(calendars: CalendarType[]) => void \| Promise<void>` | `undefined`                        | Callback nach dem Umsortieren der Kalender                  |
+| `componentsOrder`            | `('calendarList' \| 'miniCalendar')[]`                 | `['calendarList', 'miniCalendar']` | Reihenfolge der Komponenten in der Seitenleiste             |
+| `render`                     | `(props: CalendarSidebarRenderProps) => TNode`         | `undefined`                        | Vollständiger Ersatz der Seitenleisten-Oberfläche           |
+| `renderSidebarHeader`        | `(args: SidebarHeaderSlotArgs) => TNode`               | `undefined`                        | Eigener Renderer für die Kopfzeile der Seitenleiste         |
+| `renderCalendarContextMenu`  | `(calendar, onClose) => TNode`                         | `undefined`                        | Eigener Renderer für das Kontextmenü der Kalendereinträge   |
+| `renderCreateCalendarDialog` | `(props) => TNode`                                     | `undefined`                        | Eigener Renderer für den Dialog zum Anlegen eines Kalenders |
+
+## Programmatische API
+
+Sobald der Kalender gerendert ist, greifen Sie über `app.getPlugin` auf `SidebarService` zu:
+
+```tsx
+import { type SidebarService } from '@dayflow/plugin-sidebar';
+
+const sidebar = app.getPlugin<SidebarService>('sidebar');
+
+sidebar?.collapse(); // Collapse the sidebar
+sidebar?.expand(); // Expand the sidebar
+sidebar?.setCollapsed(true); // Set state explicitly
+console.log(sidebar?.isCollapsed()); // Read current state
+```
+
+### SidebarService
+
+| Methode                            | Rückgabe  | Beschreibung                              |
+| :--------------------------------- | :-------- | :---------------------------------------- |
+| `collapse()`                       | `void`    | Klappt die Seitenleiste ein               |
+| `expand()`                         | `void`    | Klappt die Seitenleiste aus               |
+| `setCollapsed(collapsed: boolean)` | `void`    | Setzt den Einklappzustand ausdrücklich    |
+| `isCollapsed()`                    | `boolean` | Gibt den aktuellen Einklappzustand zurück |
+
+### An ein Tastenkürzel binden
+
+```tsx
+window.addEventListener('keydown', e => {
+  if (e.metaKey && e.key === '[') {
+    const sidebar = app.getPlugin<SidebarService>('sidebar');
+    sidebar?.setCollapsed(!sidebar.isCollapsed());
+  }
+});
+```
+
+## Funktionen
+
+Die Seitenleiste liefert ein fertiges Layout mit Sichtbarkeitsschaltern, Farbfeldern je Kalender und Einklapp-Steuerung. Sie unterstützt außerdem das Anlegen von Kalendern und Kontextmenüs, sodass Nutzende Kalender hinzufügen, umfärben und löschen können.
+
+Enthaltene Funktionen:
+
+- **Minikalender** – eine kompakte Monatsansicht für die schnelle Datumsnavigation
+- **Kalenderliste** – blenden Sie einzelne Kalender über farbcodierte Kontrollkästchen ein und aus
+- **Kalender anlegen** – neue Kalender mit eigenem Namen und eigener Farbe hinzufügen
+- **Umbenennen / umfärben** – per Rechtsklick auf einen Kalender Namen oder Farbe ändern
+- **Kalender umsortieren** – Kalender per Drag-and-drop in der Liste neu anordnen. Über den Callback `onReorder` speichern Sie die neue Reihenfolge in Ihrem Backend.
+- **Kalender zusammenführen** – alle Termine eines Kalenders in einen anderen verschieben
+- **Kalender löschen** – einen Kalender mit Bestätigungsschritt entfernen (oder ihn vorher zusammenführen)
+- **Importieren / exportieren** – `.ics`-Dateien einlesen oder Kalender als `.ics` ausgeben
+- **Kalender abonnieren** – externe `.ics`-Feeds per URL abonnieren; abonnierte Kalender erhalten in der Liste ein Abzeichen
+
+### Live-Demo
+
+Sehen Sie sich unten die eingebaute Seitenleisten-Oberfläche und eine eigene, framework-native Umsetzung an.
+
+<SidebarCustomShowcase />
+
+#### Was Sie ausprobieren können
+
+- **Sichtbarkeitsschalter**: Blenden Sie Kalender aus und wieder ein und beobachten Sie, wie sich die Ansichten sofort aktualisieren.
+- **Ziehen und synchron halten**: Ziehen Sie Termine zwischen Ansichten; die Seitenleiste hält die anstehenden Einträge synchron.
+- **Einklappen**: Klappen Sie die Seitenleiste ein, um bei dichten Wochenansichten Platz zu gewinnen.
+
+## Kalender abonnieren
+
+Die Seitenleiste bringt eine Abonnementfunktion für externe ICS-Feeds mit. Klicken Sie dazu mit der rechten Maustaste auf einen Kalender oder auf den leeren Bereich der Seitenleiste, wählen Sie im Kontextmenü **Kalender abonnieren** und geben Sie eine öffentlich erreichbare `.ics`-URL ein.
+
+DayFlow lädt die Datei, wertet die Termine aus und legt automatisch einen neuen Kalender an. Abonnierte Kalender tragen in der Liste ein kleines Abzeichen und heben sich so von lokal angelegten Kalendern ab.
+
+### Automatisches Laden und Deduplizierung
+
+Wenn Sie in der Ausgangskonfiguration einen Kalender mit `subscription.url` angeben, lädt das Seitenleisten-Plugin beim Einhängen automatisch die neuesten Termine.
+
+Damit zwischengespeicherte und frisch geladene Termine nicht doppelt erscheinen, dedupliziert DayFlow **anhand der ID**:
+
+- Hat ein Termin aus einem Abonnement dieselbe `id` wie ein bereits vorhandener Termin im Kern-Store, gewinnt die Fassung aus dem Abonnement.
+- So zeigt Ihre Oberfläche immer den aktuellsten Stand, ohne dass sich Termine nach einem Neuladen der Seite verdoppeln.
+
+### Abonnierte Kalender persistieren
+
+DayFlow erkennt abonnierte Kalender daran, dass am `CalendarType` ein `subscription`-Objekt hängt.
+
+**Standardverhalten für Abonnements:**
+
+- **Nur lesend**: Änderungen über die Oberfläche (Titel bearbeiten, Kalender wechseln, löschen) sind über `canMutateFromUI()` deaktiviert.
+- **Nicht verschiebbar**: Drag-and-drop-Aktionen (Verschieben, Größe ändern) sind deaktiviert.
+- **Ausgeblendete Notizen**: Hat ein Termin keine Beschreibung, wird das Feld „Notiz“ im Detailbereich ausgeblendet, damit die Oberfläche aufgeräumt bleibt.
+
+Sollen Nutzende abonnierte Termine bearbeiten oder verschieben können, heben Sie diese Schutzmechanismen mit `readOnly: false` am Kalenderobjekt ausdrücklich auf:
+
+```tsx
+const calendar = useCalendarApp({
+  calendars: [
+    {
+      id: 'team-ics',
+      name: 'Team Calendar',
+      subscription: {
+        url: 'https://example.com/calendar.ics',
+        status: 'ready',
+      },
+      // Override default protections:
+      readOnly: false, // Enables both UI mutations and drag-and-drop
+      colors: {
+        /* ... */
+      },
+    },
+  ],
+});
+```
+
+Wenn Sie den Kalenderzustand in einem Backend speichern, erhalten Sie das Feld `subscription` und stellen es beim nächsten Laden wieder her.
+
+> **Hinweis:** DayFlow aktualisiert abonnierte Feeds nicht von selbst. Damit die Termine aktuell bleiben, holen Sie sie in Ihrer Anwendung regelmäßig ab und aktualisieren sie über `app.addEvent()` / `app.removeEvent()`.
+
+Sie können die Seitenleiste durch eine eigene Komponente ersetzen, indem Sie `createSidebarPlugin` eine `render`-Funktion übergeben (React) oder die Komponenten-Slots bzw. -Templates nutzen (Vue, Angular, Svelte).
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import {
+      createSidebarPlugin,
+      type CalendarSidebarRenderProps,
+    } from '@dayflow/plugin-sidebar';
+
+    const CustomSidebar = ({
+      app,
+      calendars,
+      toggleCalendarVisibility,
+      isCollapsed,
+      setCollapsed,
+    }: CalendarSidebarRenderProps) => {
+      if (isCollapsed) {
+        return (
+          <div className='p-2'>
+            <button onClick={() => setCollapsed(false)}>→</button>
+          </div>
+        );
+      }
+
+      return (
+        <aside className='flex h-full flex-col gap-4 p-4 bg-slate-50 border-r'>
+          <header className='flex items-center justify-between'>
+            <h3 className='font-semibold'>My Workspace</h3>
+            <button onClick={() => setCollapsed(true)}>←</button>
+          </header>
+
+          <nav className='space-y-1'>
+            {calendars.map(calendar => (
+              <label
+                key={calendar.id}
+                className='flex items-center gap-2 cursor-pointer'
+              >
+                <input
+                  type='checkbox'
+                  checked={calendar.isVisible}
+                  onChange={e =>
+                    toggleCalendarVisibility(calendar.id, e.target.checked)
+                  }
+                />
+                <span
+                  className='w-3 h-3 rounded-full'
+                  style={{ backgroundColor: calendar.colors.lineColor }}
+                />
+                {calendar.name}
+              </label>
+            ))}
+          </nav>
+
+          <div className='mt-auto pt-4 border-t text-xs text-slate-500'>
+            Total Events: {app.getEvents().length}
+          </div>
+        </aside>
+      );
+    };
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [/* views */],
+        plugins: [
+          createSidebarPlugin({
+            render: props => <CustomSidebar {...props} />,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <!-- Override using scoped slot 'sidebar' -->
+        <template #sidebar="args">
+          <aside v-if="!args.isCollapsed" class="flex h-full flex-col gap-4 p-4 bg-slate-50 border-r">
+            <header class="flex items-center justify-between">
+              <h3 class="font-semibold">My Workspace</h3>
+              <button @click="args.setCollapsed(true)">←</button>
+            </header>
+
+            <nav class="space-y-1">
+              <label
+                v-for="cal in args.calendars"
+                :key="cal.id"
+                class="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="cal.isVisible"
+                  @change="args.toggleCalendarVisibility(cal.id, !cal.isVisible)"
+                />
+                <span
+                  class="w-3 h-3 rounded-full"
+                  :style="{ backgroundColor: cal.colors.lineColor }"
+                />
+                {{ cal.name }}
+              </label>
+            </nav>
+
+            <div class="mt-auto pt-4 border-t text-xs text-slate-500">
+              Total Events: {{ args.app.getEvents().length }}
+            </div>
+          </aside>
+          <div v-else class="p-2">
+            <button @click="args.setCollapsed(false)">→</button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    const calendar = useCalendarApp({
+      views: [/* views */],
+      plugins: [createSidebarPlugin()]
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <!-- app.component.html -->
+    <dayflow-calendar
+      [calendar]="calendar"
+      [sidebar]="customSidebar"
+    >
+    </dayflow-calendar>
+
+    <ng-template #customSidebar let-args>
+      <aside *ngIf="!args.isCollapsed; else collapsedView" class="flex h-full flex-col gap-4 p-4 bg-slate-50 border-r">
+        <header class="flex items-center justify-between">
+          <h3 class="font-semibold">My Workspace</h3>
+          <button (click)="args.setCollapsed(true)">←</button>
+        </header>
+
+        <nav class="space-y-1">
+          <label
+            *ngFor="let cal of args.calendars"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              [checked]="cal.isVisible"
+              (change)="args.toggleCalendarVisibility(cal.id, !cal.isVisible)"
+            />
+            <span
+              class="w-3 h-3 rounded-full"
+              [style.background-color]="cal.colors.lineColor"
+            ></span>
+            {{ cal.name }}
+          </label>
+        </nav>
+
+        <div class="mt-auto pt-4 border-t text-xs text-slate-500">
+          Total Events: {{ args.app.getEvents().length }}
+        </div>
+      </aside>
+
+      <ng-template #collapsedView>
+        <div class="p-2">
+          <button (click)="args.setCollapsed(false)">→</button>
+        </div>
+      </ng-template>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <!-- App.svelte -->
+    <script lang="ts">
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+      import CustomSidebar from './CustomSidebar.svelte';
+
+      const calendar = useCalendarApp({
+        views: [/* views */],
+        plugins: [createSidebarPlugin()]
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} sidebar={CustomSidebar} />
+
+    <!-- CustomSidebar.svelte -->
+    <script lang="ts">
+      import type { CalendarSidebarRenderProps } from '@dayflow/core';
+
+      let {
+        app,
+        calendars,
+        isCollapsed,
+        setCollapsed,
+        toggleCalendarVisibility,
+      } = $props<CalendarSidebarRenderProps>();
+    </script>
+
+    {#if isCollapsed}
+      <div class="p-2">
+        <button onclick={() => setCollapsed(false)}>→</button>
+      </div>
+    {:else}
+      <aside class="flex h-full flex-col gap-4 p-4 bg-slate-50 border-r">
+        <header class="flex items-center justify-between">
+          <h3 class="font-semibold">My Workspace</h3>
+          <button onclick={() => setCollapsed(true)}>←</button>
+        </header>
+
+        <nav class="space-y-1">
+          {#each calendars as cal (cal.id)}
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={cal.isVisible}
+                onchange={(e) => toggleCalendarVisibility(cal.id, e.currentTarget.checked)}
+              />
+              <span
+                class="w-3 h-3 rounded-full"
+                style:background-color={cal.colors.lineColor}
+              ></span>
+              {cal.name}
+            </label>
+          {/each}
+        </nav>
+
+        <div class="mt-auto pt-4 border-t text-xs text-slate-500">
+          Total Events: {app.getEvents().length}
+        </div>
+      </aside>
+    {/if}
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Eigenes Kontextmenü
+
+Sie können das Standard-Kontextmenü der Kalendereinträge ersetzen:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    createSidebarPlugin({
+      renderCalendarContextMenu: (calendar, onClose) => (
+        <div className='bg-white shadow-lg border rounded p-2'>
+          <button
+            onClick={() => {
+              console.log('Custom action');
+              onClose();
+            }}
+          >
+            Custom Action for {calendar.name}
+          </button>
+        </div>
+      ),
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #calendarContextMenu="{ calendar, onClose }">
+          <div class="bg-white shadow-lg border rounded p-2">
+            <button @click="onClose()">
+              Custom Action for {{ calendar.name }}
+            </button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [calendarContextMenu]="contextMenu"
+    >
+    </dayflow-calendar>
+
+    <ng-template #contextMenu let-args>
+      <div class="bg-white shadow-lg border rounded p-2">
+        <button (click)="args.onClose()">
+          Custom Action for {{ args.calendar.name }}
+        </button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} calendarContextMenu={CustomContextMenu} />
+
+    <!-- CustomContextMenu.svelte -->
+    <script lang="ts">
+      import type { CalendarContextMenuSlotArgs } from '@dayflow/core';
+      let { calendar, onClose } = $props<CalendarContextMenuSlotArgs>();
+    </script>
+
+    <div class="bg-white shadow-lg border rounded p-2">
+      <button onclick={() => { console.log('Custom action'); onClose(); }}>
+        Custom Action for {calendar.name}
+      </button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Eigener Dialog zum Anlegen von Kalendern
+
+Sie können den Standarddialog zum Anlegen eines Kalenders ersetzen:
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    createSidebarPlugin({
+      renderCreateCalendarDialog: ({ onCreate, onClose }) => (
+        <MyCustomDialog onSave={onCreate} onCancel={onClose} />
+      ),
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #createCalendarDialog="{ onCreate, onClose }">
+          <MyCustomDialog @save="onCreate" @cancel="onClose" />
+        </template>
+      </DayFlowCalendar>
+    </template>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [createCalendarDialog]="customDialog"
+    >
+    </dayflow-calendar>
+
+    <ng-template #customDialog let-args>
+      <my-custom-dialog
+        (save)="args.onCreate($event)"
+        (cancel)="args.onClose()"
+      >
+      </my-custom-dialog>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} createCalendarDialog={CustomDialog} />
+
+    <!-- CustomDialog.svelte -->
+    <script lang="ts">
+      import type { CreateCalendarDialogProps } from '@dayflow/core';
+      let { onCreate, onClose } = $props<CreateCalendarDialogProps>();
+    </script>
+
+    <div class="dialog">
+      <!-- custom dialog markup -->
+      <button onclick={() => onCreate({ id: 'new', name: 'New' })}>Create</button>
+      <button onclick={onClose}>Cancel</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Eigene Kopfzeile der Seitenleiste
+
+Sie können die Standardkopfzeile der Seitenleiste ersetzen (den Bereich mit dem Titel „Kalender“ und der Einklapp-Schaltfläche):
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    createSidebarPlugin({
+      renderSidebarHeader: ({ isCollapsed, onCollapseToggle }) => (
+        <div className='flex items-center justify-between p-4 border-b'>
+          {!isCollapsed && <span className='font-bold text-lg'>My Calendars</span>}
+          <button
+            onClick={onCollapseToggle}
+            className='p-1 hover:bg-slate-100 rounded'
+          >
+            {isCollapsed ? '→' : '←'}
+          </button>
+        </div>
+      ),
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #sidebarHeader="{ isCollapsed, onCollapseToggle }">
+          <div class="flex items-center justify-between p-4 border-b">
+            <span v-if="!isCollapsed" class="font-bold text-lg">My Calendars</span>
+            <button
+              @click="onCollapseToggle"
+              class="p-1 hover:bg-slate-100 rounded"
+            >
+              {{ isCollapsed ? '→' : '←' }}
+            </button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [sidebarHeader]="headerTemplate"
+    >
+    </dayflow-calendar>
+
+    <ng-template #headerTemplate let-args>
+      <div class="flex items-center justify-between p-4 border-b">
+        <span *ngIf="!args.isCollapsed" class="font-bold text-lg">My Calendars</span>
+        <button
+          (click)="args.onCollapseToggle()"
+          class="p-1 hover:bg-slate-100 rounded"
+        >
+          {{ args.isCollapsed ? '→' : '←' }}
+        </button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} sidebarHeader={CustomHeader} />
+
+    <!-- CustomHeader.svelte -->
+    <script lang="ts">
+      import type { SidebarHeaderSlotArgs } from '@dayflow/core';
+      let { isCollapsed, onCollapseToggle } = $props<SidebarHeaderSlotArgs>();
+    </script>
+
+    <div class="custom-header">
+      {#if !isCollapsed}
+        <span>My Calendars</span>
+      {/if}
+      <button onclick={onCollapseToggle}>
+        {isCollapsed ? '→' : '←'}
+      </button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>

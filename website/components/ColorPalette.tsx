@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation';
 import React from 'react';
 
+import { getLanguageCodeFromPathname } from '@/lib/i18n';
+
 interface ColorSwatchProps {
   name: string;
   lightColor: string;
@@ -107,17 +109,17 @@ const translations = {
   },
 };
 
+type Translation = (typeof translations)['en'];
+
 export const DefaultColorPalette: React.FC = () => {
   const pathname = usePathname();
 
-  // Detect language from pathname
-  const lang = pathname?.startsWith('/docs-zh')
-    ? 'zh'
-    : pathname?.startsWith('/docs-ja')
-      ? 'ja'
-      : 'en';
-
-  const t = translations[lang];
+  // A locale with no entry here falls back to English rather than crashing, so
+  // adding a language does not require translating this component first.
+  const t =
+    (translations as Record<string, Translation | undefined>)[
+      getLanguageCodeFromPathname(pathname ?? '')
+    ] ?? translations.en;
 
   const colors = [
     { key: 'blue', light: '#3b82f6', dark: '#60a5fa' },

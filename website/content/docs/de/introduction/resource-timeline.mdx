@@ -1,0 +1,332 @@
+---
+title: Ressourcen-Zeitleiste
+description: Horizontale Ressourcen-Zeitleiste von DayFlow Pro mit gruppierten Ressourcen, Meilensteinen, Umschalten der Skala und Interaktionen wie in einem Planungswerkzeug.
+status: pro
+---
+
+# Ressourcen-Zeitleiste
+
+`@dayflow-pro/resource-timeline` ergänzt DayFlow um eine horizontale Zeitleiste im Stil eines Planungswerkzeugs. Die Zeit verläuft von links nach rechts, jede Ressource erhält eine eigene Zeile, und die Ansicht ist auf die Planung von Arbeit über Personen, Räume, Projekte oder Geräte hinweg ausgelegt.
+
+Probieren Sie die [Live-Demo](https://pro.dayflow.studio/?utm_source=calendar.dayflow.studio&utm_medium=referral&utm_content=docs_resource_timeline) aus
+
+Gegenüber den eingebauten Kalenderansichten ist die Ressourcen-Zeitleiste optimiert für:
+
+- lang laufende Aufgaben und Projektpläne,
+- die Verteilung von Ressourcen über mehrere Spuren,
+- Meilensteine und Fortschrittsverfolgung,
+- hierarchische oder gruppierte Ressourcenlisten.
+
+## Installation
+
+<PackageTabs pkg='@dayflow-pro/resource-timeline' />
+
+Die Installationsschritte finden Sie im Leitfaden [Pro-Installation](/docs-de/introduction/pro-installation).
+
+## Grundlegende Verwendung
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/react';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: event =>
+              (event as { resourceId?: string }).resourceId ?? event.calendarId,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+    const calendar = useCalendarApp({
+      views: [
+        createResourceTimelineView({
+          resources: [
+            {
+              id: 'eng-alice',
+              name: 'Alice Chen',
+              groupId: 'engineering',
+              groupName: 'Engineering',
+              subtitle: 'Frontend',
+            },
+            {
+              id: 'eng-bob',
+              name: 'Bob Torres',
+              groupId: 'engineering',
+              groupName: 'Engineering',
+              subtitle: 'Platform',
+            },
+          ],
+          defaultView: 'week',
+          height: 640,
+          getResourceId: event => event.resourceId ?? event.calendarId,
+        }),
+      ],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `
+        <dayflow-calendar [calendar]="calendar"></dayflow-calendar>
+      `
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: (event: any) => event.resourceId ?? event.calendarId,
+          }),
+        ],
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createResourceTimelineView } from '@dayflow-pro/resource-timeline';
+
+      const calendar = useCalendarApp({
+        views: [
+          createResourceTimelineView({
+            resources: [
+              {
+                id: 'eng-alice',
+                name: 'Alice Chen',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Frontend',
+              },
+              {
+                id: 'eng-bob',
+                name: 'Bob Torres',
+                groupId: 'engineering',
+                groupName: 'Engineering',
+                subtitle: 'Platform',
+              },
+            ],
+            defaultView: 'week',
+            height: 640,
+            getResourceId: event => event.resourceId ?? event.calendarId,
+          }),
+        ],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Skalen der Zeitleiste
+
+| Skala     | Beschreibung                                  |
+| :-------- | :-------------------------------------------- |
+| `day`     | Ein Tag mit Stundenspalten.                   |
+| `week`    | Eine Woche mit Tagesspalten.                  |
+| `month`   | Ein Monat mit Tagesspalten.                   |
+| `quarter` | Drei Monate, nach Woche oder Monat gruppiert. |
+| `year`    | Ein ganzes Jahr für Roadmap-artige Planung.   |
+
+Mit `defaultView` legen Sie die Anfangsskala fest. Über `viewSwitcherMode` steuern Sie außerdem die Darstellung des Umschalters; unterstützt werden `buttons`, `select` und `filter`.
+
+## Ressourcenmodell
+
+Ressourcen sind einfache Objekte. Der Code unterstützt deutlich mehr als nur `id` und `name`:
+
+```ts
+type Resource = {
+  id: string;
+  name: string;
+  parentId?: string;
+  collapsed?: boolean;
+  groupId?: string;
+  groupName?: string;
+  order?: number;
+  subtitle?: string;
+  avatar?: string;
+  color?: string;
+  style?: {
+    colors: { color: string; textColor?: string };
+    darkColors?: { color: string; textColor?: string };
+    opacity?: number;
+    borderRadius?: number;
+  };
+  meta?: Record<string, unknown>;
+};
+```
+
+Nützliche Felder:
+
+- `groupId` und `groupName` gliedern Ressourcen in gruppierte Abschnitte.
+- `parentId` und `collapsed` ermöglichen hierarchische Ressourcenbäume.
+- `subtitle`, `avatar`, `color` und `style` bereichern die Darstellung in der Seitenleiste.
+- `meta` dient häufig dazu, eine externe Kennung wie `calendarId` abzulegen.
+
+## Termine an Ressourcen binden
+
+Die Ansicht ermittelt die Zeile eines Termins in dieser Reihenfolge:
+
+1. `getResourceId(event)`, sofern angegeben
+2. `event.resourceId`
+3. `event.meta?.resourceId`
+4. `event.calendarId`
+
+Sie können `resourceId` also direkt an Ihren Terminobjekten hinterlegen oder bestehende DayFlow-Termine per Callback auf Ressourcen abbilden.
+
+```tsx
+const event = {
+  id: 'task-1',
+  title: 'Build export flow',
+  start: new Date(2026, 4, 10, 9, 0),
+  end: new Date(2026, 4, 12, 18, 0),
+  resourceId: 'eng-alice',
+  progress: 65,
+};
+```
+
+## Meilensteine und Termingestaltung
+
+Termine, bei denen `start` und `end` identisch sind, werden automatisch als Meilensteine dargestellt.
+
+```tsx
+const milestone = {
+  id: 'release-gate',
+  title: 'Release approval',
+  start: new Date(2026, 4, 14, 10, 0),
+  end: new Date(2026, 4, 14, 10, 0),
+  resourceId: 'eng-bob',
+};
+```
+
+| Eigenschaft             | Typ                              | Hinweise                                                                                                 |
+| :---------------------- | :------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| `milestoneLabelDisplay` | `'hover' \| 'always'`            | Legt fest, ob Meilenstein-Beschriftungen nur beim Überfahren erscheinen oder dauerhaft sichtbar bleiben. |
+| `milestoneLaneBehavior` | `'smart' \| 'overlay'`           | Legt fest, ob Meilensteine sich nach Möglichkeit normale Spuren teilen oder diese überlagern.            |
+| `getEventType`          | `(event) => ResourceEventType`   | Ordnet Termine zeitleistenspezifischen Typen zu.                                                         |
+| `getEventTooltip`       | `(event) => string \| undefined` | Liefert den Tooltip-Text eines Termins.                                                                  |
+| `styleRegistry`         | `Record<string, EventStyle>`     | Registriert eigene Stil-Voreinstellungen.                                                                |
+| `getEventStyleId`       | `(event) => string \| undefined` | Wählt die Stil-Voreinstellung für einen Termin aus.                                                      |
+
+## ResourceTimelineViewConfig
+
+### Grundlagen
+
+| Eigenschaft        | Typ                                       | Hinweise                                                           |
+| :----------------- | :---------------------------------------- | :----------------------------------------------------------------- |
+| `resources`        | `Resource[]`                              | Erforderliche Ressourcenliste der Zeitleiste.                      |
+| `license`          | `PackageLicenseConfig`                    | Optionale Angabe, wenn Sie keine globale Registrierung verwenden.  |
+| `defaultView`      | `day \| week \| month \| quarter \| year` | Anfangsskala der Zeitleiste.                                       |
+| `views`            | `SchedulerTimelineView[]`                 | Überschreibt die verfügbaren Skalen.                               |
+| `viewType`         | `ViewType \| string`                      | Eigener Ansichtstyp bei der Integration in fortgeschrittene Hosts. |
+| `viewSwitcherMode` | `'buttons' \| 'select' \| 'filter'`       | Steuert die Oberfläche des Skalenumschalters.                      |
+| `height`           | `number \| string`                        | Höhe der gerenderten Ansicht.                                      |
+
+### Layout
+
+| Eigenschaft             | Typ      | Hinweise                                                        |
+| :---------------------- | :------- | :-------------------------------------------------------------- |
+| `resourcePanelWidth`    | `number` | Bevorzugte Breite der Seitenleiste.                             |
+| `resourcePanelMinWidth` | `number` | Mindestbreite der Seitenleiste.                                 |
+| `resourcePanelMaxWidth` | `number` | Maximale Breite der Seitenleiste.                               |
+| `rowHeight`             | `number` | Höhe jeder Ressourcenzeile.                                     |
+| `headerHeight`          | `number` | Höhe der Kopfzeile der Zeitleiste.                              |
+| `hourWidth`             | `number` | Breite der Stundenskala im Modus `day`.                         |
+| `weekDayWidth`          | `number` | Breite pro Tag im Modus `week`.                                 |
+| `dayWidth`              | `number` | Breite pro Tag im Modus `month`.                                |
+| `monthDayWidth`         | `number` | Breite pro Tag bei dichten Monatsbereichen.                     |
+| `quarterMonthWidth`     | `number` | Breite pro Monat im Modus `quarter`.                            |
+| `yearCellWidth`         | `number` | Breite pro Einheit im Modus `year`.                             |
+| `yearRangePast`         | `number` | Zusätzliche Jahre vor dem aktuellen Jahr.                       |
+| `yearRangeFuture`       | `number` | Zusätzliche Jahre nach dem aktuellen Jahr.                      |
+| `overscanRows`          | `number` | Zusätzlich gerenderte Zeilen außerhalb des sichtbaren Bereichs. |
+| `bufferCells`           | `number` | Zusätzliche Zeitzellen für flüssigeres Scrollen.                |
+
+### Sichtbarkeit und Synchronisierung von Ressourcen
+
+| Eigenschaft                           | Typ                                 | Hinweise                                                                               |
+| :------------------------------------ | :---------------------------------- | :------------------------------------------------------------------------------------- |
+| `resourceSorter`                      | `(left, right) => number`           | Eigene Sortierung der Zeilen.                                                          |
+| `syncResourceVisibilityWithCalendars` | `boolean`                           | Blendet die Zeile einer Ressource aus, wenn der zugeordnete Kalender ausgeblendet ist. |
+| `getCalendarIdForResource`            | `(resource) => string \| undefined` | Überschreibt die Zuordnung einer Ressource zur Kalendersichtbarkeit.                   |
+| `onResourcesUpdate`                   | `(resources) => void`               | Wird ausgelöst, wenn Ressourcen in der Oberfläche umsortiert oder eingeklappt werden.  |
+
+Wenn die Kalendersynchronisierung aktiviert ist, lautet die Ersatzzuordnung von Ressource zu Kalender `resource.meta?.calendarId ?? resource.id`.
+
+## Fokus, Seitenleiste und Integrationen
+
+Die Zeitleiste bietet einige Integrationspunkte, die leicht übersehen werden:
+
+- `focusRequest` erlaubt der Host-Anwendung, die Zeitleiste programmgesteuert zu einem bestimmten Termin und Datum zu bewegen.
+- `sidebar` reicht die Konfiguration der Planungs-Seitenleiste durch, etwa Aktionen des Kontextmenüs.
+- `customDetailPanelContent` und `customEventDetailDialog` lassen sich über die Ansichts-Props übergeben, wenn Sie eine eigene Detailoberfläche benötigen.
+- `timeFormat` unterstützt `24h` und `12h`.
+- `resizeTimeFormat` passt die Beschriftung an, die beim Ändern der Termingröße angezeigt wird.

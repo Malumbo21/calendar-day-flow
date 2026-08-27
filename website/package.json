@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "add-locale": "node scripts/add-locale.mjs",
     "build": "next build",
     "dev": "next dev --disable-source-maps",
     "dev:source-maps": "next dev",
     "format": "prettier --write \"**/*.{ts,tsx,mdx,css}\"",
+    "i18n:coverage": "node scripts/i18n-coverage.mjs",
     "lint": "oxlint .",
     "postinstall": "fumadocs-mdx",
     "start": "next start",

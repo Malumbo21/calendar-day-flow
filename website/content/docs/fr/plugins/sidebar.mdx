@@ -1,0 +1,722 @@
+---
+title: 'Plugin de barre latérale'
+---
+
+import { SidebarCustomShowcase } from '@/components/showcase/SidebarShowcases';
+
+# Plugin de barre latérale
+
+Le plugin barre latérale ajoute à votre calendrier un panneau de gestion des calendriers. Il comprend un mini-calendrier pour naviguer entre les dates, une liste de calendriers avec des interrupteurs de visibilité et toutes les opérations CRUD (créer, renommer, changer de couleur, fusionner, supprimer, importer et exporter).
+
+## Installation
+
+Installez le paquet du plugin :
+
+<PackageTabs pkg='@dayflow/plugin-sidebar' />
+
+## Utilisation
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    function MyCalendar() {
+      const sidebarPlugin = createSidebarPlugin({
+        width: 280,
+        createCalendarMode: 'modal',
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [sidebarPlugin],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar" />
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    const sidebarPlugin = createSidebarPlugin({
+      width: 280,
+      createCalendarMode: 'modal',
+    });
+
+    const calendar = useCalendarApp({
+      views: [
+        /* your views */
+      ],
+      plugins: [sidebarPlugin],
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript
+    import { Component } from '@angular/core';
+    import { DayFlowCalendarModule } from '@dayflow/angular';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [DayFlowCalendarModule],
+      template: `<dayflow-calendar [calendar]="calendar"></dayflow-calendar>`
+    })
+    export class AppComponent {
+      calendar = {
+        views: [
+          /* your views */
+        ],
+        plugins: [
+          createSidebarPlugin({
+            width: 280,
+            createCalendarMode: 'modal',
+          })
+        ]
+      };
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <script>
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+      const sidebarPlugin = createSidebarPlugin({
+        width: 280,
+        createCalendarMode: 'modal',
+      });
+
+      const calendar = useCalendarApp({
+        views: [
+          /* your views */
+        ],
+        plugins: [sidebarPlugin],
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} />
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Configuration
+
+| Propriété                    | Type                                                   | Par défaut                         | Description                                                          |
+| :--------------------------- | :----------------------------------------------------- | :--------------------------------- | :------------------------------------------------------------------- |
+| `width`                      | `number \| string`                                     | `'240px'`                          | Largeur de la barre latérale (par exemple `280` ou `'20rem'`)        |
+| `miniWidth`                  | `string`                                               | `'50px'`                           | Largeur de la barre latérale repliée                                 |
+| `initialCollapsed`           | `boolean`                                              | `false`                            | Indique si la barre latérale démarre repliée                         |
+| `createCalendarMode`         | `'inline' \| 'modal'`                                  | `'inline'`                         | Mode d'affichage du formulaire de création de calendrier             |
+| `colorPickerMode`            | `'blossom' \| 'default'`                               | `'default'`                        | Composant de sélection de couleur utilisé                            |
+| `onSubscribeCalendar`        | `(calendar, events) => Promise<void>`                  | `undefined`                        | Callback déclenché après la création d'un abonnement                 |
+| `onLoadSubscription`         | `(calendar) => Promise<void>`                          | `undefined`                        | Chargeur personnalisé pour les abonnements existants                 |
+| `onReorder`                  | `(calendars: CalendarType[]) => void \| Promise<void>` | `undefined`                        | Callback déclenché après réorganisation des calendriers              |
+| `componentsOrder`            | `('calendarList' \| 'miniCalendar')[]`                 | `['calendarList', 'miniCalendar']` | Ordre d'affichage des composants de la barre latérale                |
+| `render`                     | `(props: CalendarSidebarRenderProps) => TNode`         | `undefined`                        | Remplacement complet de l'interface de la barre latérale             |
+| `renderSidebarHeader`        | `(args: SidebarHeaderSlotArgs) => TNode`               | `undefined`                        | Rendu personnalisé de l'en-tête de la barre latérale                 |
+| `renderCalendarContextMenu`  | `(calendar, onClose) => TNode`                         | `undefined`                        | Rendu personnalisé du menu contextuel des calendriers                |
+| `renderCreateCalendarDialog` | `(props) => TNode`                                     | `undefined`                        | Rendu personnalisé de la boîte de dialogue de création de calendrier |
+
+## API programmatique
+
+Une fois le calendrier affiché, accédez à `SidebarService` via `app.getPlugin` :
+
+```tsx
+import { type SidebarService } from '@dayflow/plugin-sidebar';
+
+const sidebar = app.getPlugin<SidebarService>('sidebar');
+
+sidebar?.collapse(); // Collapse the sidebar
+sidebar?.expand(); // Expand the sidebar
+sidebar?.setCollapsed(true); // Set state explicitly
+console.log(sidebar?.isCollapsed()); // Read current state
+```
+
+### SidebarService
+
+| Méthode                            | Renvoie   | Description                         |
+| :--------------------------------- | :-------- | :---------------------------------- |
+| `collapse()`                       | `void`    | Replie la barre latérale            |
+| `expand()`                         | `void`    | Déplie la barre latérale            |
+| `setCollapsed(collapsed: boolean)` | `void`    | Définit explicitement l'état replié |
+| `isCollapsed()`                    | `boolean` | Renvoie l'état replié actuel        |
+
+### Associer un raccourci clavier
+
+```tsx
+window.addEventListener('keydown', e => {
+  if (e.metaKey && e.key === '[') {
+    const sidebar = app.getPlugin<SidebarService>('sidebar');
+    sidebar?.setCollapsed(!sidebar.isCollapsed());
+  }
+});
+```
+
+## Fonctionnalités
+
+La barre latérale propose une mise en page prête à l'emploi, avec interrupteurs de visibilité, pastilles de couleur par calendrier et commandes de repli. Elle gère aussi la création de calendriers et les menus contextuels, permettant aux utilisateurs d'ajouter des calendriers, d'en changer la couleur et de les supprimer.
+
+Fonctionnalités intégrées :
+
+- **Mini-calendrier** : une vue mensuelle compacte pour naviguer rapidement entre les dates
+- **Liste des calendriers** : affichez ou masquez chaque calendrier via des cases à cocher colorées
+- **Créer un calendrier** : ajoutez des calendriers avec un nom et une couleur personnalisés
+- **Renommer / recolorer** : faites un clic droit sur un calendrier pour le renommer ou changer sa couleur
+- **Réorganiser les calendriers** : glissez-déposez les calendriers dans la liste pour les réordonner. Utilisez le callback `onReorder` pour enregistrer le nouvel ordre côté backend.
+- **Fusionner des calendriers** : déplacez tous les événements d'un calendrier vers un autre
+- **Supprimer un calendrier** : supprimez un calendrier avec une étape de confirmation (ou fusionnez-le au préalable)
+- **Importer / exporter** : importez des fichiers `.ics` ou exportez des calendriers au format `.ics`
+- **S'abonner à un calendrier** : abonnez-vous par URL à des flux `.ics` distants ; les calendriers abonnés affichent un badge dans la liste
+
+### Démonstration en direct
+
+Découvrez ci-dessous l'interface intégrée de la barre latérale ainsi qu'une implémentation personnalisée en composants natifs du framework.
+
+<SidebarCustomShowcase />
+
+#### À essayer
+
+- **Interrupteurs de visibilité** : masquez et affichez des calendriers pour voir les vues se mettre à jour instantanément.
+- **Glisser et synchroniser** : déplacez des événements entre les vues ; la barre latérale garde les prochains éléments à jour.
+- **Repli** : repliez la barre latérale pour gagner de la place sur les vues hebdomadaires denses.
+
+## S'abonner à un calendrier
+
+La barre latérale intègre une fonction d'abonnement qui permet d'ajouter des flux ICS distants. Pour l'utiliser, faites un clic droit sur un calendrier ou sur la zone vide de la barre latérale afin d'ouvrir le menu contextuel, choisissez **S'abonner à un calendrier**, puis saisissez n'importe quelle URL `.ics` accessible publiquement.
+
+DayFlow télécharge le fichier, analyse les événements et crée automatiquement un nouveau calendrier. Les calendriers abonnés affichent une petite icône dans la liste, ce qui les distingue de ceux créés localement.
+
+### Chargement automatique et déduplication
+
+Lorsque vous fournissez un calendrier avec `subscription.url` dans la configuration initiale, le plugin télécharge automatiquement les derniers événements au montage.
+
+Pour éviter les doublons visuels lors de la combinaison des événements en cache et des données fraîchement téléchargées, DayFlow applique une **déduplication basée sur l'identifiant** :
+
+- Si un événement issu d'un abonnement porte le même `id` qu'un événement déjà présent dans le store du cœur, la version de l'abonnement l'emporte.
+- Votre interface affiche ainsi toujours les informations les plus récentes, sans « doublement » des événements après un rechargement de page.
+
+### Conserver les calendriers abonnés
+
+DayFlow reconnaît les calendriers abonnés à la présence d'un objet `subscription` sur le `CalendarType`.
+
+**Comportement par défaut des abonnements :**
+
+- **Lecture seule** : les modifications depuis l'interface (édition du titre, changement de calendrier, suppression) sont désactivées via `canMutateFromUI()`.
+- **Non déplaçables** : les actions de glisser-déposer (déplacement, redimensionnement) sont désactivées.
+- **Notes masquées** : si un événement n'a pas de description, le champ « Note » est masqué dans le panneau de détail pour alléger l'interface.
+
+Pour permettre aux utilisateurs de modifier ou de déplacer les événements abonnés, désactivez explicitement ces protections avec `readOnly: false` sur l'objet calendrier :
+
+```tsx
+const calendar = useCalendarApp({
+  calendars: [
+    {
+      id: 'team-ics',
+      name: 'Team Calendar',
+      subscription: {
+        url: 'https://example.com/calendar.ics',
+        status: 'ready',
+      },
+      // Override default protections:
+      readOnly: false, // Enables both UI mutations and drag-and-drop
+      colors: {
+        /* ... */
+      },
+    },
+  ],
+});
+```
+
+Lorsque vous enregistrez l'état des calendriers côté backend, conservez le champ `subscription` et restaurez-le au chargement suivant.
+
+> **Remarque :** DayFlow n'actualise pas automatiquement les flux abonnés. Pour garder les événements à jour, mettez en place un rafraîchissement périodique dans votre application et actualisez-les via `app.addEvent()` / `app.removeEvent()`.
+
+Vous pouvez remplacer la barre latérale par votre propre composant en passant une fonction `render` à `createSidebarPlugin` (React) ou en utilisant les slots et templates de composants (Vue, Angular, Svelte).
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    import { useCalendarApp, DayFlowCalendar } from '@dayflow/react';
+    import {
+      createSidebarPlugin,
+      type CalendarSidebarRenderProps,
+    } from '@dayflow/plugin-sidebar';
+
+    const CustomSidebar = ({
+      app,
+      calendars,
+      toggleCalendarVisibility,
+      isCollapsed,
+      setCollapsed,
+    }: CalendarSidebarRenderProps) => {
+      if (isCollapsed) {
+        return (
+          <div className='p-2'>
+            <button onClick={() => setCollapsed(false)}>→</button>
+          </div>
+        );
+      }
+
+      return (
+        <aside className='flex h-full flex-col gap-4 p-4 bg-slate-50 border-r'>
+          <header className='flex items-center justify-between'>
+            <h3 className='font-semibold'>My Workspace</h3>
+            <button onClick={() => setCollapsed(true)}>←</button>
+          </header>
+
+          <nav className='space-y-1'>
+            {calendars.map(calendar => (
+              <label
+                key={calendar.id}
+                className='flex items-center gap-2 cursor-pointer'
+              >
+                <input
+                  type='checkbox'
+                  checked={calendar.isVisible}
+                  onChange={e =>
+                    toggleCalendarVisibility(calendar.id, e.target.checked)
+                  }
+                />
+                <span
+                  className='w-3 h-3 rounded-full'
+                  style={{ backgroundColor: calendar.colors.lineColor }}
+                />
+                {calendar.name}
+              </label>
+            ))}
+          </nav>
+
+          <div className='mt-auto pt-4 border-t text-xs text-slate-500'>
+            Total Events: {app.getEvents().length}
+          </div>
+        </aside>
+      );
+    };
+
+    function App() {
+      const calendar = useCalendarApp({
+        views: [/* views */],
+        plugins: [
+          createSidebarPlugin({
+            render: props => <CustomSidebar {...props} />,
+          }),
+        ],
+      });
+
+      return <DayFlowCalendar calendar={calendar} />;
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <!-- Override using scoped slot 'sidebar' -->
+        <template #sidebar="args">
+          <aside v-if="!args.isCollapsed" class="flex h-full flex-col gap-4 p-4 bg-slate-50 border-r">
+            <header class="flex items-center justify-between">
+              <h3 class="font-semibold">My Workspace</h3>
+              <button @click="args.setCollapsed(true)">←</button>
+            </header>
+
+            <nav class="space-y-1">
+              <label
+                v-for="cal in args.calendars"
+                :key="cal.id"
+                class="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="cal.isVisible"
+                  @change="args.toggleCalendarVisibility(cal.id, !cal.isVisible)"
+                />
+                <span
+                  class="w-3 h-3 rounded-full"
+                  :style="{ backgroundColor: cal.colors.lineColor }"
+                />
+                {{ cal.name }}
+              </label>
+            </nav>
+
+            <div class="mt-auto pt-4 border-t text-xs text-slate-500">
+              Total Events: {{ args.app.getEvents().length }}
+            </div>
+          </aside>
+          <div v-else class="p-2">
+            <button @click="args.setCollapsed(false)">→</button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+
+    <script setup>
+    import { DayFlowCalendar, useCalendarApp } from '@dayflow/vue';
+    import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+
+    const calendar = useCalendarApp({
+      views: [/* views */],
+      plugins: [createSidebarPlugin()]
+    });
+    </script>
+    ```
+
+  </Tab>
+  <Tab>
+    ```html
+    <!-- app.component.html -->
+    <dayflow-calendar
+      [calendar]="calendar"
+      [sidebar]="customSidebar"
+    >
+    </dayflow-calendar>
+
+    <ng-template #customSidebar let-args>
+      <aside *ngIf="!args.isCollapsed; else collapsedView" class="flex h-full flex-col gap-4 p-4 bg-slate-50 border-r">
+        <header class="flex items-center justify-between">
+          <h3 class="font-semibold">My Workspace</h3>
+          <button (click)="args.setCollapsed(true)">←</button>
+        </header>
+
+        <nav class="space-y-1">
+          <label
+            *ngFor="let cal of args.calendars"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              [checked]="cal.isVisible"
+              (change)="args.toggleCalendarVisibility(cal.id, !cal.isVisible)"
+            />
+            <span
+              class="w-3 h-3 rounded-full"
+              [style.background-color]="cal.colors.lineColor"
+            ></span>
+            {{ cal.name }}
+          </label>
+        </nav>
+
+        <div class="mt-auto pt-4 border-t text-xs text-slate-500">
+          Total Events: {{ args.app.getEvents().length }}
+        </div>
+      </aside>
+
+      <ng-template #collapsedView>
+        <div class="p-2">
+          <button (click)="args.setCollapsed(false)">→</button>
+        </div>
+      </ng-template>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <!-- App.svelte -->
+    <script lang="ts">
+      import { DayFlowCalendar, useCalendarApp } from '@dayflow/svelte';
+      import { createSidebarPlugin } from '@dayflow/plugin-sidebar';
+      import CustomSidebar from './CustomSidebar.svelte';
+
+      const calendar = useCalendarApp({
+        views: [/* views */],
+        plugins: [createSidebarPlugin()]
+      });
+    </script>
+
+    <DayFlowCalendar {calendar} sidebar={CustomSidebar} />
+
+    <!-- CustomSidebar.svelte -->
+    <script lang="ts">
+      import type { CalendarSidebarRenderProps } from '@dayflow/core';
+
+      let {
+        app,
+        calendars,
+        isCollapsed,
+        setCollapsed,
+        toggleCalendarVisibility,
+      } = $props<CalendarSidebarRenderProps>();
+    </script>
+
+    {#if isCollapsed}
+      <div class="p-2">
+        <button onclick={() => setCollapsed(false)}>→</button>
+      </div>
+    {:else}
+      <aside class="flex h-full flex-col gap-4 p-4 bg-slate-50 border-r">
+        <header class="flex items-center justify-between">
+          <h3 class="font-semibold">My Workspace</h3>
+          <button onclick={() => setCollapsed(true)}>←</button>
+        </header>
+
+        <nav class="space-y-1">
+          {#each calendars as cal (cal.id)}
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={cal.isVisible}
+                onchange={(e) => toggleCalendarVisibility(cal.id, e.currentTarget.checked)}
+              />
+              <span
+                class="w-3 h-3 rounded-full"
+                style:background-color={cal.colors.lineColor}
+              ></span>
+              {cal.name}
+            </label>
+          {/each}
+        </nav>
+
+        <div class="mt-auto pt-4 border-t text-xs text-slate-500">
+          Total Events: {app.getEvents().length}
+        </div>
+      </aside>
+    {/if}
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Menu contextuel personnalisé
+
+Vous pouvez remplacer le menu contextuel par défaut des calendriers :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    createSidebarPlugin({
+      renderCalendarContextMenu: (calendar, onClose) => (
+        <div className='bg-white shadow-lg border rounded p-2'>
+          <button
+            onClick={() => {
+              console.log('Custom action');
+              onClose();
+            }}
+          >
+            Custom Action for {calendar.name}
+          </button>
+        </div>
+      ),
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #calendarContextMenu="{ calendar, onClose }">
+          <div class="bg-white shadow-lg border rounded p-2">
+            <button @click="onClose()">
+              Custom Action for {{ calendar.name }}
+            </button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [calendarContextMenu]="contextMenu"
+    >
+    </dayflow-calendar>
+
+    <ng-template #contextMenu let-args>
+      <div class="bg-white shadow-lg border rounded p-2">
+        <button (click)="args.onClose()">
+          Custom Action for {{ args.calendar.name }}
+        </button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} calendarContextMenu={CustomContextMenu} />
+
+    <!-- CustomContextMenu.svelte -->
+    <script lang="ts">
+      import type { CalendarContextMenuSlotArgs } from '@dayflow/core';
+      let { calendar, onClose } = $props<CalendarContextMenuSlotArgs>();
+    </script>
+
+    <div class="bg-white shadow-lg border rounded p-2">
+      <button onclick={() => { console.log('Custom action'); onClose(); }}>
+        Custom Action for {calendar.name}
+      </button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## Boîte de dialogue de création personnalisée
+
+Vous pouvez remplacer la boîte de dialogue de création de calendrier :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    createSidebarPlugin({
+      renderCreateCalendarDialog: ({ onCreate, onClose }) => (
+        <MyCustomDialog onSave={onCreate} onCancel={onClose} />
+      ),
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #createCalendarDialog="{ onCreate, onClose }">
+          <MyCustomDialog @save="onCreate" @cancel="onClose" />
+        </template>
+      </DayFlowCalendar>
+    </template>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [createCalendarDialog]="customDialog"
+    >
+    </dayflow-calendar>
+
+    <ng-template #customDialog let-args>
+      <my-custom-dialog
+        (save)="args.onCreate($event)"
+        (cancel)="args.onClose()"
+      >
+      </my-custom-dialog>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} createCalendarDialog={CustomDialog} />
+
+    <!-- CustomDialog.svelte -->
+    <script lang="ts">
+      import type { CreateCalendarDialogProps } from '@dayflow/core';
+      let { onCreate, onClose } = $props<CreateCalendarDialogProps>();
+    </script>
+
+    <div class="dialog">
+      <!-- custom dialog markup -->
+      <button onclick={() => onCreate({ id: 'new', name: 'New' })}>Create</button>
+      <button onclick={onClose}>Cancel</button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
+
+## En-tête de barre latérale personnalisé
+
+Vous pouvez remplacer l'en-tête par défaut de la barre latérale (la zone contenant le titre « Calendriers » et le bouton de repli) :
+
+<FrameworkTabs>
+  <Tab>
+    ```tsx
+    createSidebarPlugin({
+      renderSidebarHeader: ({ isCollapsed, onCollapseToggle }) => (
+        <div className='flex items-center justify-between p-4 border-b'>
+          {!isCollapsed && <span className='font-bold text-lg'>My Calendars</span>}
+          <button
+            onClick={onCollapseToggle}
+            className='p-1 hover:bg-slate-100 rounded'
+          >
+            {isCollapsed ? '→' : '←'}
+          </button>
+        </div>
+      ),
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```vue
+    <template>
+      <DayFlowCalendar :calendar="calendar">
+        <template #sidebarHeader="{ isCollapsed, onCollapseToggle }">
+          <div class="flex items-center justify-between p-4 border-b">
+            <span v-if="!isCollapsed" class="font-bold text-lg">My Calendars</span>
+            <button
+              @click="onCollapseToggle"
+              class="p-1 hover:bg-slate-100 rounded"
+            >
+              {{ isCollapsed ? '→' : '←' }}
+            </button>
+          </div>
+        </template>
+      </DayFlowCalendar>
+    </template>
+    ```
+  </Tab>
+  <Tab>
+    ```html
+    <dayflow-calendar
+      [calendar]="calendar"
+      [sidebarHeader]="headerTemplate"
+    >
+    </dayflow-calendar>
+
+    <ng-template #headerTemplate let-args>
+      <div class="flex items-center justify-between p-4 border-b">
+        <span *ngIf="!args.isCollapsed" class="font-bold text-lg">My Calendars</span>
+        <button
+          (click)="args.onCollapseToggle()"
+          class="p-1 hover:bg-slate-100 rounded"
+        >
+          {{ args.isCollapsed ? '→' : '←' }}
+        </button>
+      </div>
+    </ng-template>
+    ```
+
+  </Tab>
+  <Tab>
+    ```svelte
+    <DayFlowCalendar {calendar} sidebarHeader={CustomHeader} />
+
+    <!-- CustomHeader.svelte -->
+    <script lang="ts">
+      import type { SidebarHeaderSlotArgs } from '@dayflow/core';
+      let { isCollapsed, onCollapseToggle } = $props<SidebarHeaderSlotArgs>();
+    </script>
+
+    <div class="custom-header">
+      {#if !isCollapsed}
+        <span>My Calendars</span>
+      {/if}
+      <button onclick={onCollapseToggle}>
+        {isCollapsed ? '→' : '←'}
+      </button>
+    </div>
+    ```
+
+  </Tab>
+</FrameworkTabs>
