@@ -1,0 +1,14 @@
+{
+  "title": "소개",
+  "defaultOpen": true,
+  "pages": [
+    "index",
+    "events",
+    "views",
+    "dayflow-calendar",
+    "use-calendar-app",
+    "resource-grid",
+    "resource-timeline",
+    "pro-installation"
+  ]
+}

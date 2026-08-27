@@ -19,6 +19,7 @@ export const SITE_METADATA_BASE = new URL(SITE_URL);
 
 const PRO_BASE_URL = 'https://pro.dayflow.studio';
 const SCHEDULER_BASE_URL = 'https://scheduler.dayflow.studio';
+const BRAND_BASE_URL = 'https://dayflow.studio';
 
 function ecosystemUrl(baseUrl: string, content: string): string {
   const params = new URLSearchParams({
@@ -35,4 +36,8 @@ export function proUrl(content: string): string {
 
 export function schedulerUrl(content: string): string {
   return ecosystemUrl(SCHEDULER_BASE_URL, content);
+}
+
+export function brandUrl(content: string): string {
+  return ecosystemUrl(BRAND_BASE_URL, content);
 }

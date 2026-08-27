@@ -14,6 +14,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: SITE_METADATA_BASE,
   applicationName: 'DayFlow',
+  authors: [{ name: 'DayFlow', url: 'https://dayflow.studio/' }],
+  creator: 'DayFlow',
+  publisher: 'DayFlow',
   title: {
     template: '%s | DayFlow',
     default: 'DayFlow – Lightweight calendar component',

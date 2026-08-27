@@ -1,0 +1,14 @@
+{
+  "title": "Einführung",
+  "defaultOpen": true,
+  "pages": [
+    "index",
+    "events",
+    "views",
+    "dayflow-calendar",
+    "use-calendar-app",
+    "resource-grid",
+    "resource-timeline",
+    "pro-installation"
+  ]
+}
