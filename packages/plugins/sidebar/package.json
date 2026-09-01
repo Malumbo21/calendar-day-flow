@@ -1,6 +1,6 @@
 {
   "name": "@dayflow/plugin-sidebar",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Sidebar plugin for DayFlow calendar",
   "keywords": [
     "calendar",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@dayflow/blossom-color-picker": "catalog:",
-    "@dayflow/core": "workspace:*",
+    "@dayflow/core": "workspace:^",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
@@ -61,6 +61,8 @@
     "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@dayflow/core": "workspace:*"
+    "@dayflow/blossom-color-picker": "catalog:",
+    "@dayflow/core": "workspace:^",
+    "preact": "catalog:"
   }
 }

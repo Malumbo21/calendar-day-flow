@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm -r --workspace-concurrency=4 --if-present run build",
     "build:demo": "vite build --config packages/core/vite.config.ts",
+    "check:deps": "node ./scripts/check-deps.mjs",
     "clean": "pnpm -r --parallel --if-present run clean && rimraf node_modules",
     "dev": "vite --config packages/core/vite.config.ts --host",
     "format": "oxfmt .",
@@ -20,7 +21,7 @@
     "tag": "./scripts/git-tag.sh",
     "test": "vitest run && pnpm --filter @dayflow/angular test",
     "typecheck": "pnpm -r --parallel --if-present run typecheck && tsc -p test-kit/tsconfig.json --noEmit",
-    "version:update": "./scripts/update-versions.sh"
+    "version:update": "node ./scripts/update-versions.mjs"
   },
   "devDependencies": {
     "@dayflow/plugin-drag": "workspace:*",

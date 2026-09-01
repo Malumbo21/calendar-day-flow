@@ -1,6 +1,6 @@
 {
   "name": "@dayflow/caldav",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Headless CalDAV sync engine for DayFlow - transport-agnostic, adapter-first",
   "keywords": [
     "caldav",
@@ -34,11 +34,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dayflow/sync-core": "workspace:*",
+    "@dayflow/sync-core": "workspace:^",
     "temporal-polyfill": "catalog:"
   },
   "devDependencies": {
-    "@dayflow/core": "workspace:*",
+    "@dayflow/core": "workspace:^",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
@@ -50,6 +50,6 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@dayflow/core": "workspace:*"
+    "@dayflow/core": "workspace:^"
   }
 }

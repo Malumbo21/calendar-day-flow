@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.1] - 2026-08-28
+
+### New Features & Enhancements
+
+- **Event Recurrence Editor**: Added a recurrence editor with a custom repeat dialog for building RRULE-backed repeating events, including multi-language translations.
+
+### Fixed
+
+- Fixed `@dayflow/plugin-drag` and `@dayflow/plugin-sidebar` failing to resolve `preact`, `temporal-polyfill` and `@dayflow/blossom-color-picker` at runtime. These were imported by the published bundles but never declared, so installs resolved them only by hoisting and failed outright under pnpm's strict layout.
+- Fixed `@dayflow/caldav` bundling its own copy of `temporal-polyfill`. Temporal values it produced did not match the instance used by `@dayflow/core`; the polyfill is now external and shared. The package tarball also drops from 184 KB to 83 KB.
+
+### Changed
+
+- Internal `@dayflow/*` dependencies now publish as caret ranges (`^3.7.1`) instead of exact pins. Upgrading `@dayflow/core` no longer forces a matching upgrade of every adapter and plugin in the same install.
+- `@dayflow/core` no longer declares `@dayflow/ui-context-menu` and `@dayflow/ui-range-picker` as runtime dependencies. Both were already inlined into its bundle, so consumers were downloading a second copy that was never loaded.
+
 ## [3.7.0] - 2026-08-13
 
 ### New Features & Enhancements

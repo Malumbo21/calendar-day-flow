@@ -17,7 +17,7 @@ export interface EventRecurrence {
   extraParts: string[];
 }
 
-const FREQUENCIES: RecurrenceFrequency[] = new Set([
+const FREQUENCIES: ReadonlySet<RecurrenceFrequency> = new Set([
   'DAILY',
   'WEEKLY',
   'MONTHLY',

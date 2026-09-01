@@ -267,7 +267,7 @@ importers:
         specifier: ^18.2.0
         version: 18.2.14(@angular/common@18.2.14(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10))(rxjs@7.8.2))(@angular/compiler@18.2.14(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10)))(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10))(@angular/platform-browser@18.2.14(@angular/common@18.2.14(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10))(rxjs@7.8.2))(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10)))
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@testing-library/jest-dom':
         specifier: 'catalog:'
@@ -303,14 +303,14 @@ importers:
   packages/caldav/core:
     dependencies:
       '@dayflow/sync-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../sync-core
       temporal-polyfill:
         specifier: 'catalog:'
         version: 0.3.0
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -343,14 +343,14 @@ importers:
   packages/caldav/google-sync:
     dependencies:
       '@dayflow/sync-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../sync-core
       temporal-polyfill:
         specifier: 'catalog:'
         version: 0.3.0
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -383,14 +383,14 @@ importers:
   packages/caldav/outlook-sync:
     dependencies:
       '@dayflow/sync-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../sync-core
       temporal-polyfill:
         specifier: 'catalog:'
         version: 0.3.0
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -423,7 +423,7 @@ importers:
   packages/caldav/sync-core:
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -455,12 +455,6 @@ importers:
       '@dayflow/blossom-color-picker':
         specifier: 'catalog:'
         version: 2.0.1
-      '@dayflow/ui-context-menu':
-        specifier: workspace:*
-        version: link:../ui/context-menu
-      '@dayflow/ui-range-picker':
-        specifier: workspace:*
-        version: link:../ui/range-picker
       preact:
         specifier: 'catalog:'
         version: 10.28.4
@@ -471,6 +465,12 @@ importers:
         specifier: 'catalog:'
         version: 2.8.1
     devDependencies:
+      '@dayflow/ui-context-menu':
+        specifier: workspace:^
+        version: link:../ui/context-menu
+      '@dayflow/ui-range-picker':
+        specifier: workspace:^
+        version: link:../ui/range-picker
       '@preact/preset-vite':
         specifier: 'catalog:'
         version: 2.10.3(@babel/core@7.29.0)(preact@10.28.4)(rollup@4.57.1)(vite@5.4.21(@types/node@22.19.11)(less@4.5.1)(lightningcss@1.31.1)(sass@1.97.3)(terser@5.46.0))
@@ -573,9 +573,13 @@ importers:
         version: 5.9.3
 
   packages/plugins/drag:
+    dependencies:
+      preact:
+        specifier: 'catalog:'
+        version: 10.28.4
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -611,7 +615,7 @@ importers:
   packages/plugins/keyboard-shortcuts:
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -641,7 +645,7 @@ importers:
   packages/plugins/localization:
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -671,7 +675,7 @@ importers:
         specifier: 'catalog:'
         version: 2.0.1
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -722,7 +726,7 @@ importers:
   packages/react:
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -782,7 +786,7 @@ importers:
   packages/svelte:
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -935,7 +939,7 @@ importers:
   packages/vue:
     devDependencies:
       '@dayflow/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'

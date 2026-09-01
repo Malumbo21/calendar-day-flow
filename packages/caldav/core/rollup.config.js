@@ -14,12 +14,12 @@ export default [
       },
     ],
     plugins: [resolve(), commonjs()],
-    external: ['@dayflow/core', '@dayflow/sync-core'],
+    external: ['@dayflow/core', '@dayflow/sync-core', 'temporal-polyfill'],
   },
   {
     input: 'dist/types/index.d.ts',
     output: [{ file: 'dist/index.d.ts', format: 'es' }],
     plugins: [dts()],
-    external: ['@dayflow/core', '@dayflow/sync-core'],
+    external: ['@dayflow/core', '@dayflow/sync-core', 'temporal-polyfill'],
   },
 ];

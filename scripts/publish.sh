@@ -25,6 +25,7 @@ usage() {
     echo "Options:"
     echo "  --dry-run      Run npm publish with --dry-run (no actual publish)"
     echo "  --skip-build   Skip the build step"
+    echo "  --skip-checks  Skip the dependency preflight (not recommended)"
     exit 0
 }
 
@@ -32,6 +33,7 @@ usage() {
 MODE="all"
 DRY_RUN=""
 SKIP_BUILD=false
+SKIP_CHECKS=false
 
 for arg in "$@"; do
     case "$arg" in
@@ -44,6 +46,7 @@ for arg in "$@"; do
         all) MODE="all" ;;
         --dry-run) DRY_RUN="--dry-run" ;;
         --skip-build) SKIP_BUILD=true ;;
+        --skip-checks) SKIP_CHECKS=true ;;
         -h|--help) usage ;;
     esac
 done
@@ -74,6 +77,17 @@ if [ -z "$DRY_RUN" ] && [ -n "$(git status --porcelain)" ]; then
     read -p "Continue anyway? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then err "Publish aborted."; fi
+fi
+
+# Manifest-level gate. Runs before the build so a bad version or an
+# incompatible range fails in seconds instead of after a full rebuild.
+if [ "$SKIP_CHECKS" = false ]; then
+    echo ""
+    if ! node "$ROOT/scripts/check-deps.mjs" --mode "$MODE" --manifest-only; then
+        err "Dependency preflight failed. Fix the errors above, or re-run with --skip-checks."
+    fi
+else
+    warn "Skipping dependency preflight (--skip-checks)"
 fi
 
 # ---------- Define Packages ----------
@@ -197,30 +211,13 @@ publish_pkg() {
     # ng-packagr doesn't resolve workspace:* protocols and may produce incorrect
     # export conditions. We patch dist/package.json before publishing.
     if [[ "$dir" == *"packages/angular/dist" ]]; then
-        local core_version=$(node -e "console.log(require('$ROOT/packages/core/package.json').version)")
-        echo "  Patching Angular dist/package.json (core: $core_version)..."
-
-        node -e "
-          const fs = require('fs');
-          const pkg = JSON.parse(fs.readFileSync('$dir/package.json', 'utf8'));
-
-          // Replace workspace:* with actual core version
-          for (const section of ['peerDependencies', 'dependencies', 'optionalDependencies']) {
-            if (pkg[section]) {
-              for (const dep of Object.keys(pkg[section])) {
-                if (pkg[section][dep] === 'workspace:*') pkg[section][dep] = '$core_version';
-              }
-            }
-          }
-
-          // Add 'import' condition if missing (required by Vite/esbuild to resolve ESM entry)
-          const dot = pkg.exports && pkg.exports['.'];
-          if (dot && !dot.import && (dot.default || dot.esm2022)) {
-            dot.import = dot.default || dot.esm2022;
-          }
-
-          fs.writeFileSync('$dir/package.json', JSON.stringify(pkg, null, 2) + '\n');
-        "
+        # The manifest was rewritten after the build; refuse to ship it if that
+        # somehow did not happen, because npm publishes this file as-is.
+        if grep -q "workspace:\|catalog:" "$dir/package.json"; then
+            echo -e "${RED} ✗ dist/package.json still has an unresolved range${NC}"
+            FAILED_PKGS+=("@dayflow/$name")
+            return 1
+        fi
 
         echo "  Detected Angular dist - using npm publish..."
         if ! (cd "$dir" && npm publish --access public $DRY_RUN); then
@@ -312,6 +309,28 @@ else
         caldav)  STEP=$(( ${#CALDAV_DIRS[@]} + 1 )) ;;
         all)     STEP=$(( ${#MAIN_PKGS[@]} + ${#PLUGIN_DIRS[@]} + ${#UI_DIRS[@]} + ${#CALDAV_DIRS[@]} + 2 )) ;;
     esac
+fi
+
+# ng-packagr copies the source manifest verbatim into dist/ on every build, so
+# the workspace:/catalog: protocols pnpm would normally rewrite survive there.
+# Fix it now: the gate below reads that manifest, and npm publish ships it as-is.
+if [[ "$MODE" == "all" || "$MODE" == "angular" ]] && [ -f "$ROOT/packages/angular/dist/package.json" ]; then
+    echo ""
+    echo -e "${CYAN}${BOLD}Preparing Angular dist manifest${NC}"
+    if ! node "$ROOT/scripts/patch-angular-manifest.mjs"; then
+        err "Failed to rewrite packages/angular/dist/package.json"
+    fi
+fi
+
+# Full gate. dist/ now exists, so this also cross-checks what the bundles
+# import against what the manifests declare — the "publish A, B stops
+# resolving" class of bug. Nothing has been pushed yet at this point.
+if [ "$SKIP_CHECKS" = false ]; then
+    echo ""
+    echo -e "${CYAN}${BOLD}Verifying built packages before publishing${NC}"
+    if ! node "$ROOT/scripts/check-deps.mjs" --mode "$MODE"; then
+        err "Dependency preflight failed after build. Nothing was published."
+    fi
 fi
 
 # 3. Publish Phase
