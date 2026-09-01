@@ -263,7 +263,12 @@ const softwareApplicationJsonLd = {
   author: {
     '@type': 'Organization',
     name: 'DayFlow',
-    url: SITE_URL,
+    url: 'https://dayflow.studio/',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'DayFlow',
+    url: 'https://dayflow.studio/',
   },
 };
 
@@ -627,7 +632,14 @@ export default function HomePage() {
       </section>
 
       <footer className='relative z-10 px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400'>
-        MIT {new Date().getFullYear()} © DayFlow.
+        MIT {new Date().getFullYear()} ©{' '}
+        <a
+          href='https://dayflow.studio/'
+          className='underline decoration-slate-300 underline-offset-4 transition-colors hover:text-slate-900 dark:decoration-slate-600 dark:hover:text-white'
+        >
+          DayFlow
+        </a>
+        .
       </footer>
     </main>
   );

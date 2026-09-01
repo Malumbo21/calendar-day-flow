@@ -1,0 +1,12 @@
+{
+  "title": "Funcionalidades",
+  "pages": [
+    "calendar-header",
+    "content-slots",
+    "dark-mode",
+    "event-dialog",
+    "multi-calendar-event",
+    "read-only",
+    "switcher-mode"
+  ]
+}

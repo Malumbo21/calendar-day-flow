@@ -1,0 +1,14 @@
+{
+  "title": "Complementos",
+  "defaultOpen": true,
+  "pages": [
+    "overview",
+    "localization",
+    "drag",
+    "print",
+    "appointment-schedule",
+    "events",
+    "keyboard-shortcuts",
+    "sidebar"
+  ]
+}

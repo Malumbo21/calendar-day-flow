@@ -37,6 +37,7 @@ export function DocsLocaleLayout({
       sidebar={{
         collapsible: false,
         tabs: sidebarTabs(
+          locale,
           docsPrefix(locale),
           source.getPages(locale).map(page => page.url)
         ),
