@@ -1,6 +1,6 @@
 {
   "name": "@dayflow/plugin-keyboard-shortcuts",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Keyboard shortcuts plugin for DayFlow calendar",
   "keywords": [
     "calendar",
@@ -33,7 +33,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@dayflow/core": "workspace:*",
+    "@dayflow/core": "workspace:^",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
@@ -44,6 +44,6 @@
     "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@dayflow/core": "workspace:*"
+    "@dayflow/core": "workspace:^"
   }
 }

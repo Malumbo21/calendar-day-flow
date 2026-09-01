@@ -1,6 +1,6 @@
 {
   "name": "@dayflow/svelte",
-  "version": "3.7.0",
+  "version": "3.7.1",
   "description": "Svelte adapter for DayFlow calendar",
   "files": [
     "dist",
@@ -36,7 +36,7 @@
     "typecheck": "svelte-check"
   },
   "devDependencies": {
-    "@dayflow/core": "workspace:*",
+    "@dayflow/core": "workspace:^",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-terser": "catalog:",
@@ -59,7 +59,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@dayflow/core": "workspace:*",
+    "@dayflow/core": "workspace:^",
     "svelte": "^4.0.0 || ^5.0.0"
   }
 }

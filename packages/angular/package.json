@@ -1,6 +1,6 @@
 {
   "name": "@dayflow/angular",
-  "version": "3.7.0",
+  "version": "3.7.1",
   "description": "Angular adapter for DayFlow calendar",
   "files": [
     "**/*.mjs",
@@ -28,7 +28,7 @@
     "@angular/core": "^18.2.0",
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
-    "@dayflow/core": "workspace:*",
+    "@dayflow/core": "workspace:^",
     "@testing-library/jest-dom": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "jsdom": "catalog:",
@@ -43,6 +43,6 @@
   "peerDependencies": {
     "@angular/common": ">=14.0.0",
     "@angular/core": ">=14.0.0",
-    "@dayflow/core": "workspace:*"
+    "@dayflow/core": "workspace:^"
   }
 }

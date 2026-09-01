@@ -251,7 +251,7 @@ const DefaultCalendarExample: React.FC<{
     // useEventDetailDialog: true,
     // switcherMode: 'select',
     plugins,
-    locale: 'zh',
+    locale: 'fr',
     defaultView: ViewType.MONTH,
     // useEventDetailDialog: true,
     // switcherMode: 'select' as const,

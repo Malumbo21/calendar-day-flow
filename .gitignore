@@ -42,6 +42,7 @@ next-env.d.ts
 # Turbo
 .turbo/
 
-/bundle-analysis.html
+# rollup-plugin-visualizer output, emitted next to whichever package was built
+bundle-analysis.html
 temp/
 *.tgz
