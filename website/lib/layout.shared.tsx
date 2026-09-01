@@ -8,6 +8,7 @@ import {
 } from '@/components/HeaderSearch';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
+import type { LanguageCode } from '@/lib/i18n';
 import { brandUrl, proUrl, schedulerUrl } from '@/lib/site';
 
 export const gitConfig = {
@@ -22,17 +23,62 @@ const PRO_URL = proUrl('nav');
 const SCHEDULER_URL = schedulerUrl('nav');
 const SCHEDULER_SIDEBAR_URL = schedulerUrl('docs_sidebar');
 
+const SIDEBAR_TAB_LABELS: Record<
+  LanguageCode,
+  { calendar: string; calendarPro: string; scheduler: string }
+> = {
+  en: {
+    calendar: 'Calendar',
+    calendarPro: 'Calendar Pro',
+    scheduler: 'Scheduler',
+  },
+  zh: {
+    calendar: '日历',
+    calendarPro: '日历 Pro',
+    scheduler: '日程规划',
+  },
+  ja: {
+    calendar: 'カレンダー',
+    calendarPro: 'カレンダー Pro',
+    scheduler: 'スケジューラー',
+  },
+  es: {
+    calendar: 'Calendario',
+    calendarPro: 'Calendario Pro',
+    scheduler: 'Planificador',
+  },
+  fr: {
+    calendar: 'Calendrier',
+    calendarPro: 'Calendrier Pro',
+    scheduler: 'Planificateur',
+  },
+  de: {
+    calendar: 'Kalender',
+    calendarPro: 'Kalender Pro',
+    scheduler: 'Terminplaner',
+  },
+  ko: {
+    calendar: '캘린더',
+    calendarPro: '캘린더 Pro',
+    scheduler: '스케줄러',
+  },
+};
+
 /**
+ * @param locale - locale whose labels should be shown
  * @param docsBaseUrl - base URL of the locale's docs section, e.g. `/docs-ja`
  * @param docsUrls - every page URL in that section
  */
 export function sidebarTabs(
+  locale: LanguageCode,
   docsBaseUrl: string,
   docsUrls: Iterable<string>
 ): SidebarTab[] {
+  const labels = SIDEBAR_TAB_LABELS[locale];
+
   return [
     {
-      title: 'Calendar',
+      title: labels.calendar,
       // `/docs` renders a blank page under `output: 'export'` — its `redirect()`
       // is dropped at build time — so point the tab at the section's first page.
       url: `${docsBaseUrl}/introduction`,
@@ -52,7 +98,7 @@ export function sidebarTabs(
       ),
     },
     {
-      title: 'Calendar Pro',
+      title: labels.calendarPro,
       url: PRO_URL,
       icon: (
         <Image
@@ -65,7 +111,7 @@ export function sidebarTabs(
       ),
     },
     {
-      title: 'Scheduler',
+      title: labels.scheduler,
       url: SCHEDULER_SIDEBAR_URL,
       icon: (
         <Image
