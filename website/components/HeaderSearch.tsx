@@ -40,12 +40,12 @@ export function HeaderSearchLarge() {
         <button
           type='button'
           data-search-full=''
-          aria-label='Open Search'
+          aria-label={text.search ?? 'Open Search'}
           onClick={() => setOpenSearch(true)}
           className='bg-fd-secondary/50 text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-accent-foreground inline-flex w-full max-w-[240px] items-center gap-2 rounded-full border p-1.5 ps-2.5 text-sm transition-colors'
         >
           <Search className='size-4' />
-          {text.search}
+          {text.search ?? 'Search'}
           <div className='ms-auto inline-flex gap-0.5'>
             {hotKey.map((key, i) => (
               <kbd
@@ -64,6 +64,7 @@ export function HeaderSearchLarge() {
 
 export function HeaderSearchCompact() {
   const { setOpenSearch, enabled } = useSearchContext();
+  const { text } = useI18n();
 
   return (
     <>
@@ -72,7 +73,7 @@ export function HeaderSearchCompact() {
         <button
           type='button'
           data-search=''
-          aria-label='Open Search'
+          aria-label={text.search ?? 'Open Search'}
           onClick={() => setOpenSearch(true)}
           className={cn(
             buttonVariants({ size: 'icon-sm', color: 'ghost' }),

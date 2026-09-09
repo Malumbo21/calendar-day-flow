@@ -23,6 +23,10 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
+import {
+  CalendarGroupsPreview,
+  SecondaryTimeZonePreview,
+} from './FeaturePreviews';
 import { MiniDotsFeature } from './MiniDotsFeature';
 import { MultiCalFeature } from './MultiCalFeature';
 import { ThemeColorColumn } from './ThemeColorColumn';
@@ -278,6 +282,7 @@ export function ControlPanel({
                         Groups calendars by source in the sidebar. Each source
                         is shown as a collapsible section header.
                       </p>
+                      <CalendarGroupsPreview />
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -523,6 +528,9 @@ export function ControlPanel({
                   <p className='text-xs text-slate-500 dark:text-slate-400'>
                     Adds a second reference timeline in Day and Week views.
                   </p>
+                  <div className='mt-2'>
+                    <SecondaryTimeZonePreview />
+                  </div>
                 </TooltipContent>
               </Tooltip>
             </div>

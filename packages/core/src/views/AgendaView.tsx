@@ -441,8 +441,36 @@ const AgendaView = ({
       clickTimerRef.current = setTimeout(() => {
         app.onEventClick(event, nativeEvent);
         onEventSelect?.(event.id);
-        if (app.getEventDetailEnabled()) {
-          onDetailPanelToggle?.(null);
+        if (
+          app.getEventDetailEnabled() &&
+          app.getEventDetailTrigger() === 'click' &&
+          nativeEvent?.currentTarget &&
+          useEventDetailPanel !== false
+        ) {
+          const target = nativeEvent.currentTarget as HTMLElement;
+          const rect = target.getBoundingClientRect();
+          const panelWidth = 320;
+          const gap = 12;
+          const viewportPadding = 16;
+          const placeLeft =
+            rect.right + gap + panelWidth > window.innerWidth - viewportPadding;
+          selectedEventElementRef.current = target;
+          setDetailPanelPosition({
+            top: Math.min(
+              Math.max(viewportPadding, rect.top + rect.height / 2 - 180),
+              window.innerHeight - 380
+            ),
+            left: placeLeft
+              ? Math.max(viewportPadding, rect.left - panelWidth - gap)
+              : Math.min(
+                  window.innerWidth - panelWidth - viewportPadding,
+                  rect.right + gap
+                ),
+            eventHeight: rect.height,
+            eventMiddleY: rect.top + rect.height / 2,
+            isSunday: placeLeft,
+          });
+          onDetailPanelToggle?.(event.id);
         }
         clickTimerRef.current = null;
       }, 180);
