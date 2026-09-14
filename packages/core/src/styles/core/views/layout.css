@@ -594,6 +594,20 @@
     }
   }
 
+  .df-time-grid-row[data-half-hour-lines='true'] {
+    position: relative;
+  }
+
+  .df-time-grid-row[data-half-hour-lines='true']::after {
+    content: '';
+    position: absolute;
+    top: calc(var(--df-hour-height, 4.5rem) / 2 - 1px);
+    left: 0;
+    right: 0;
+    border-top: 1px dashed var(--df-color-border);
+    pointer-events: none;
+  }
+
   .df-time-grid-cell {
     position: relative;
     flex: 1;

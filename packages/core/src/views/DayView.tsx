@@ -64,6 +64,7 @@ const DayView = ({
     lastHour: configLastHour = defaultDragConfig.LAST_HOUR,
     allDayHeight: configAllDayHeight = defaultDragConfig.ALL_DAY_HEIGHT,
     showAllDay = true,
+    showHalfHourLines = false,
     timeFormat: configTimeFormat = '24h',
     secondaryTimeZone,
     showEventDots = true,
@@ -347,6 +348,7 @@ const DayView = ({
       isMobile,
       HOUR_HEIGHT,
       FIRST_HOUR,
+      LAST_HOUR,
     }),
     [
       calendarRef,
@@ -362,6 +364,7 @@ const DayView = ({
       isMobile,
       HOUR_HEIGHT,
       FIRST_HOUR,
+      LAST_HOUR,
     ]
   );
 
@@ -534,6 +537,7 @@ const DayView = ({
       style={{ '--df-hour-height': `${HOUR_HEIGHT}px` } as JSX.CSSProperties}
     >
       <DayContent
+        showHalfHourLines={showHalfHourLines}
         app={app}
         currentDate={currentDate}
         currentWeekStart={currentWeekStart}

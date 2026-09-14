@@ -38,7 +38,7 @@ import { getWebsiteCalendars } from '@/utils/palette';
 import { generateSampleEvents } from '@/utils/sampleData';
 
 import { CalendarViewer } from './livedemo/CalendarViewer';
-import { ControlPanel } from './livedemo/ControlPanel';
+import { ControlPanelV2 } from './livedemo/ControlPanelV2';
 import {
   CalendarFeatures,
   CalendarSelections,
@@ -87,6 +87,14 @@ export function InteractiveCalendar() {
     showMultiCalendar: false,
     readOnly: false,
     collapsedSafeAreaLeft: false,
+    showHalfHourLines: false,
+    showAllDay: true,
+    scrollToCurrentTime: true,
+    showWeekends: true,
+    showWeekNumbers: false,
+    showMonthIndicator: false,
+    showTimedEventsInYearView: true,
+    showEmptyAgendaDays: true,
     sidebarOrder: ['calendarList', 'miniCalendar'],
   });
 
@@ -102,6 +110,12 @@ export function InteractiveCalendar() {
     activeView: ViewType.MONTH,
     yearMode: 'fixed-week',
     switcherMode: 'buttons',
+    timeFormat: '24h',
+    firstHour: 0,
+    lastHour: 24,
+    hourHeight: 72,
+    startOfWeek: 1,
+    agendaDaysToShow: 14,
   });
 
   useEffect(() => {
@@ -256,24 +270,40 @@ export function InteractiveCalendar() {
       v.push(
         createDayView({
           secondaryTimeZone: selections.secondaryTimeZone as never,
-          scrollToCurrentTime: true,
+          scrollToCurrentTime: features.scrollToCurrentTime,
+          showAllDay: features.showAllDay,
+          timeFormat: selections.timeFormat,
+          firstHour: selections.firstHour,
+          lastHour: selections.lastHour,
+          hourHeight: selections.hourHeight,
           showEventDots: features.showEventDots,
-        })
+          showHalfHourLines: features.showHalfHourLines,
+        } as never)
       );
     }
     if (selections.selectedViews.includes(ViewType.WEEK)) {
       v.push(
         createWeekView({
           secondaryTimeZone: selections.secondaryTimeZone as never,
-          scrollToCurrentTime: true,
+          scrollToCurrentTime: features.scrollToCurrentTime,
+          showAllDay: features.showAllDay,
+          showWeekends: features.showWeekends,
+          startOfWeek: selections.startOfWeek,
+          timeFormat: selections.timeFormat,
+          firstHour: selections.firstHour,
+          lastHour: selections.lastHour,
+          hourHeight: selections.hourHeight,
           showEventDots: features.showEventDots,
-        })
+          showHalfHourLines: features.showHalfHourLines,
+        } as never)
       );
     }
     if (selections.selectedViews.includes(ViewType.MONTH)) {
       v.push(
         createMonthView({
-          showMonthIndicator: false,
+          showWeekNumbers: features.showWeekNumbers,
+          showMonthIndicator: features.showMonthIndicator,
+          startOfWeek: selections.startOfWeek,
           showEventDots: features.showEventDots,
         })
       );
@@ -282,7 +312,7 @@ export function InteractiveCalendar() {
       v.push(
         createYearView({
           mode: selections.yearMode as never,
-          showTimedEventsInYearView: true,
+          showTimedEventsInYearView: features.showTimedEventsInYearView,
           showEventDots: features.showEventDots,
         })
       );
@@ -290,7 +320,9 @@ export function InteractiveCalendar() {
     if (selections.selectedViews.includes(ViewType.AGENDA)) {
       v.push(
         createAgendaView({
-          daysToShow: 14,
+          daysToShow: selections.agendaDaysToShow,
+          showEmptyDays: features.showEmptyAgendaDays,
+          timeFormat: selections.timeFormat,
           gridDateDoubleClick: 'day-view',
         })
       );
@@ -344,6 +376,14 @@ export function InteractiveCalendar() {
     features.showHeader,
     features.readOnly,
     features.showEventDots,
+    features.showHalfHourLines,
+    features.showAllDay,
+    features.scrollToCurrentTime,
+    features.showWeekends,
+    features.showWeekNumbers,
+    features.showMonthIndicator,
+    features.showTimedEventsInYearView,
+    features.showEmptyAgendaDays,
     features.sidebarOrder,
     selections.selectedViews,
     selections.activeView,
@@ -352,6 +392,12 @@ export function InteractiveCalendar() {
     selections.switcherMode,
     selections.secondaryTimeZone,
     selections.yearMode,
+    selections.timeFormat,
+    selections.firstHour,
+    selections.lastHour,
+    selections.hourHeight,
+    selections.startOfWeek,
+    selections.agendaDaysToShow,
     events,
     mounted,
     calendarsWithGroups,
@@ -368,7 +414,7 @@ export function InteractiveCalendar() {
   return (
     <TooltipProvider delayDuration={0}>
       <div className='flex w-full flex-col gap-6'>
-        <ControlPanel
+        <ControlPanelV2
           features={features}
           selections={selections}
           onUpdateFeatures={updateFeatures}
@@ -376,11 +422,15 @@ export function InteractiveCalendar() {
           onPreviewThemeColor={previewThemeColor}
           localesOptions={LOCALES_OPTIONS}
           showControls={showControls}
+          onConfigureView={view => {
+            updateSelections({ activeView: view });
+            calendarRef.current?.changeView(view);
+          }}
         />
 
         <div
           ref={calendarWrapperRef}
-          className={`calendar-wrapper w-full${features.collapsedSafeAreaLeft && features.showSidebar ? ' mac-title-bar-active' : ''}`}
+          className={`calendar-wrapper w-full${features.collapsedSafeAreaLeft && features.showSidebar ? ' mac-title-bar-active' : ''}${features.showHalfHourLines ? ' demo-half-hour-lines' : ''}`}
           style={
             {
               '--df-color-primary':
@@ -391,7 +441,19 @@ export function InteractiveCalendar() {
         >
           <CalendarViewer
             key={`${selections.locale}-${selections.selectedViews.join(',')}-${selections.yearMode}-${selections.switcherMode}`}
-            version={`${features.showSidebar}-${features.enableDrag}-${features.enableShortcuts}-${features.showEventDots}-${features.showMultiCalendar}-${features.sidebarOrder?.join(',')}-${features.collapsedSafeAreaLeft}`}
+            version={JSON.stringify({
+              features,
+              viewConfig: {
+                selectedViews: selections.selectedViews,
+                yearMode: selections.yearMode,
+                timeFormat: selections.timeFormat,
+                firstHour: selections.firstHour,
+                lastHour: selections.lastHour,
+                hourHeight: selections.hourHeight,
+                startOfWeek: selections.startOfWeek,
+                agendaDaysToShow: selections.agendaDaysToShow,
+              },
+            })}
             config={config}
             calendarRef={calendarRef}
             collapsedSafeAreaLeft={
