@@ -30,7 +30,7 @@ jobs:
       - name: Install deps
         run: |
           cd website
-          npm install
+          npm install --legacy-peer-deps
 
       - name: Build website
         run: |
