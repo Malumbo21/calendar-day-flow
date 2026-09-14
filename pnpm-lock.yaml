@@ -689,6 +689,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.2.1
+      '@testing-library/preact':
+        specifier: 'catalog:'
+        version: 3.2.4(preact@10.28.4)
       autoprefixer:
         specifier: 'catalog:'
         version: 10.4.24(postcss@8.5.25)

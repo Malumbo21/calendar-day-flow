@@ -51,13 +51,25 @@ export interface CalendarSidebarRenderProps {
   renderCreateCalendarDialog?: (props: CreateCalendarDialogProps) => TNode;
   editingCalendarId?: string | null;
   setEditingCalendarId?: (id: string | null) => void;
-  onCreateCalendar?: () => void;
+  onCreateCalendar?: (source?: string) => void;
   onSubscribeCalendar?: (
     calendar: CalendarType,
     events: Event[]
   ) => Promise<void>;
   onLoadSubscription?: (calendar: CalendarType) => Promise<void>;
   onReorder?: (calendars: CalendarType[]) => void | Promise<void>;
+  groups?: string[];
+  onGroupCreate?: (groupName: string) => void | Promise<void>;
+  onGroupRename?: (
+    previousName: string,
+    nextName: string,
+    calendars: CalendarType[]
+  ) => void | Promise<void>;
+  onGroupDelete?: (
+    groupName: string,
+    calendars: CalendarType[]
+  ) => void | Promise<void>;
+  onGroupReorder?: (groups: string[]) => void | Promise<void>;
   componentsOrder?: ('calendarList' | 'miniCalendar')[];
   groupStatus?: Record<string, { isLoading: boolean }>;
 }
@@ -80,6 +92,18 @@ export interface SidebarPluginConfig {
   ) => Promise<void>;
   onLoadSubscription?: (calendar: CalendarType) => Promise<void>;
   onReorder?: (calendars: CalendarType[]) => void | Promise<void>;
+  groups?: string[];
+  onGroupCreate?: (groupName: string) => void | Promise<void>;
+  onGroupRename?: (
+    previousName: string,
+    nextName: string,
+    calendars: CalendarType[]
+  ) => void | Promise<void>;
+  onGroupDelete?: (
+    groupName: string,
+    calendars: CalendarType[]
+  ) => void | Promise<void>;
+  onGroupReorder?: (groups: string[]) => void | Promise<void>;
   componentsOrder?: ('calendarList' | 'miniCalendar')[];
   groupStatus?: Record<string, { isLoading: boolean }>;
 }
@@ -150,6 +174,9 @@ export function createSidebarPlugin(
             string | null
           >(null);
           const [showCreateDialog, setShowCreateDialog] = useState(false);
+          const [createCalendarSource, setCreateCalendarSource] = useState<
+            string | undefined
+          >();
           const isEditable = app.canMutateFromUI();
 
           const refreshSidebar = useCallback(() => {
@@ -185,39 +212,46 @@ export function createSidebarPlugin(
             [app, refreshSidebar]
           );
 
-          const handleCreateCalendar = useCallback(() => {
-            if (!isEditable) return;
+          const handleCreateCalendar = useCallback(
+            (source?: string) => {
+              if (!isEditable) return;
 
-            const createMode = config.createCalendarMode || 'inline';
+              const createMode = config.createCalendarMode || 'inline';
 
-            if (createMode === 'modal') {
-              setShowCreateDialog(true);
-              return;
-            }
+              if (createMode === 'modal') {
+                setCreateCalendarSource(source);
+                setShowCreateDialog(true);
+                return;
+              }
 
-            const randomColor =
-              COLORS[Math.floor(Math.random() * COLORS.length)];
-            const { colors, darkColors } = getCalendarColorsForHex(randomColor);
-            const newId = generateUniKey();
+              const randomColor =
+                COLORS[Math.floor(Math.random() * COLORS.length)];
+              const { colors, darkColors } =
+                getCalendarColorsForHex(randomColor);
+              const newId = generateUniKey();
 
-            const newCalendar: CalendarType = {
-              id: newId,
-              name: t('untitled'),
-              colors,
-              darkColors,
-              isVisible: true,
-              isDefault: false,
-            };
+              const newCalendar: CalendarType = {
+                id: newId,
+                name: t('untitled'),
+                colors,
+                darkColors,
+                isVisible: true,
+                isDefault: false,
+                ...(source ? { source } : {}),
+              };
 
-            app.createCalendar(newCalendar);
-            setEditingCalendarId(newId);
-            refreshSidebar();
-          }, [app, isEditable, t, refreshSidebar]);
+              app.createCalendar(newCalendar);
+              setEditingCalendarId(newId);
+              refreshSidebar();
+            },
+            [app, isEditable, t, refreshSidebar]
+          );
 
           useEffect(() => {
             if (isEditable) return;
 
             setShowCreateDialog(false);
+            setCreateCalendarSource(undefined);
             setEditingCalendarId(null);
           }, [isEditable]);
 
@@ -245,6 +279,11 @@ export function createSidebarPlugin(
               onSubscribeCalendar: currentConfig.onSubscribeCalendar,
               onLoadSubscription: currentConfig.onLoadSubscription,
               onReorder: currentConfig.onReorder,
+              groups: currentConfig.groups,
+              onGroupCreate: currentConfig.onGroupCreate,
+              onGroupRename: currentConfig.onGroupRename,
+              onGroupDelete: currentConfig.onGroupDelete,
+              onGroupReorder: currentConfig.onGroupReorder,
               componentsOrder: currentConfig.componentsOrder,
               groupStatus: currentConfig.groupStatus,
             };
@@ -280,10 +319,19 @@ export function createSidebarPlugin(
           const renderExtraContent = () => {
             if (!isEditable || !showCreateDialog) return null;
 
-            const onClose = () => setShowCreateDialog(false);
-            const onCreate = async (newCalendar: unknown) => {
-              await app.createCalendar(newCalendar as CalendarType);
+            const onClose = () => {
               setShowCreateDialog(false);
+              setCreateCalendarSource(undefined);
+            };
+            const onCreate = async (newCalendar: unknown) => {
+              const calendar = newCalendar as CalendarType;
+              await app.createCalendar(
+                createCalendarSource
+                  ? { ...calendar, source: createCalendarSource }
+                  : calendar
+              );
+              setShowCreateDialog(false);
+              setCreateCalendarSource(undefined);
               refreshSidebar();
             };
 

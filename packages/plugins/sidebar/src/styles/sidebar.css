@@ -189,7 +189,32 @@
   }
 
   .df-sidebar-source-group {
+    position: relative;
     margin-top: 0.25rem;
+    transition: opacity 120ms ease;
+  }
+
+  .df-sidebar-source-group[data-dragging='true'] {
+    opacity: 0.5;
+  }
+
+  .df-sidebar-group-drop-indicator {
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--df-color-primary);
+  }
+
+  .df-sidebar-group-drop-indicator[data-position='top'] {
+    top: -0.125rem;
+  }
+
+  .df-sidebar-group-drop-indicator[data-position='bottom'] {
+    bottom: -0.125rem;
   }
 
   .df-sidebar-source-toggle {
@@ -210,8 +235,17 @@
       color 120ms ease;
   }
 
-  .df-sidebar-source-toggle:hover {
+  .df-sidebar-source-toggle:hover,
+  .df-sidebar-source-toggle[data-active='true'] {
     background: var(--df-color-hover);
+  }
+
+  .df-sidebar-source-toggle[data-draggable='true'] {
+    cursor: grab;
+  }
+
+  .df-sidebar-source-toggle[data-draggable='true']:active {
+    cursor: grabbing;
   }
 
   .df-sidebar-source-label {
@@ -330,6 +364,34 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.125rem;
+  }
+
+  .df-sidebar-group-name-label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.375rem;
+    color: var(--df-color-muted-foreground);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .df-sidebar-group-name-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 2.25rem;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.5rem;
+    background: var(--df-color-background);
+    color: var(--df-color-foreground);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    outline: none;
+  }
+
+  .df-sidebar-group-name-input:focus {
+    border-color: var(--df-color-primary);
+    box-shadow: 0 0 0 2px var(--df-color-primary);
   }
 
   .df-sidebar-dialog-actions,
@@ -603,6 +665,10 @@
 
   .df-sidebar-context-menu-calendar {
     min-width: 16rem;
+  }
+
+  .df-sidebar-context-menu-group {
+    min-width: 12rem;
   }
 
   .df-sidebar-context-menu-sidebar {

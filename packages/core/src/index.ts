@@ -60,6 +60,7 @@ export { MiniCalendar } from './components/common/MiniCalendar';
 export { CreateCalendarDialog } from './components/common/CreateCalendarDialog';
 export { default as DefaultEventDetailPanel } from './components/common/DefaultEventDetailPanel';
 export { default as DefaultEventDetailDialog } from './components/common/DefaultEventDetailDialog';
+export { EventConferenceField } from './components/common/EventConferenceField';
 export { ContentSlot } from './renderer/ContentSlot';
 export { TimeGridBackgroundLayer } from './components/weekView/TimeGridBackgroundLayer';
 export type { TimeGridBackgroundLayerProps } from './components/weekView/TimeGridBackgroundLayer';

@@ -28,6 +28,11 @@ import { useCallback, useState, useRef, useEffect } from 'preact/hooks';
 import { CalendarList } from './components/CalendarList';
 import { DeleteCalendarDialog } from './components/DeleteCalendarDialog';
 import {
+  CreateGroupDialog,
+  DeleteGroupDialog,
+  RenameGroupDialog,
+} from './components/GroupDialogs';
+import {
   ImportCalendarDialog,
   NEW_CALENDAR_ID,
 } from './components/ImportCalendarDialog';
@@ -52,6 +57,11 @@ const DefaultCalendarSidebar = ({
   onSubscribeCalendar,
   onLoadSubscription,
   onReorder,
+  groups: configuredGroups,
+  onGroupCreate,
+  onGroupRename,
+  onGroupDelete,
+  onGroupReorder,
   componentsOrder = ['calendarList', 'miniCalendar'],
   groupStatus,
 }: CalendarSidebarRenderProps) => {
@@ -134,6 +144,28 @@ const DefaultCalendarSidebar = ({
     y: number;
   } | null>(null);
 
+  const [groupContextMenu, setGroupContextMenu] = useState<{
+    x: number;
+    y: number;
+    source: string;
+  } | null>(null);
+
+  const [renameGroupSource, setRenameGroupSource] = useState<string | null>(
+    null
+  );
+  const [deleteGroupSource, setDeleteGroupSource] = useState<string | null>(
+    null
+  );
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [customGroupNames, setCustomGroupNames] = useState<string[]>(
+    () => configuredGroups ?? []
+  );
+
+  useEffect(() => {
+    if (configuredGroups === undefined) return;
+    setCustomGroupNames(configuredGroups);
+  }, [configuredGroups]);
+
   const [customColorPicker, setCustomColorPicker] = useState<{
     x: number;
     y: number;
@@ -180,6 +212,22 @@ const DefaultCalendarSidebar = ({
         rowRect: e.currentTarget.getBoundingClientRect(),
       });
       setSidebarContextMenu(null);
+      setGroupContextMenu(null);
+    },
+    []
+  );
+
+  const handleGroupContextMenu = useCallback(
+    (e: JSX.TargetedMouseEvent<HTMLElement>, source: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setGroupContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        source,
+      });
+      setContextMenu(null);
+      setSidebarContextMenu(null);
     },
     []
   );
@@ -192,6 +240,7 @@ const DefaultCalendarSidebar = ({
         y: e.clientY,
       });
       setContextMenu(null);
+      setGroupContextMenu(null);
     },
     []
   );
@@ -203,6 +252,74 @@ const DefaultCalendarSidebar = ({
   const handleCloseSidebarContextMenu = useCallback(() => {
     setSidebarContextMenu(null);
   }, []);
+
+  const handleCloseGroupContextMenu = useCallback(() => {
+    setGroupContextMenu(null);
+  }, []);
+
+  const handleCreateGroup = useCallback(
+    async (name: string) => {
+      await onGroupCreate?.(name);
+      setCustomGroupNames(current =>
+        current.some(
+          groupName =>
+            groupName.toLocaleLowerCase() === name.toLocaleLowerCase()
+        )
+          ? current
+          : [...current, name]
+      );
+      setIsCreateGroupOpen(false);
+    },
+    [onGroupCreate]
+  );
+
+  const handleRenameGroup = useCallback(
+    async (name: string) => {
+      if (!renameGroupSource) return;
+      const previousName = renameGroupSource;
+      const groupCalendars = calendars.filter(
+        calendar => calendar.source === previousName
+      );
+      await onGroupRename?.(previousName, name, groupCalendars);
+      groupCalendars.forEach(calendar =>
+        app.updateCalendar(calendar.id, { source: name })
+      );
+      setCustomGroupNames(current =>
+        current.map(groupName =>
+          groupName === previousName ? name : groupName
+        )
+      );
+      setRenameGroupSource(null);
+    },
+    [app, calendars, onGroupRename, renameGroupSource]
+  );
+
+  const handleDeleteGroup = useCallback(async () => {
+    if (!deleteGroupSource) return;
+    const groupCalendars = calendars.filter(
+      calendar => calendar.source === deleteGroupSource
+    );
+    await onGroupDelete?.(deleteGroupSource, groupCalendars);
+    for (const calendar of groupCalendars) {
+      await app.deleteCalendar(calendar.id);
+    }
+    setCustomGroupNames(current =>
+      current.filter(groupName => groupName !== deleteGroupSource)
+    );
+    setDeleteGroupSource(null);
+  }, [app, calendars, deleteGroupSource, onGroupDelete]);
+
+  const handleGroupReorder = useCallback(
+    async (nextGroups: string[]) => {
+      try {
+        await onGroupReorder?.(nextGroups);
+        setCustomGroupNames(nextGroups);
+      } catch (error) {
+        console.error('Failed to reorder calendar groups:', error);
+      }
+    },
+    [onGroupReorder]
+  );
 
   const handleDeleteCalendar = useCallback(() => {
     if (contextMenu) {
@@ -456,6 +573,32 @@ const DefaultCalendarSidebar = ({
   const deleteCalendarName = deleteState
     ? calendars.find(c => c.id === deleteState.calendarId)?.name || 'Unknown'
     : '';
+  const groupNames = Array.from(
+    new Set(
+      [
+        ...customGroupNames,
+        ...Object.keys(groupStatus ?? {}),
+        ...calendars.map(calendar => calendar.source),
+      ].filter(
+        (source): source is string =>
+          typeof source === 'string' && source.length > 0
+      )
+    )
+  );
+  const deleteGroupCalendarCount = deleteGroupSource
+    ? calendars.filter(calendar => calendar.source === deleteGroupSource).length
+    : 0;
+  const contextGroupCalendars = groupContextMenu
+    ? calendars.filter(calendar => calendar.source === groupContextMenu.source)
+    : [];
+  const canMutateContextGroup =
+    (contextGroupCalendars.length > 0 &&
+      contextGroupCalendars.every(calendar =>
+        app.canMutateFromUI(calendar.id)
+      )) ||
+    (contextGroupCalendars.length === 0 &&
+      groupContextMenu !== null &&
+      customGroupNames.includes(groupContextMenu.source));
 
   const readOnlyConfig = app.getReadOnlyConfig();
   const isEditable = app.canMutateFromUI();
@@ -466,6 +609,10 @@ const DefaultCalendarSidebar = ({
 
     setContextMenu(null);
     setSidebarContextMenu(null);
+    setGroupContextMenu(null);
+    setIsCreateGroupOpen(false);
+    setRenameGroupSource(null);
+    setDeleteGroupSource(null);
     setCustomColorPicker(null);
     setMergeState(null);
     setDeleteState(null);
@@ -525,12 +672,22 @@ const DefaultCalendarSidebar = ({
                   /* noop */
                 }
           }
+          onGroupContextMenu={
+            isEditable
+              ? handleGroupContextMenu
+              : () => {
+                  /* noop */
+                }
+          }
+          onGroupReorder={handleGroupReorder}
           editingId={editingCalendarId}
           setEditingId={setEditingCalendarId}
           activeContextMenuCalendarId={contextMenu?.calendarId}
+          activeContextMenuGroup={groupContextMenu?.source}
           isDraggable={isDraggable}
           isEditable={isEditable}
           groupStatus={groupStatus}
+          additionalGroups={customGroupNames}
         />
       ) : (
         <>
@@ -563,12 +720,22 @@ const DefaultCalendarSidebar = ({
                           /* noop */
                         }
                   }
+                  onGroupContextMenu={
+                    isEditable
+                      ? handleGroupContextMenu
+                      : () => {
+                          /* noop */
+                        }
+                  }
+                  onGroupReorder={handleGroupReorder}
                   editingId={editingCalendarId}
                   setEditingId={setEditingCalendarId}
                   activeContextMenuCalendarId={contextMenu?.calendarId}
+                  activeContextMenuGroup={groupContextMenu?.source}
                   isDraggable={isDraggable}
                   isEditable={isEditable}
                   groupStatus={groupStatus}
+                  additionalGroups={customGroupNames}
                 />
               );
             }
@@ -647,6 +814,47 @@ const DefaultCalendarSidebar = ({
         </ContextMenu>
       )}
 
+      {isEditable && groupContextMenu && (
+        <ContextMenu
+          x={groupContextMenu.x}
+          y={groupContextMenu.y}
+          onClose={handleCloseGroupContextMenu}
+          className='df-sidebar-context-menu df-sidebar-context-menu-group'
+        >
+          <ContextMenuLabel>{groupContextMenu.source}</ContextMenuLabel>
+          <ContextMenuItem
+            disabled={!onCreateCalendar}
+            onClick={() => {
+              const { source } = groupContextMenu;
+              handleCloseGroupContextMenu();
+              onCreateCalendar?.(source);
+            }}
+          >
+            {t('newCalendar')}
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            disabled={!canMutateContextGroup}
+            onClick={() => {
+              setRenameGroupSource(groupContextMenu.source);
+              handleCloseGroupContextMenu();
+            }}
+          >
+            {t('renameGroup')}
+          </ContextMenuItem>
+          <ContextMenuItem
+            danger
+            disabled={!canMutateContextGroup}
+            onClick={() => {
+              setDeleteGroupSource(groupContextMenu.source);
+              handleCloseGroupContextMenu();
+            }}
+          >
+            {t('deleteGroup')}
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+
       {isEditable &&
         sidebarContextMenu &&
         createPortal(
@@ -656,6 +864,15 @@ const DefaultCalendarSidebar = ({
             onClose={handleCloseSidebarContextMenu}
             className='df-sidebar-context-menu df-sidebar-context-menu-sidebar'
           >
+            <ContextMenuItem
+              onClick={() => {
+                setIsCreateGroupOpen(true);
+                handleCloseSidebarContextMenu();
+              }}
+            >
+              {t('newGroup')}
+            </ContextMenuItem>
+            <ContextMenuSeparator />
             <ContextMenuItem
               onClick={() => {
                 onCreateCalendar?.();
@@ -744,6 +961,32 @@ const DefaultCalendarSidebar = ({
           />,
           document.body
         )}
+
+      {isEditable && renameGroupSource && (
+        <RenameGroupDialog
+          groupName={renameGroupSource}
+          existingGroupNames={groupNames}
+          onRename={handleRenameGroup}
+          onCancel={() => setRenameGroupSource(null)}
+        />
+      )}
+
+      {isEditable && isCreateGroupOpen && (
+        <CreateGroupDialog
+          existingGroupNames={groupNames}
+          onCreate={handleCreateGroup}
+          onCancel={() => setIsCreateGroupOpen(false)}
+        />
+      )}
+
+      {isEditable && deleteGroupSource && (
+        <DeleteGroupDialog
+          groupName={deleteGroupSource}
+          calendarCount={deleteGroupCalendarCount}
+          onConfirm={handleDeleteGroup}
+          onCancel={() => setDeleteGroupSource(null)}
+        />
+      )}
 
       {isEditable &&
         customColorPicker &&

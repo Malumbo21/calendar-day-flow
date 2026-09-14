@@ -420,6 +420,133 @@
     margin-bottom: 1rem;
   }
 
+  .df-event-conference-field {
+    margin-bottom: 1rem;
+  }
+
+  .df-event-conference-editor,
+  .df-event-conference-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .df-event-conference-summary {
+    box-sizing: border-box;
+    height: 2.25rem;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.625rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.625rem;
+    background-color: var(--df-color-card);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .df-event-conference-provider-icon {
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--df-color-muted-foreground);
+  }
+
+  .df-event-conference-input {
+    min-width: 0;
+  }
+
+  .df-event-conference-info {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+    line-height: 1.15;
+  }
+
+  .df-event-conference-name,
+  .df-event-conference-id {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .df-event-conference-name {
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .df-event-conference-id,
+  .df-event-conference-error {
+    font-size: 0.75rem;
+  }
+
+  .df-event-conference-id {
+    color: var(--df-color-muted-foreground);
+  }
+
+  .df-event-conference-error {
+    margin-top: 0.25rem;
+    padding-left: 2rem;
+  }
+
+  .df-event-conference-error {
+    color: var(--df-color-destructive);
+  }
+
+  .df-event-conference-icon-button,
+  .df-event-conference-done {
+    flex: 0 0 auto;
+    border: 0;
+    cursor: pointer;
+    color: var(--df-color-muted-foreground);
+    background: transparent;
+  }
+
+  .df-event-conference-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+  }
+
+  .df-event-conference-icon-button:hover,
+  .df-event-conference-done:hover {
+    color: var(--df-color-foreground);
+    background-color: var(--df-color-hover);
+  }
+
+  .df-event-conference-icon-button:disabled,
+  .df-event-conference-done:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .df-event-conference-icon-button svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .df-event-conference-done {
+    min-height: 2.25rem;
+    border-radius: 0.375rem;
+    padding-inline: 0.625rem;
+    color: var(--df-color-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .df-event-conference-join {
+    flex: 0 0 auto;
+    text-decoration: none;
+  }
+
   .df-event-repeat-editor {
     display: grid;
     gap: 0.75rem;

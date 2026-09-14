@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### New Features & Enhancements
+
+- **Sidebar Group Management**: Added sidebar and group context-menu actions for creating, renaming, and deleting groups, plus creating calendars directly inside a group.
+- **Sidebar Group Reordering**: Added drag-and-drop group ordering, persisted ordering through `groups`, and the async `onGroupReorder(groups)` callback.
+
 ## [3.7.1] - 2026-08-28
 
 ### New Features & Enhancements
