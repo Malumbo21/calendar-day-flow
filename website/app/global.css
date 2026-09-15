@@ -40,6 +40,8 @@
   --color-fd-background: #ffffff;
   --color-fd-card: #ffffff;
   --color-fd-secondary: #ffffff;
+  --df-color-primary: #6786e6;
+  --df-color-primary-foreground: #ffffff;
 }
 
 .dark {

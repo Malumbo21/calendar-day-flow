@@ -39,7 +39,7 @@ export const MobileEventDrawer = ({
     viewable: boolean;
   };
   const isEditable = app.canMutateFromUI(draftEvent?.id);
-  const isViewable = readOnlyConfig.viewable !== false;
+  const isViewable = readOnlyConfig.viewable;
 
   const [notes, setNotes] = useState('');
 
@@ -101,6 +101,7 @@ export const MobileEventDrawer = ({
     (cal: CalendarType) => ({
       label: cal.name,
       value: cal.id,
+      group: cal.source,
     })
   );
 

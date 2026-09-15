@@ -171,6 +171,7 @@ const DefaultEventDetailPanel = ({
     return registry.getVisible().map((cal: CalendarType) => ({
       label: cal.name,
       value: cal.id,
+      group: cal.source,
     }));
   }, [app, app?.getCalendars()]); // Depend on app.getCalendars() to update when calendars change
 
@@ -184,7 +185,7 @@ const DefaultEventDetailPanel = ({
     draggable: boolean;
     viewable: boolean;
   };
-  const isViewable = readOnlyConfig?.viewable !== false;
+  const isViewable = readOnlyConfig?.viewable;
   const isDraftAllDay = !!draftEvent.allDay;
 
   // Check if it's a subscribed calendar

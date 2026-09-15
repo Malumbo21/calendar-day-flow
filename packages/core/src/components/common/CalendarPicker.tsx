@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { createPortal } from 'preact/compat';
-import { useState, useRef, useEffect } from 'preact/hooks';
+import { useState, useRef, useEffect, useMemo } from 'preact/hooks';
 
 import {
   getDefaultCalendarRegistry,
@@ -8,11 +8,12 @@ import {
 } from '@/core/calendarRegistry';
 import { calendarPickerDropdown } from '@/styles/classNames';
 
-import { ChevronsUpDown, Check } from './Icons';
+import { ChevronsUpDown } from './Icons';
 
 export interface CalendarOption {
   label: string;
   value: string; // calendar ID
+  group?: string;
 }
 
 export interface CalendarPickerProps {
@@ -105,6 +106,34 @@ export const CalendarPicker = ({
 
   const currentOption = options.find(o => o.value === value);
 
+  const groupedOptions = useMemo(() => {
+    const hasGroups = options.some(o => !!o.group);
+    if (!hasGroups) {
+      return [{ group: null, items: options }];
+    }
+    const ungrouped: CalendarOption[] = [];
+    const groupMap = new Map<string, CalendarOption[]>();
+
+    for (const opt of options) {
+      if (opt.group) {
+        const list = groupMap.get(opt.group) || [];
+        list.push(opt);
+        groupMap.set(opt.group, list);
+      } else {
+        ungrouped.push(opt);
+      }
+    }
+
+    const result: { group: string | null; items: CalendarOption[] }[] = [];
+    if (ungrouped.length > 0) {
+      result.push({ group: null, items: ungrouped });
+    }
+    for (const [groupName, items] of groupMap.entries()) {
+      result.push({ group: groupName, items });
+    }
+    return result;
+  }, [options]);
+
   const renderDropdown = () => {
     if (!isOpen || typeof window === 'undefined') return null;
 
@@ -115,25 +144,31 @@ export const CalendarPicker = ({
           style={dropdownStyle}
           className={calendarPickerDropdown}
         >
-          {options.map(opt => (
-            <div
-              key={opt.value}
-              className='df-calendar-picker-option df-calendar-picker-option-mobile'
-              data-selected={opt.value === value ? 'true' : 'false'}
-              onClick={e => handleSelect(e, opt.value)}
-            >
-              <div className='df-calendar-picker-option-inner'>
-                <div className='df-calendar-picker-check-area'>
-                  {opt.value === value && <Check className='df-text-primary' />}
+          {groupedOptions.map(section => (
+            <div key={section.group ?? '__default'}>
+              {section.group && (
+                <div className='df-calendar-picker-group-label'>
+                  {section.group}
                 </div>
-                <span className='df-calendar-picker-option-label'>
-                  {opt.label}
-                </span>
-              </div>
-              <span
-                className='df-calendar-picker-color-swatch df-calendar-picker-color-swatch-sm'
-                style={{ backgroundColor: getColorForCalendarId(opt.value) }}
-              />
+              )}
+              {section.items.map(opt => (
+                <div
+                  key={opt.value}
+                  className='df-calendar-picker-option df-calendar-picker-option-mobile'
+                  data-selected={opt.value === value ? 'true' : 'false'}
+                  onClick={e => handleSelect(e, opt.value)}
+                >
+                  <span
+                    className='df-calendar-picker-color-swatch df-calendar-picker-color-swatch-sm'
+                    style={{
+                      backgroundColor: getColorForCalendarId(opt.value),
+                    }}
+                  />
+                  <span className='df-calendar-picker-option-label'>
+                    {opt.label}
+                  </span>
+                </div>
+              ))}
             </div>
           ))}
         </div>,
@@ -147,22 +182,30 @@ export const CalendarPicker = ({
         style={dropdownStyle}
         className={calendarPickerDropdown}
       >
-        {options.map(opt => (
-          <li
-            key={opt.value}
-            className='df-calendar-picker-option'
-            data-selected={value === opt.value ? 'true' : 'false'}
-            onClick={e => handleSelect(e, opt.value)}
-          >
-            <div className='df-calendar-picker-check-area'>
-              {opt.value === value && <Check className='df-text-primary' />}
-            </div>
-            <span
-              className='df-calendar-picker-color-swatch-sm'
-              style={{ backgroundColor: getColorForCalendarId(opt.value) }}
-            />
-            <span className='df-calendar-picker-option-label'>{opt.label}</span>
-          </li>
+        {groupedOptions.map(section => (
+          <div key={section.group ?? '__default'}>
+            {section.group && (
+              <li className='df-calendar-picker-group-label'>
+                {section.group}
+              </li>
+            )}
+            {section.items.map(opt => (
+              <li
+                key={opt.value}
+                className='df-calendar-picker-option'
+                data-selected={value === opt.value ? 'true' : 'false'}
+                onClick={e => handleSelect(e, opt.value)}
+              >
+                <span
+                  className='df-calendar-picker-color-swatch df-calendar-picker-color-swatch-sm'
+                  style={{ backgroundColor: getColorForCalendarId(opt.value) }}
+                />
+                <span className='df-calendar-picker-option-label'>
+                  {opt.label}
+                </span>
+              </li>
+            ))}
+          </div>
         ))}
       </ul>,
       document.body

@@ -124,7 +124,9 @@ const CalendarEvent = ({
           : event.id
         : `${event.id}::day-${multiDaySegmentInfo.dayIndex}`;
 
-  const showDetailPanel = detailPanelEventId === detailPanelKey;
+  const showDetailPanel =
+    detailPanelEventId === detailPanelKey ||
+    (detailPanelEventId?.startsWith(`${detailPanelKey}::`) ?? false);
   const panelEnabled = useEventDetailPanel !== false;
   const showDetailPanelForClickOutside = showDetailPanel && panelEnabled;
 
@@ -276,6 +278,7 @@ const CalendarEvent = ({
     setContextMenuPosition,
     setActiveDayIndex,
     getClickedDayIdx,
+    getActiveDayIdx,
     updatePanelPosition,
     selectedEventElementRef,
   });

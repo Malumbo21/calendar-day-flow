@@ -58,6 +58,7 @@ const DefaultEventDetailDialog = ({
     return registry.getVisible().map(cal => ({
       label: cal.name,
       value: cal.id,
+      group: cal.source,
     }));
   }, [app, app?.getCalendars()]);
 
@@ -152,7 +153,7 @@ const DefaultEventDetailDialog = ({
     draggable: boolean;
     viewable: boolean;
   };
-  const isViewable = readOnlyConfig?.viewable !== false;
+  const isViewable = readOnlyConfig?.viewable;
   const isPending = isSaving || isDeleting;
 
   const isSubscribed = useMemo(() => {

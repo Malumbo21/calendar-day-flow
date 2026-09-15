@@ -380,6 +380,8 @@ export const MultiDayEvent = memo(
     return (
       <div
         className='df-month-segment-event'
+        data-start-day={segment.startDayIndex}
+        data-end-day={segment.endDayIndex}
         style={{
           left: adjustedLeft,
           width: adjustedWidth,

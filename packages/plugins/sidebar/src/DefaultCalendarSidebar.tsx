@@ -914,6 +914,7 @@ const DefaultCalendarSidebar = ({
           <ImportCalendarDialog
             calendars={calendars}
             filename={importState.filename}
+            groups={customGroupNames}
             onConfirm={handleImportConfirm}
             onCancel={() => setImportState(null)}
           />,
@@ -951,6 +952,7 @@ const DefaultCalendarSidebar = ({
             calendarId={deleteState.calendarId}
             calendarName={deleteCalendarName}
             calendars={calendars}
+            groups={customGroupNames}
             step={deleteState.step}
             onStepChange={step =>
               setDeleteState(prev => (prev ? { ...prev, step } : null))
