@@ -2,10 +2,11 @@ pre-commit:
   jobs:
     - run: pnpm --filter @dayflow/core run check:css
 
-    - run: pnpm format
+    # Staged files only: running on the whole repo rewrites unrelated files and leaves them unstaged
+    - run: pnpm exec oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
 
-    - run: pnpm lint:fix
+    - run: pnpm exec oxlint --fix {staged_files}
       glob:
         - '*.js'
         - '*.jsx'
@@ -17,5 +18,5 @@ pre-commit:
         - '*.md'
       stage_fixed: true
 
-    - glob: 'website/**/*'
+    - glob: 'website/**'
       run: pnpm --dir website run build

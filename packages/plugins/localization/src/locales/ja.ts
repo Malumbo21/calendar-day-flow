@@ -11,6 +11,13 @@ const ja: DayflowLocale = {
     timeRange: '時間範囲',
     note: 'メモ',
     addNotePlaceholder: 'メモを追加...',
+    videoMeeting: 'ビデオ会議',
+    meetingUrl: '会議 URL',
+    meetingUrlPlaceholder: '会議リンクを貼り付け...',
+    invalidMeetingUrl:
+      '有効な http:// または https:// URL を入力してください。',
+    editMeetingUrl: '会議 URL を編集',
+    join: '参加',
     setAsAllDay: '終日予定に設定',
     setAsTimed: '時間指定の予定に設定',
     delete: '削除',
@@ -29,6 +36,15 @@ const ja: DayflowLocale = {
     deleteCalendar: 'カレンダー {calendarName} を削除しますか？',
     deleteCalendarMessage:
       'カレンダー {calendarName} を削除しますか？それともイベントを別の既存のカレンダーにマージしますか？',
+    newGroup: '新規グループ',
+    renameGroup: 'グループ名を変更',
+    deleteGroup: 'グループを削除',
+    deleteGroupTitle: '{groupName} を削除しますか？',
+    deleteGroupMessage:
+      'このグループを削除すると、グループ内のすべてのカレンダー（合計 {calendarCount} 件）が削除されます。この操作は元に戻せません。',
+    groupName: 'グループ名',
+    groupNamePlaceholder: '例：仕事',
+    groupNameExists: '同じ名前のグループが既に存在します。',
     merge: 'マージ',
     confirmDeleteTitle:
       'カレンダー {calendarName} を削除してもよろしいですか？',

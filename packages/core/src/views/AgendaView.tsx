@@ -72,7 +72,26 @@ const isMidnight = (date: Date): boolean =>
   date.getSeconds() === 0 &&
   date.getMilliseconds() === 0;
 
-const getEventRangeForAgenda = (event: Event, appTimeZone: string) => {
+interface AgendaEventRange {
+  start: Date;
+  end: Date;
+  startDay: Date;
+  effectiveEndDay: Date;
+}
+
+const agendaRangeCache = new WeakMap<Event, Map<string, AgendaEventRange>>();
+
+const getEventRangeForAgenda = (
+  event: Event,
+  appTimeZone: string
+): AgendaEventRange => {
+  const tzKey = appTimeZone ?? '';
+  let perEvent = agendaRangeCache.get(event);
+  if (perEvent) {
+    const cached = perEvent.get(tzKey);
+    if (cached) return cached;
+  }
+
   const start = temporalToVisualDate(event.start, appTimeZone);
   const end = event.end ? temporalToVisualDate(event.end, appTimeZone) : start;
   const startDay = normalizeDate(start);
@@ -87,12 +106,19 @@ const getEventRangeForAgenda = (event: Event, appTimeZone: string) => {
     effectiveEndDay = new Date(startDay);
   }
 
-  return {
+  const result: AgendaEventRange = {
     start,
     end,
     startDay,
     effectiveEndDay,
   };
+
+  if (!perEvent) {
+    perEvent = new Map();
+    agendaRangeCache.set(event, perEvent);
+  }
+  perEvent.set(tzKey, result);
+  return result;
 };
 
 const formatAgendaTitle = (
@@ -119,12 +145,11 @@ const formatAgendaTimeLabel = (
   event: Event,
   day: Date,
   appTimeZone: string,
-  timeFormat: '12h' | '24h'
+  timeFormat: '12h' | '24h',
+  range?: AgendaEventRange
 ): { timeLabel: string; renderAsBadge: boolean; sortMs: number } => {
-  const { start, end, startDay, effectiveEndDay } = getEventRangeForAgenda(
-    event,
-    appTimeZone
-  );
+  const { start, end, startDay, effectiveEndDay } =
+    range ?? getEventRangeForAgenda(event, appTimeZone);
   const multiDay = effectiveEndDay.getTime() > startDay.getTime();
 
   if (event.allDay) {
@@ -201,6 +226,37 @@ const renderAgendaTimeLabel = (label: string, timeFormat?: string) => {
   );
 };
 
+const getCoarseYearMonth = (
+  val: unknown
+): { year: number; month: number } | null => {
+  if (!val) return null;
+  if (
+    typeof val === 'object' &&
+    val !== null &&
+    'year' in val &&
+    'month' in val
+  ) {
+    const candidate = val as { year: unknown; month: unknown };
+    if (
+      typeof candidate.year === 'number' &&
+      typeof candidate.month === 'number'
+    ) {
+      return { year: candidate.year, month: candidate.month };
+    }
+  }
+  if (val instanceof Date) {
+    return { year: val.getFullYear(), month: val.getMonth() + 1 };
+  }
+  if (typeof val === 'string' && val.length >= 7) {
+    const y = Number.parseInt(val.slice(0, 4), 10);
+    const m = Number.parseInt(val.slice(5, 7), 10);
+    if (Number.isFinite(y) && Number.isFinite(m)) {
+      return { year: y, month: m };
+    }
+  }
+  return null;
+};
+
 const buildAgendaGroups = (
   app: ICalendarApp,
   events: Event[],
@@ -213,29 +269,53 @@ const buildAgendaGroups = (
   const appTimeZone = app.timeZone;
   const groups: AgendaDayGroup[] = [];
 
+  const agendaStart = normalizeDate(startDate);
+  const agendaEnd = addDays(agendaStart, daysToShow);
+
+  const startYear = agendaStart.getFullYear();
+  const startMonth = agendaStart.getMonth() + 1;
+  const endYear = agendaEnd.getFullYear();
+  const endMonth = agendaEnd.getMonth() + 1;
+  const minYearMonth = startYear * 12 + (startMonth - 1);
+  const maxYearMonth = endYear * 12 + (endMonth + 1);
+
+  const candidateEvents: { event: Event; range: AgendaEventRange }[] = [];
+  for (let i = 0; i < events.length; i += 1) {
+    const event = events[i];
+    const s = getCoarseYearMonth(event.start);
+    const e = getCoarseYearMonth(event.end ?? event.start);
+    if (s && e) {
+      const sYM = s.year * 12 + s.month;
+      const eYM = e.year * 12 + e.month;
+      if (eYM < minYearMonth || sYM > maxYearMonth) {
+        continue;
+      }
+    }
+
+    const range = getEventRangeForAgenda(event, appTimeZone);
+    if (range.startDay < agendaEnd && range.effectiveEndDay >= agendaStart) {
+      candidateEvents.push({ event, range });
+    }
+  }
+
   for (let index = 0; index < daysToShow; index += 1) {
     const day = addDays(startDate, index);
     const dayStart = normalizeDate(day);
     const dayEnd = addDays(dayStart, 1);
 
-    const entries = events
-      .filter(event => {
-        const { startDay, effectiveEndDay } = getEventRangeForAgenda(
-          event,
-          appTimeZone
-        );
-        return startDay < dayEnd && effectiveEndDay >= dayStart;
-      })
-      .map(event => {
-        const { startDay, effectiveEndDay } = getEventRangeForAgenda(
-          event,
-          appTimeZone
-        );
+    const entries = candidateEvents
+      .filter(
+        ({ range }) =>
+          range.startDay < dayEnd && range.effectiveEndDay >= dayStart
+      )
+      .map(({ event, range }) => {
+        const { startDay, effectiveEndDay } = range;
         const { timeLabel, renderAsBadge, sortMs } = formatAgendaTimeLabel(
           event,
           dayStart,
           appTimeZone,
-          timeFormat
+          timeFormat,
+          range
         );
         const calendarId = getPrimaryCalendarId(event);
         const isMultiDayAllDay =

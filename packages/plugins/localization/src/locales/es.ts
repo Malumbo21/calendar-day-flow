@@ -11,6 +11,12 @@ const es: DayflowLocale = {
     timeRange: 'Rango de tiempo',
     note: 'Nota',
     addNotePlaceholder: 'Añadir una nota...',
+    videoMeeting: 'Videollamada',
+    meetingUrl: 'URL de la reunión',
+    meetingUrlPlaceholder: 'Pega un enlace de reunión...',
+    invalidMeetingUrl: 'Introduce una URL http:// o https:// válida.',
+    editMeetingUrl: 'Editar URL de la reunión',
+    join: 'Unirse',
     setAsAllDay: 'Establecer como todo el día',
     setAsTimed: 'Establecer como evento con horario',
     delete: 'Eliminar',
@@ -29,6 +35,15 @@ const es: DayflowLocale = {
     deleteCalendar: '¿Eliminar {calendarName}?',
     deleteCalendarMessage:
       '¿Quieres eliminar {calendarName} o fusionar sus eventos en otro calendario existente?',
+    newGroup: 'Nuevo grupo',
+    renameGroup: 'Renombrar grupo',
+    deleteGroup: 'Eliminar grupo',
+    deleteGroupTitle: '¿Eliminar {groupName}?',
+    deleteGroupMessage:
+      'Al eliminar este grupo se eliminarán todos sus calendarios ({calendarCount} en total). Esta acción no se puede deshacer.',
+    groupName: 'Nombre del grupo',
+    groupNamePlaceholder: 'p. ej., Trabajo',
+    groupNameExists: 'Ya existe un grupo con este nombre.',
     merge: 'Fusionar',
     confirmDeleteTitle:
       '¿Seguro que quieres eliminar el calendario {calendarName}?',

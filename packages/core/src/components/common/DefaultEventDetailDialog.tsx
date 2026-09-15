@@ -9,6 +9,7 @@ import { dialogContainer } from '@/styles/classNames';
 import { ICalendarApp } from '@/types';
 import { EventDetailDialogProps } from '@/types/eventDetail';
 import { isEventDeepEqual } from '@/utils/eventUtils';
+import { getEventConference, setEventConference } from '@/utils/meetingUtils';
 import { isPlainDate } from '@/utils/temporal';
 import {
   restoreVisualEventToCanonical,
@@ -16,6 +17,7 @@ import {
 } from '@/utils/timeUtils';
 
 import { CalendarPicker, CalendarOption } from './CalendarPicker';
+import { EventConferenceField } from './EventConferenceField';
 import { EventRepeatEditor } from './EventRepeatEditor';
 import { LoadingButton } from './LoadingButton';
 
@@ -290,6 +292,16 @@ const DefaultEventDetailDialog = ({
             startOfWeek={startOfWeek}
             disabled={!isEditable || isPending}
             onChange={setEditedEvent}
+          />
+
+          <EventConferenceField
+            key={editedEvent.id}
+            value={getEventConference(editedEvent)}
+            editable={isEditable}
+            disabled={isPending}
+            onChange={conference =>
+              setEditedEvent(setEventConference(editedEvent, conference))
+            }
           />
 
           {shouldShowNotes && (

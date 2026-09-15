@@ -11,6 +11,12 @@ const ko: DayflowLocale = {
     timeRange: '시간 범위',
     note: '메모',
     addNotePlaceholder: '메모 추가...',
+    videoMeeting: '화상 회의',
+    meetingUrl: '회의 URL',
+    meetingUrlPlaceholder: '회의 링크 붙여넣기...',
+    invalidMeetingUrl: '올바른 http:// 또는 https:// URL을 입력하세요.',
+    editMeetingUrl: '회의 URL 편집',
+    join: '참가',
     setAsAllDay: '종일 일정으로 설정',
     setAsTimed: '시간 지정 일정으로 설정',
     delete: '삭제',
@@ -29,6 +35,15 @@ const ko: DayflowLocale = {
     deleteCalendar: '{calendarName} 삭제?',
     deleteCalendarMessage:
       '{calendarName}을(를) 삭제하시겠습니까, 아니면 이벤트를 다른 기존 캘린더로 병합하시겠습니까?',
+    newGroup: '새 그룹',
+    renameGroup: '그룹 이름 변경',
+    deleteGroup: '그룹 삭제',
+    deleteGroupTitle: '{groupName}을(를) 삭제할까요?',
+    deleteGroupMessage:
+      '이 그룹을 삭제하면 그룹 안의 모든 캘린더(총 {calendarCount}개)가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.',
+    groupName: '그룹 이름',
+    groupNamePlaceholder: '예: 업무',
+    groupNameExists: '같은 이름의 그룹이 이미 있습니다.',
     merge: '병합',
     confirmDeleteTitle: '{calendarName} 캘린더를 삭제하시겠습니까?',
     confirmDeleteMessage:

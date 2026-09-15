@@ -24,6 +24,7 @@ import {
 } from '@/types';
 import { isEventDeepEqual } from '@/utils/eventUtils';
 import { logger } from '@/utils/logger';
+import { getEventConference, setEventConference } from '@/utils/meetingUtils';
 import { isPlainDate } from '@/utils/temporal';
 import { resolveAppliedTheme } from '@/utils/themeUtils';
 import {
@@ -32,6 +33,7 @@ import {
 } from '@/utils/timeUtils';
 
 import { CalendarOption, CalendarPicker } from './CalendarPicker';
+import { EventConferenceField } from './EventConferenceField';
 import { EventRepeatEditor } from './EventRepeatEditor';
 import { LoadingButton } from './LoadingButton';
 
@@ -500,6 +502,16 @@ const DefaultEventDetailPanel = ({
         startOfWeek={startOfWeek}
         disabled={!isEditable || isLoading}
         onChange={applyDraftEventUpdate}
+      />
+
+      <EventConferenceField
+        key={draftEvent.id}
+        value={getEventConference(draftEvent)}
+        editable={isEditable}
+        disabled={isLoading}
+        onChange={conference =>
+          applyDraftEventUpdate(setEventConference(draftEvent, conference))
+        }
       />
 
       {shouldShowNotes && (

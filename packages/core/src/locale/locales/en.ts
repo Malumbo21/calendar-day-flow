@@ -11,6 +11,12 @@ const en: Locale = {
     timeRange: 'Time Range',
     note: 'Note',
     addNotePlaceholder: 'Add a note...',
+    videoMeeting: 'Video meeting',
+    meetingUrl: 'Meeting URL',
+    meetingUrlPlaceholder: 'Paste a meeting link...',
+    invalidMeetingUrl: 'Enter a valid http:// or https:// meeting URL.',
+    editMeetingUrl: 'Edit meeting URL',
+    join: 'Join',
     setAsAllDay: 'Set as All-day',
     setAsTimed: 'Set as Timed Event',
     delete: 'Delete',
@@ -30,6 +36,15 @@ const en: Locale = {
     deleteCalendar: 'Delete {calendarName}?',
     deleteCalendarMessage:
       'Do you want to delete {calendarName} or merge its events into another existing calendar?',
+    newGroup: 'New Group',
+    renameGroup: 'Rename Group',
+    deleteGroup: 'Delete Group',
+    deleteGroupTitle: 'Delete {groupName}?',
+    deleteGroupMessage:
+      'Deleting this group will delete every calendar in it ({calendarCount} total). This action cannot be undone.',
+    groupName: 'Group name',
+    groupNamePlaceholder: 'e.g. Work',
+    groupNameExists: 'A group with this name already exists.',
     merge: 'Merge',
     confirmDeleteTitle:
       'Are you sure you want to delete the calendar {calendarName}?',

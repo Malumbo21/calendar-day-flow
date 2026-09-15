@@ -48,6 +48,7 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
     "@tailwindcss/postcss": "catalog:",
+    "@testing-library/preact": "catalog:",
     "autoprefixer": "catalog:",
     "postcss": "catalog:",
     "postcss-import": "catalog:",
