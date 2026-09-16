@@ -608,17 +608,19 @@ function packageDirsTouched(sha) {
 }
 
 /**
- * Recent first-parent history, annotated with the packages each commit touches.
+ * Recent history, annotated with the packages each commit touches.
  * That annotation is what makes a commit list usable for deciding where to cut
  * a release — a subject line alone does not say what shipped.
  */
 export function recentCommits(limit = 20) {
+  // Deliberately not --first-parent. Work lands here through PR merges, so a
+  // first-parent walk hides every commit that describes what changed and
+  // leaves a list of "Merge pull request #NNN" rows you cannot choose between.
   const raw = git(
     [
       'log',
-      '--first-parent',
       `-n${limit}`,
-      `--format=%H${FIELD_SEP}%h${FIELD_SEP}%ad${FIELD_SEP}%s`,
+      `--format=%H${FIELD_SEP}%h${FIELD_SEP}%ad${FIELD_SEP}%s${FIELD_SEP}%P`,
       '--date=short',
     ],
     { allowFail: true }
@@ -627,15 +629,27 @@ export function recentCommits(limit = 20) {
     .split('\n')
     .filter(Boolean)
     .map(line => {
-      const [sha, short, date, subject] = line.split(FIELD_SEP);
+      const [sha, short, date, subject, parents] = line.split(FIELD_SEP);
       return {
         sha,
         short,
         date,
         subject,
+        isMerge: (parents ?? '').trim().split(/\s+/).filter(Boolean).length > 1,
         packageDirs: packageDirsTouched(sha),
       };
     });
+}
+
+/**
+ * Commit a release tag points at, so the picker can show where the previous
+ * release ended and which commits are still unreleased.
+ */
+export function latestReleaseTagCommit() {
+  const tag = latestReleaseTag();
+  if (!tag) return null;
+  const sha = resolveRef(tag);
+  return sha ? { tag, sha } : null;
 }
 
 /** Commits between two refs that touch a package's shipping source. */
@@ -727,7 +741,14 @@ export function dependencyDrift(pkg, packages) {
     ? JSON.parse(fs.readFileSync(publishManifestPath, 'utf8'))
     : pkg.manifest;
 
-  const versions = new Map(packages.map(p => [p.name, p.version]));
+  // Resolve workspace: ranges against each dependency's PUBLISHED version, not
+  // its local one. Using the local version makes every dependent look drifted
+  // the moment a shared package is bumped — `workspace:^` would read as
+  // ^3.7.1 -> ^3.7.2 even though nobody edited the manifest and ^3.7.1 already
+  // accepts 3.7.2. Comparing against what npm serves isolates authored edits.
+  const versions = new Map(
+    packages.map(dep => [dep.name, latestPublished(dep.name) ?? dep.version])
+  );
   const catalog = loadCatalog();
   const drift = [];
 

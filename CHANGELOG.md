@@ -2,12 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [3.7.2] - 2026-09-16
 
 ### New Features & Enhancements
 
-- **Sidebar Group Management**: Added sidebar and group context-menu actions for creating, renaming, and deleting groups, plus creating calendars directly inside a group.
-- **Sidebar Group Reordering**: Added drag-and-drop group ordering, persisted ordering through `groups`, and the async `onGroupReorder(groups)` callback.
+- **Video Conference Integration (`@dayflow/core`)**:
+  - Added native video conference support on calendar events via `event.conference` (`EventConference`), supporting Google Meet, Zoom, Microsoft Teams, Webex, Whereby, Jitsi, and custom meeting URLs.
+  - Added utility functions (`createEventConference`, `detectMeetingProvider`, `extractMeetingId`, `normalizeMeetingUrl`, `getEventConference`, `setEventConference`) for provider auto-detection, URL normalization, meeting ID extraction, and backwards compatibility with legacy `meta.meetingUrl`.
+  - Added `EventConferenceField` in the default event detail dialog and panel, featuring platform icons, a quick "Join" button, and 1-click meeting link copying with status feedback.
+  - Added full localization keys for conference labels and actions.
+- **Sidebar Group Management & Reordering (`@dayflow/plugin-sidebar`)**:
+  - Added sidebar and group context-menu actions for creating, renaming, and deleting calendar groups.
+  - Added the ability to create calendars directly inside a specific group.
+  - Added drag-and-drop group reordering, persisting ordering through `groups`, and the asynchronous `onGroupReorder(groups)` callback.
+- **Calendar Sync Video Meeting Support (`@dayflow/google-sync` & `@dayflow/outlook-sync`)**:
+  - `@dayflow/google-sync`: Maps Google Calendar `conferenceData` (Google Meet entries, meeting codes, passcodes) and `hangoutLink` into DayFlow `event.conference`.
+  - `@dayflow/outlook-sync`: Queries online meeting metadata from Microsoft Graph (`isOnlineMeeting`, `onlineMeetingProvider`, `onlineMeeting`, `onlineMeetingUrl`) and maps Teams/Skype meetings into `event.conference`.
+- **Half-Hour Grid Lines (`@dayflow/core`)**:
+  - Added `showHalfHourLines` configuration option to `DayViewConfig` and `WeekViewConfig` (`createDayView`, `createWeekView`) to display dashed divider lines at every half-hour interval.
+
+### Performance
+
+- **AgendaView Rendering Optimizations (`@dayflow/core`)**:
+  - Added WeakMap-based per-event range caching (`agendaRangeCache`) and coarse year/month pre-filtering to prevent redundant date calculations and accelerate rendering on large event collections.
+  - Added event click and detail panel interaction support in `AgendaView`, with intelligent panel positioning and viewport boundary clamping.
+
+### Fixed
+
+- **Time Axis Boundary Labels (`@dayflow/core`)**:
+  - Fixed Day and Week view midnight and last-hour label calculation (`LAST_HOUR % 24`) to ensure consistent time-axis rendering across 12-hour and 24-hour formats.
+  - Aligned secondary timezone labels in Day view with the primary time-axis.
 
 ## [3.7.1] - 2026-08-28
 
