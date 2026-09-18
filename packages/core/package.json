@@ -65,13 +65,13 @@
   },
   "dependencies": {
     "@dayflow/blossom-color-picker": "catalog:",
+    "@dayflow/ui-context-menu": "workspace:^",
+    "@dayflow/ui-range-picker": "workspace:^",
     "preact": "catalog:",
     "temporal-polyfill": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {
-    "@dayflow/ui-context-menu": "workspace:^",
-    "@dayflow/ui-range-picker": "workspace:^",
     "@preact/preset-vite": "catalog:",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-node-resolve": "catalog:",

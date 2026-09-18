@@ -408,7 +408,7 @@ for (const p of packages) {
   if (status.changed === true) reasons.push('own source changed');
   if (drift.length > 0) {
     reasons.push(
-      `published deps differ (${drift.map(d => d.dep.replace('@dayflow/', '')).join(', ')})`
+      `published deps differ (${[...new Set(drift.map(d => d.dep.replace('@dayflow/', '')))].join(', ')})`
     );
   }
 

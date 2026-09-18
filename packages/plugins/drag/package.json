@@ -34,6 +34,10 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "preact": "catalog:",
+    "temporal-polyfill": "catalog:"
+  },
   "devDependencies": {
     "@dayflow/core": "workspace:^",
     "@rollup/plugin-commonjs": "catalog:",
@@ -48,8 +52,6 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@dayflow/core": "workspace:^",
-    "preact": "catalog:",
-    "temporal-polyfill": "catalog:"
+    "@dayflow/core": "workspace:^"
   }
 }
