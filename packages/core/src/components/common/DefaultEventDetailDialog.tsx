@@ -58,6 +58,7 @@ const DefaultEventDetailDialog = ({
     return registry.getVisible().map(cal => ({
       label: cal.name,
       value: cal.id,
+      group: cal.source,
     }));
   }, [app, app?.getCalendars()]);
 
@@ -148,10 +149,7 @@ const DefaultEventDetailDialog = ({
   };
 
   const isEditable = app?.canMutateFromUI(event.id) ?? false;
-  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as {
-    draggable: boolean;
-    viewable: boolean;
-  };
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id);
   const isViewable = readOnlyConfig?.viewable !== false;
   const isPending = isSaving || isDeleting;
 

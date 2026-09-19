@@ -33,10 +33,11 @@ interface ContextMenuProps {
   onClose: () => void;
   children: ComponentChildren;
   className?: string;
+  style?: Record<string, number | string>;
 }
 
 export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
-  ({ x, y, onClose, children, className }, ref) => {
+  ({ x, y, onClose, children, className, style: customStyle }, ref) => {
     const internalRef = useRef<HTMLDivElement>(null);
 
     const setRefs = (node: HTMLDivElement | null) => {
@@ -93,7 +94,11 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
       };
     }, [onClose]);
 
-    const style: Record<string, number | string> = { top: y, left: x };
+    const style: Record<string, number | string> = {
+      top: y,
+      left: x,
+      ...customStyle,
+    };
 
     return createPortal(
       <div

@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { ControlPanel } from './ControlPanel';
 import {
   CalendarGroupsPreview,
+  KeyboardShortcutsPreview,
   SecondaryTimeZonePreview,
 } from './FeaturePreviews';
 import { MiniDotsFeature } from './MiniDotsFeature';
@@ -108,29 +109,43 @@ function PreviewLabel({
   preview,
 }: {
   children: ReactNode;
-  preview: 'calendar-groups' | 'secondary-timezone';
+  preview: 'calendar-groups' | 'secondary-timezone' | 'keyboard-shortcuts';
 }) {
   return (
     <span className='inline-flex items-center gap-1'>
       {children}
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className='inline-flex cursor-help'>
+          <span
+            className='inline-flex cursor-help'
+            onClick={e => e.preventDefault()}
+          >
             <CircleAlert className='h-3 w-3 text-slate-400' />
           </span>
         </TooltipTrigger>
-        <TooltipContent className='w-64 space-y-2 p-3'>
+        <TooltipContent
+          side='top'
+          className={cn(
+            'p-3',
+            preview === 'keyboard-shortcuts' ? 'w-60' : 'w-64 space-y-2'
+          )}
+        >
           {preview === 'calendar-groups' ? (
             <>
               <p className='text-xs'>Group calendars by their source.</p>
               <CalendarGroupsPreview />
             </>
-          ) : (
+          ) : preview === 'secondary-timezone' ? (
             <>
               <p className='text-xs'>
                 Show a second reference timeline in Day and Week views.
               </p>
               <SecondaryTimeZonePreview />
+            </>
+          ) : (
+            <>
+              <p className='mb-2 text-sm font-semibold'>Shortcuts</p>
+              <KeyboardShortcutsPreview />
             </>
           )}
         </TooltipContent>
@@ -395,7 +410,11 @@ export function ControlPanelV2(props: Props) {
                     />
                     <Toggle
                       id='keyboard-plugin'
-                      label='Keyboard shortcuts'
+                      label={
+                        <PreviewLabel preview='keyboard-shortcuts'>
+                          Keyboard shortcuts
+                        </PreviewLabel>
+                      }
                       checked={features.enableShortcuts}
                       onChange={enableShortcuts =>
                         updateFeatures({ enableShortcuts })

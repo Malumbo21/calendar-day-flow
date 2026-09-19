@@ -144,8 +144,22 @@ export function InteractiveCalendar() {
     [startTransition]
   );
 
+  useEffect(() => {
+    const color = selections.themeColor || DEFAULT_THEME_COLOR;
+    document.documentElement.style.setProperty('--df-color-primary', color);
+    document.documentElement.style.setProperty(
+      '--df-color-primary-foreground',
+      '#ffffff'
+    );
+  }, [selections.themeColor]);
+
   const previewThemeColor = useCallback((color: string) => {
     calendarWrapperRef.current?.style.setProperty('--df-color-primary', color);
+    document.documentElement.style.setProperty('--df-color-primary', color);
+    document.documentElement.style.setProperty(
+      '--df-color-primary-foreground',
+      '#ffffff'
+    );
   }, []);
 
   const titleBarSlot = useMemo(

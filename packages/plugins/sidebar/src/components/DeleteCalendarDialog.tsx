@@ -4,7 +4,7 @@ import {
   useLocale,
   LoadingButton,
 } from '@dayflow/core';
-import { useState } from 'preact/hooks';
+import { useState, useMemo } from 'preact/hooks';
 
 import { CalendarChip } from './CalendarChip';
 
@@ -24,6 +24,7 @@ interface DeleteCalendarDialogProps {
   calendarId: string;
   calendarName: string;
   calendars: CalendarType[];
+  groups?: string[];
   step: 'initial' | 'confirm_delete';
   onStepChange: (step: 'initial' | 'confirm_delete') => void;
   onConfirmDelete: () => void | Promise<void>;
@@ -35,6 +36,7 @@ export const DeleteCalendarDialog = ({
   calendarId,
   calendarName,
   calendars,
+  groups,
   step,
   onStepChange,
   onConfirmDelete,
@@ -46,6 +48,52 @@ export const DeleteCalendarDialog = ({
   const { t } = useLocale();
   const calendarColor =
     calendars.find(c => c.id === calendarId)?.colors.lineColor ?? '#6b7280';
+
+  const availableCalendars = useMemo(
+    () => calendars.filter(c => c.id !== calendarId),
+    [calendars, calendarId]
+  );
+
+  const { ungroupedCalendars, groupedCalendars, hasGroups } = useMemo(() => {
+    const hasAnyGroup =
+      availableCalendars.some(c => !!c.source) || (groups && groups.length > 0);
+    if (!hasAnyGroup) {
+      return {
+        ungroupedCalendars: availableCalendars,
+        groupedCalendars: [],
+        hasGroups: false,
+      };
+    }
+
+    const ungrouped: CalendarType[] = [];
+    const groupMap = new Map<string, CalendarType[]>();
+
+    if (groups) {
+      groups.forEach(groupName => {
+        if (!groupMap.has(groupName)) groupMap.set(groupName, []);
+      });
+    }
+
+    availableCalendars.forEach(calendar => {
+      const source = calendar.source;
+      if (source) {
+        if (!groupMap.has(source)) groupMap.set(source, []);
+        groupMap.get(source)!.push(calendar);
+      } else {
+        ungrouped.push(calendar);
+      }
+    });
+
+    const grouped = Array.from(groupMap.entries()).filter(
+      ([, cals]) => cals.length > 0
+    );
+
+    return {
+      ungroupedCalendars: ungrouped,
+      groupedCalendars: grouped,
+      hasGroups: true,
+    };
+  }, [availableCalendars, groups]);
 
   const handleMergeSelect = async (id: string) => {
     if (isLoading) return;
@@ -95,9 +143,59 @@ export const DeleteCalendarDialog = ({
                 </button>
                 {showMergeDropdown && (
                   <div className='df-sidebar-dropdown'>
-                    {calendars
-                      .filter(c => c.id !== calendarId)
-                      .map(calendar => (
+                    {hasGroups ? (
+                      <>
+                        {ungroupedCalendars.map(calendar => (
+                          <div
+                            key={calendar.id}
+                            className='df-sidebar-dropdown-item'
+                            onClick={() => {
+                              handleMergeSelect(calendar.id);
+                            }}
+                          >
+                            <div
+                              className='df-sidebar-swatch'
+                              style={{
+                                backgroundColor: calendar.colors.lineColor,
+                              }}
+                            />
+                            <span className='df-sidebar-dropdown-label'>
+                              {calendar.name || calendar.id}
+                            </span>
+                          </div>
+                        ))}
+                        {groupedCalendars.map(([groupName, groupCals]) => (
+                          <div
+                            key={groupName}
+                            className='df-sidebar-dropdown-group'
+                          >
+                            <div className='df-sidebar-dropdown-group-label'>
+                              {groupName}
+                            </div>
+                            {groupCals.map(calendar => (
+                              <div
+                                key={calendar.id}
+                                className='df-sidebar-dropdown-item'
+                                onClick={() => {
+                                  handleMergeSelect(calendar.id);
+                                }}
+                              >
+                                <div
+                                  className='df-sidebar-swatch'
+                                  style={{
+                                    backgroundColor: calendar.colors.lineColor,
+                                  }}
+                                />
+                                <span className='df-sidebar-dropdown-label'>
+                                  {calendar.name || calendar.id}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      availableCalendars.map(calendar => (
                         <div
                           key={calendar.id}
                           className='df-sidebar-dropdown-item'
@@ -115,7 +213,8 @@ export const DeleteCalendarDialog = ({
                             {calendar.name || calendar.id}
                           </span>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </div>
                 )}
               </div>

@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.3] - 2026-09-19
+
+Released in this version: `@dayflow/core`, `@dayflow/react`, `@dayflow/vue`, `@dayflow/svelte` and `@dayflow/angular` 3.7.3 · `@dayflow/plugin-drag` 1.6.2 · `@dayflow/plugin-sidebar` 1.6.3 · `@dayflow/ui-context-menu` 1.2.1 · `@dayflow/sync-core` 1.1.2. All other packages are unchanged.
+
+### New Features & Enhancements
+
+- **Grouped Calendar Selectors (`@dayflow/core`, `@dayflow/plugin-sidebar`)**:
+  - Calendar pickers in the event detail panel, detail dialog and mobile drawer, the event context menu, and the sidebar's import and delete-calendar dialogs now group calendars under headers by their `source` (for example "Google Calendar" or "iCloud").
+  - Calendars without a `source` are listed ungrouped, and the lists look the same as before when no calendar has one. The sidebar's dialogs list groups in the sidebar's own group order.
+- **Theme-Aware Context Menus (`@dayflow/core`, `@dayflow/ui-context-menu`)**:
+  - Context menus take their colors from the calendar theme tokens (`--df-color-*`, with `--df-color-card` for the surface) instead of a built-in palette, so custom theme colors now apply to them.
+  - `ContextMenu` accepts a `style` prop, merged with its computed position.
+  - Used on its own, the menu falls back to the light palette. Its built-in dark palette has been removed, so define the `--df-color-*` tokens to style it for dark mode.
+
+### Fixed
+
+- **Event Detail Panel for Multi-Day Events (`@dayflow/core`)**: In Month view the panel now anchors to the day that was clicked rather than the whole multi-day segment, so events in the last column (for example Sunday) open the panel to the left instead of past the edge of the calendar.
+- **Plugins No Longer Require Preact in Your App (`@dayflow/plugin-drag`, `@dayflow/plugin-sidebar`)**: Since 3.7.1 these plugins declared `preact`, `temporal-polyfill` and `@dayflow/blossom-color-picker` as peer dependencies. Yarn then reported that the app "doesn't provide preact", and Yarn PnP refused to resolve them, so apps had to install Preact themselves. They are regular dependencies again and share the single copy `@dayflow/core` uses. If you added `preact` to your own `package.json` for this, you can remove it.
+- **Missing Types for Context Menu and Range Picker Exports (`@dayflow/core`)**: 3.7.1 and 3.7.2 re-exported `ContextMenu`, `ContextMenuItem`, `DayflowRangePicker`, `RangePickerProps`, `ZonedRange` and related types from packages that were no longer installed with core. TypeScript reported "Cannot find module", or, with `skipLibCheck` enabled, silently typed them as `any`. Those packages are core dependencies again.
+- **Sync Result Types (`@dayflow/sync-core`)**: The `changes` field returned by `reconcileProviderCalendars` and `reconcileProviderEvents` referenced an internal path alias that consumers cannot resolve, so it was typed as `any` or failed with "Cannot find module". The types are now bundled correctly. This affected every release since 1.0.2.
+- **React and Vue Adapter Types with `node16` / `nodenext` Resolution (`@dayflow/react`, `@dayflow/vue`)**: Under `moduleResolution: "node16"` or `"nodenext"`, TypeScript could not find `DayFlowCalendar` or `useCalendarApp`. The declarations are now bundled into a single file. `bundler` resolution was not affected.
+- **Loading `@dayflow/core` in Node (`@dayflow/core`)**: The package now declares `"type": "module"`, so Node loads it as ES modules directly. Node versions without ESM syntax detection — Node 18, 20 before 20.19, and 22 before 22.7 — previously failed to load it, which affected server-side rendering and test runners.
+
 ## [3.7.2] - 2026-09-16
 
 ### New Features & Enhancements

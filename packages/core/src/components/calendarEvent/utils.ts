@@ -88,8 +88,9 @@ export const getActiveDayIndex = (
     return selectedDayIndex;
   }
 
-  if (detailPanelEventId === detailPanelKey) {
-    const keyParts = detailPanelKey.split('::');
+  const candidateKey = detailPanelEventId || detailPanelKey;
+  if (candidateKey) {
+    const keyParts = candidateKey.split('::');
     const suffix = keyParts.at(-1);
     if (suffix && suffix.startsWith('day-')) {
       const parsed = Number(suffix.replace('day-', ''));

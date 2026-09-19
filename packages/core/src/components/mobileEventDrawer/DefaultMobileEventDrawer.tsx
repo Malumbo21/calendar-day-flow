@@ -34,10 +34,7 @@ export const MobileEventDrawer = ({
   timeFormat = '24h',
 }: MobileEventProps) => {
   const { locale, t } = useLocale();
-  const readOnlyConfig = app.getReadOnlyConfig(draftEvent?.id) as {
-    draggable: boolean;
-    viewable: boolean;
-  };
+  const readOnlyConfig = app.getReadOnlyConfig(draftEvent?.id);
   const isEditable = app.canMutateFromUI(draftEvent?.id);
   const isViewable = readOnlyConfig.viewable !== false;
 
@@ -101,6 +98,7 @@ export const MobileEventDrawer = ({
     (cal: CalendarType) => ({
       label: cal.name,
       value: cal.id,
+      group: cal.source,
     })
   );
 

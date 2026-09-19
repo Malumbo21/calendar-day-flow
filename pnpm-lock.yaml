@@ -455,6 +455,12 @@ importers:
       '@dayflow/blossom-color-picker':
         specifier: 'catalog:'
         version: 2.0.1
+      '@dayflow/ui-context-menu':
+        specifier: workspace:^
+        version: link:../ui/context-menu
+      '@dayflow/ui-range-picker':
+        specifier: workspace:^
+        version: link:../ui/range-picker
       preact:
         specifier: 'catalog:'
         version: 10.28.4
@@ -465,12 +471,6 @@ importers:
         specifier: 'catalog:'
         version: 2.8.1
     devDependencies:
-      '@dayflow/ui-context-menu':
-        specifier: workspace:^
-        version: link:../ui/context-menu
-      '@dayflow/ui-range-picker':
-        specifier: workspace:^
-        version: link:../ui/range-picker
       '@preact/preset-vite':
         specifier: 'catalog:'
         version: 2.10.3(@babel/core@7.29.0)(preact@10.28.4)(rollup@4.57.1)(vite@5.4.21(@types/node@22.19.11)(less@4.5.1)(lightningcss@1.31.1)(sass@1.97.3)(terser@5.46.0))
@@ -577,6 +577,9 @@ importers:
       preact:
         specifier: 'catalog:'
         version: 10.28.4
+      temporal-polyfill:
+        specifier: 'catalog:'
+        version: 0.3.0
     devDependencies:
       '@dayflow/core':
         specifier: workspace:^
@@ -602,9 +605,6 @@ importers:
       rollup-plugin-dts:
         specifier: 'catalog:'
         version: 6.3.0(rollup@4.57.1)(typescript@5.9.3)
-      temporal-polyfill:
-        specifier: 'catalog:'
-        version: 0.3.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -670,10 +670,14 @@ importers:
         version: 5.9.3
 
   packages/plugins/sidebar:
-    devDependencies:
+    dependencies:
       '@dayflow/blossom-color-picker':
         specifier: 'catalog:'
         version: 2.0.1
+      preact:
+        specifier: 'catalog:'
+        version: 10.28.4
+    devDependencies:
       '@dayflow/core':
         specifier: workspace:^
         version: link:../../core
@@ -701,9 +705,6 @@ importers:
       postcss-import:
         specifier: 'catalog:'
         version: 16.1.1(postcss@8.5.25)
-      preact:
-        specifier: 'catalog:'
-        version: 10.28.4
       rimraf:
         specifier: 'catalog:'
         version: 6.1.3
@@ -776,6 +777,9 @@ importers:
       rollup:
         specifier: 'catalog:'
         version: 4.57.1
+      rollup-plugin-dts:
+        specifier: 'catalog:'
+        version: 6.3.0(rollup@4.57.1)(typescript@5.9.3)
       rollup-plugin-peer-deps-external:
         specifier: 'catalog:'
         version: 2.2.4(rollup@4.57.1)
@@ -974,6 +978,9 @@ importers:
       rollup:
         specifier: 'catalog:'
         version: 4.57.1
+      rollup-plugin-dts:
+        specifier: 'catalog:'
+        version: 6.3.0(rollup@4.57.1)(typescript@5.9.3)
       rollup-plugin-peer-deps-external:
         specifier: 'catalog:'
         version: 2.2.4(rollup@4.57.1)

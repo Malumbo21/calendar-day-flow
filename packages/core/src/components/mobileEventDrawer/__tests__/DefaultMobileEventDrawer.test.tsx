@@ -101,4 +101,42 @@ describe('MobileEventDrawer', () => {
     expect(document.body.style.overflow).toBe('');
     expect(window.scrollTo).toHaveBeenCalled();
   });
+
+  // ReadOnlyConfig.viewable is optional and means "allowed" when unset;
+  // only an explicit false should keep the drawer from opening.
+  it('opens when the read-only config leaves viewable unset', () => {
+    const app = createApp();
+    vi.spyOn(app, 'getReadOnlyConfig').mockReturnValue({});
+
+    render(
+      <MobileEventDrawer
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onEventDelete={vi.fn()}
+        draftEvent={app.getEvents()[0]}
+        app={app}
+      />
+    );
+
+    expect(document.querySelector('.df-mobile-event-drawer')).not.toBeNull();
+  });
+
+  it('stays closed when viewable is explicitly false', () => {
+    const app = createApp();
+    vi.spyOn(app, 'getReadOnlyConfig').mockReturnValue({ viewable: false });
+
+    render(
+      <MobileEventDrawer
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onEventDelete={vi.fn()}
+        draftEvent={app.getEvents()[0]}
+        app={app}
+      />
+    );
+
+    expect(document.querySelector('.df-mobile-event-drawer')).toBeNull();
+  });
 });

@@ -171,6 +171,7 @@ const DefaultEventDetailPanel = ({
     return registry.getVisible().map((cal: CalendarType) => ({
       label: cal.name,
       value: cal.id,
+      group: cal.source,
     }));
   }, [app, app?.getCalendars()]); // Depend on app.getCalendars() to update when calendars change
 
@@ -180,10 +181,7 @@ const DefaultEventDetailPanel = ({
     (typeof document !== 'undefined' &&
       document.documentElement.classList.contains('dark'));
   const isEditable = app?.canMutateFromUI(event.id) ?? false;
-  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as {
-    draggable: boolean;
-    viewable: boolean;
-  };
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id);
   const isViewable = readOnlyConfig?.viewable !== false;
   const isDraftAllDay = !!draftEvent.allDay;
 
