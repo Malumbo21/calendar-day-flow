@@ -94,3 +94,35 @@ export function SecondaryTimeZonePreview() {
     </div>
   );
 }
+
+const SHORTCUTS = [
+  { label: 'Search', key: '⌘F' },
+  { label: 'Today', key: '⌘T' },
+  { label: 'New Event', key: '⌘N' },
+  { label: 'Undo', key: '⌘Z' },
+  { label: 'Redo', key: '⌘⇧Z / ⌘Y' },
+  { label: 'Event Switch', key: 'Tab / ⇧Tab' },
+  { label: 'Prev/Next', key: '← / →' },
+  { label: 'Copy Event', key: '⌘C' },
+  { label: 'Paste Event', key: '⌘V' },
+  { label: 'Cut Event', key: '⌘X' },
+  { label: 'Delete', key: '⌫' },
+];
+
+export function KeyboardShortcutsPreview() {
+  return (
+    <div className='space-y-2'>
+      <ul className='space-y-1.5 text-xs'>
+        {SHORTCUTS.map(shortcut => (
+          <li key={shortcut.label} className='flex justify-between gap-4'>
+            <span>{shortcut.label}</span>{' '}
+            <kbd className='font-sans opacity-70'>{shortcut.key}</kbd>
+          </li>
+        ))}
+      </ul>
+      <div className='border-t border-slate-100 pt-1.5 text-[10px] text-slate-400 dark:border-slate-800 dark:text-slate-500'>
+        Windows / Linux 上用 Ctrl
+      </div>
+    </div>
+  );
+}
