@@ -1,4 +1,7 @@
 pre-commit:
+  # Run jobs in order and stop at the first failure: format and lint fixes are
+  # re-staged before the tests see the tree, and a lint failure skips the test run.
+  piped: true
   jobs:
     - run: pnpm --filter @dayflow/core run check:css
 
@@ -17,3 +20,14 @@ pre-commit:
         - '*.css'
         - '*.md'
       stage_fixed: true
+
+    # The full suite CI runs (vitest + Angular). Skipped when nothing it covers
+    # is staged, such as docs-only or website-only commits.
+    - name: test
+      run: pnpm test
+      glob:
+        - '*.{js,jsx,mjs,cjs,ts,tsx,vue,svelte,json}'
+        - 'pnpm-lock.yaml'
+        - 'pnpm-workspace.yaml'
+      exclude:
+        - 'website/**'

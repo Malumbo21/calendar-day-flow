@@ -149,11 +149,8 @@ const DefaultEventDetailDialog = ({
   };
 
   const isEditable = app?.canMutateFromUI(event.id) ?? false;
-  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as {
-    draggable: boolean;
-    viewable: boolean;
-  };
-  const isViewable = readOnlyConfig?.viewable;
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id);
+  const isViewable = readOnlyConfig?.viewable !== false;
   const isPending = isSaving || isDeleting;
 
   const isSubscribed = useMemo(() => {

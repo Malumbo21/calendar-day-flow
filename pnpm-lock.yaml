@@ -777,6 +777,9 @@ importers:
       rollup:
         specifier: 'catalog:'
         version: 4.57.1
+      rollup-plugin-dts:
+        specifier: 'catalog:'
+        version: 6.3.0(rollup@4.57.1)(typescript@5.9.3)
       rollup-plugin-peer-deps-external:
         specifier: 'catalog:'
         version: 2.2.4(rollup@4.57.1)
@@ -975,6 +978,9 @@ importers:
       rollup:
         specifier: 'catalog:'
         version: 4.57.1
+      rollup-plugin-dts:
+        specifier: 'catalog:'
+        version: 6.3.0(rollup@4.57.1)(typescript@5.9.3)
       rollup-plugin-peer-deps-external:
         specifier: 'catalog:'
         version: 2.2.4(rollup@4.57.1)

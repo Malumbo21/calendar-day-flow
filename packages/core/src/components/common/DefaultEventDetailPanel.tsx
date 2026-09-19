@@ -181,11 +181,8 @@ const DefaultEventDetailPanel = ({
     (typeof document !== 'undefined' &&
       document.documentElement.classList.contains('dark'));
   const isEditable = app?.canMutateFromUI(event.id) ?? false;
-  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as {
-    draggable: boolean;
-    viewable: boolean;
-  };
-  const isViewable = readOnlyConfig?.viewable;
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id);
+  const isViewable = readOnlyConfig?.viewable !== false;
   const isDraftAllDay = !!draftEvent.allDay;
 
   // Check if it's a subscribed calendar

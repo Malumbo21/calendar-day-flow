@@ -5,6 +5,7 @@
   "files": [
     "dist",
     "src",
+    "!src/__tests__",
     "index.d.ts",
     "README.md",
     "LICENSE"
