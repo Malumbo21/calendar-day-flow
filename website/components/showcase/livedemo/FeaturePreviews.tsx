@@ -121,7 +121,7 @@ export function KeyboardShortcutsPreview() {
         ))}
       </ul>
       <div className='border-t border-slate-100 pt-1.5 text-[10px] text-slate-400 dark:border-slate-800 dark:text-slate-500'>
-        Windows / Linux 上用 Ctrl
+        Windows / Linux Using Ctrl
       </div>
     </div>
   );
